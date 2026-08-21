@@ -14,11 +14,38 @@
     <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600&display=swap" rel="stylesheet">
     
     <style>
+        /* ==========================================
+   IOS TOUCH FIX
+   ========================================== */
+
+button,
+select,
+input {
+    -webkit-tap-highlight-color: transparent;
+}
+
+button {
+    -webkit-appearance: none;
+    appearance: none;
+    touch-action: manipulation;
+    cursor: pointer;
+}
+
+select,
+input {
+    -webkit-appearance: none;
+    appearance: none;
+}
+
+#view-setup,
+#view-scanner,
+#view-input {
+    position: relative;
+}
         body {
-            font-family: 'Prompt', sans-serif;
-            background-color: #f3f4f6; /* bg-gray-100 */
-            touch-action: pan-y; /* Prevent horizontal scroll, allow vertical */
-        }
+    font-family: 'Prompt', sans-serif;
+    background-color: #f3f4f6;
+}
         /* Style for the scanner container to ensure it fits well on mobile */
         #reader {
     width: 100%;
@@ -300,11 +327,28 @@
 
         // --- View Navigation ---
         function showView(viewId) {
-            document.getElementById('view-setup').classList.add('hidden');
-            document.getElementById('view-scanner').classList.add('hidden');
-            document.getElementById('view-input').classList.add('hidden');
-            document.getElementById(viewId).classList.remove('hidden');
-            document.getElementById(viewId).classList.add('flex');
+
+    const views = [
+        'view-setup',
+        'view-scanner',
+        'view-input'
+    ];
+
+    views.forEach(id => {
+
+        const el = document.getElementById(id);
+
+        el.classList.add('hidden');
+        el.classList.remove('flex');
+
+    });
+
+    const target =
+        document.getElementById(viewId);
+
+    target.classList.remove('hidden');
+    target.classList.add('flex');
+}
         }
 
         function updateLocations() {
