@@ -398,26 +398,105 @@
             // Expected Format: Part Number,Qty,Unit,Lot Number,Serial Number
             // Example: 3DET23244818601,2000,PCS,WO-26070376,3DET23244818601B26080005
             
-            const parts = text.split(',');
-            
-            if (parts.length < 4) {
-                Swal.fire({
-                    icon: 'error',
-                    title: 'รูปแบบไม่ถูกต้อง',
-                    text: 'ข้อมูล QR/Barcode ที่สแกนไม่ตรงกับรูปแบบที่กำหนดไว้',
-                    confirmButtonText: 'สแกนใหม่'
-                }).then(() => {
-                    initScanner(); // Restart scanner
-                });
-                return;
-            }
+            const parts = text.split(',').map(x => x.trim());
 
-            // Extract Data
-            currentScanData.partNumber = parts[0].trim();
-            currentScanData.qrQty = parts[1].trim();
-            currentScanData.unit = parts[2].trim();
-            currentScanData.lotNumber = parts[3].trim(); // Index 3 is the 4th item
-            currentScanData.serialNumber = parts.length >= 5 ? parts[4].trim() : "-";
+if (parts.length < 2) {
+    Swal.fire({
+        icon: 'error',
+        title: 'รูปแบบไม่ถูกต้อง',
+        text: 'ข้อมูล QR/Barcode ที่สแกนไม่ถูกต้อง',
+        confirmButtonText: 'สแกนใหม่'
+    }).then(() => {
+        initScanner();
+    });
+    return;
+}
+
+// ==========================================
+// ค้นหา WO / WO2 / RC จากทุกตำแหน่ง
+// ==========================================
+
+let lotNumber = "";
+
+for (let i = 0; i < parts.length; i++) {
+
+    const value = parts[i];
+
+    // รองรับ
+    // WO-xxxx
+    // WO2-xxxx
+    // RC-xxxx
+    // RCxxxx
+    if (/^(WO2?|RC)[-_]/i.test(value)) {
+        lotNumber = value;
+        break;
+    }
+}
+
+// ถ้ายังหาไม่เจอ ลองค้นหา WO / RC ที่อยู่ติดกับข้อความอื่น
+if (!lotNumber) {
+
+    for (let i = 0; i < parts.length; i++) {
+
+        const value = parts[i];
+
+        const match = value.match(/(WO2?|RC)[-_][A-Z0-9-]+/i);
+
+        if (match) {
+            lotNumber = match[0];
+            break;
+        }
+    }
+}
+
+// ==========================================
+// ถ้าไม่พบ WO / RC
+// ==========================================
+
+if (!lotNumber) {
+
+    Swal.fire({
+        icon: 'warning',
+        title: 'ไม่พบ WO / RC',
+        text: 'ไม่พบหมายเลข WO หรือ RC ใน QR Code นี้',
+        confirmButtonText: 'สแกนใหม่'
+    }).then(() => {
+        initScanner();
+    });
+
+    return;
+}
+
+// ==========================================
+// Extract Data
+// ==========================================
+
+currentScanData.partNumber = parts[0] || "";
+currentScanData.qrQty = parts[1] || "";
+currentScanData.unit = parts[2] || "";
+
+currentScanData.lotNumber = lotNumber;
+
+currentScanData.serialNumber =
+    parts.length >= 5 ? parts[4] : "-";
+
+// ==========================================
+// Update UI
+// ==========================================
+
+document.getElementById('display-lot').textContent =
+    currentScanData.lotNumber;
+
+document.getElementById('display-part').textContent =
+    currentScanData.partNumber;
+
+document.getElementById('actual-qty').value = "";
+
+// ==========================================
+// Show Input View
+// ==========================================
+
+showView('view-input');
 
             // Update UI
             document.getElementById('display-lot').textContent = currentScanData.lotNumber;
