@@ -80,17 +80,18 @@
             <h2 class="text-xl font-medium text-gray-700 border-b pb-2">ข้อมูลผู้ตรวจนับ</h2>
             
             <div>
-                <label class="block text-sm font-medium text-gray-600 mb-1">รหัสพนักงาน (User)</label>
+                <label class="block text-sm font-medium text-gray-600 mb-1">โซนตรวจนับ (Zone)</label>
                 <select
     id="user-select"
     onchange="updateLocations()"
     class="w-full border border-gray-300 rounded-lg p-3 text-lg bg-gray-50 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
 >
-                    <option value="" disabled selected>-- เลือกพนักงาน --</option>
-                    <option value="USER_001">USER_001 (Admin)</option>
-                    <option value="USER_002">USER_002 (Staff)</option>
-                    <option value="USER_003">USER_003 (Staff)</option>
-                </select>
+                    <option value="" disabled selected>-- เลือกโซนตรวจนับ --</option>
+    <option value="ZONE_A">Zone A</option>
+    <option value="ZONE_B">Zone B</option>
+    <option value="ZONE_C">Zone C</option>
+    <option value="ZONE_D">Zone D</option>
+</select>
             </div>
 
             <div>
@@ -261,11 +262,12 @@
 
     <script>
         // --- State Management ---
-        const MOCK_USERS = {
-            "USER_001": ["A1-1", "A1-2", "A1-3", "B1-1", "B1-2", "B1-3"],
-            "USER_002": ["C1-1", "C1-2", "C1-3"],
-            "USER_003": ["D1-1", "D1-2", "D1-3", "D1-4"]
-        };
+        const MOCK_ZONES = {
+    "ZONE_A": ["A1-1", "A1-2", "A1-3"],
+    "ZONE_B": ["B1-1", "B1-2", "B1-3"],
+    "ZONE_C": ["C1-1", "C1-2", "C1-3"],
+    "ZONE_D": ["D1-1", "D1-2", "D1-3", "D1-4"]
+};
 
         let currentSession = {
             user: "",
