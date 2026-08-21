@@ -31,8 +31,8 @@
 
 #reader video {
     width: 100% !important;
-    height: 100% !important;
-    object-fit: contain !important;
+    height: auto !important;
+    object-fit: cover !important;
 }
         
         /* Custom SweetAlert styles for mobile */
@@ -403,16 +403,8 @@
 };
 
     html5QrCode.start(
-        {
-    facingMode: "environment",
-    width: {
-        ideal: 1920
-    },
-    height: {
-        ideal: 1080
-    }
-},
-        config,
+    { facingMode: "environment" },
+    config,
 
         function(decodedText) {
 
