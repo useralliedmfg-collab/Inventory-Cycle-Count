@@ -169,6 +169,38 @@
                 <h2 id="display-lot" class="text-3xl font-bold text-gray-900 break-all">WO-000000</h2>
                 <p class="text-xs text-gray-500 mt-2">Part: <span id="display-part"></span></p>
             </div>
+            <!-- ==========================================
+     UNIT2 - RC ONLY
+     ========================================== -->
+
+<div id="unit2-container" class="hidden mb-6">
+
+    <label class="block text-center text-lg font-semibold text-gray-700 mb-3">
+        Unit2
+    </label>
+
+    <select
+    id="unit2-select"
+    class="w-full border-2 border-blue-300 rounded-xl p-4 text-lg bg-white focus:ring-4 focus:ring-blue-200 focus:border-blue-500 outline-none"
+>
+
+    <option value="" selected>
+        -- กรุณาเลือก Unit2 --
+    </option>
+
+    <option value="M">M</option>
+    <option value="MM">MM</option>
+    <option value="RL">RL</option>
+    <option value="SHT">SHT</option>
+    <option value="BLK">BLK</option>
+    <option value="PCS">PCS</option>
+    <option value="LTR">LTR</option>
+    <option value="KG">KG</option>
+    <option value="SET">SET</option>
+
+</select>
+
+</div>
 
             <div class="mb-8">
                 <label class="block text-center text-lg font-semibold text-gray-700 mb-3">จำนวนที่ตรวจนับได้จริง</label>
@@ -227,13 +259,13 @@
         };
 
         let currentScanData = {
-            partNumber: "",
-            qrQty: "",
-            unit: "",
-            lotNumber: "",
-            serialNumber: ""
-        };
-
+    partNumber: "",
+    qrQty: "",
+    unit: "",
+    lotNumber: "",
+    serialNumber: "",
+    unit2: ""
+};
         let html5QrCode = null;
         let availableCameras = [];
         let currentCameraIndex = 0;
@@ -398,93 +430,131 @@
 
     console.log("QR DATA:", text);
 
+
     // ==========================================
-    // แยกข้อมูล QR
+    // SPLIT QR
     // ==========================================
 
     const parts = text
         .split(',')
         .map(x => x.trim());
 
-    if (parts.length < 2) {
+
+    if (parts.length < 4) {
 
         Swal.fire({
+
             icon: 'error',
+
             title: 'รูปแบบไม่ถูกต้อง',
-            text: 'ข้อมูล QR / Barcode ไม่ถูกต้อง',
-            confirmButtonText: 'สแกนใหม่'
+
+            text:
+                'ข้อมูล QR / Barcode ไม่ถูกต้อง',
+
+            confirmButtonText:
+                'สแกนใหม่'
+
         }).then(() => {
+
             initScanner();
+
         });
 
         return;
+
     }
 
 
     // ==========================================
-    // ค้นหา WO / WO2 / RC
-    // จากทุกตำแหน่งของ QR
+    // FIND WO / WO2 / RC
     // ==========================================
 
     let lotNumber = "";
 
-    for (let i = 0; i < parts.length; i++) {
+    let qrType = "";
 
-        const value = parts[i];
 
-        /*
-            รองรับ:
+    for (
+        let i = 0;
+        i < parts.length;
+        i++
+    ) {
 
-            WO-XXXX
-            WO2-XXXX
-            RC-XXXX
-        */
+        const value =
+            parts[i];
 
-        if (/^(WO2?|RC)[-_]/i.test(value)) {
 
-            lotNumber = value;
+        // WO2
+        if (
+            /^WO2([-_]|$)/i
+                .test(value)
+        ) {
+
+            lotNumber =
+                value;
+
+            qrType =
+                "WO2";
 
             break;
+
         }
+
+
+        // WO
+        if (
+            /^WO([-_]|$)/i
+                .test(value)
+        ) {
+
+            lotNumber =
+                value;
+
+            qrType =
+                "WO";
+
+            break;
+
+        }
+
+
+        // RC
+        if (
+            /^RC([-_]|$)/i
+                .test(value)
+        ) {
+
+            lotNumber =
+                value;
+
+            qrType =
+                "RC";
+
+            break;
+
+        }
+
     }
 
 
     // ==========================================
-    // กรณีข้อมูลมีข้อความอื่นปนอยู่
-    // เช่น ABC-WO-123456
-    // ==========================================
-
-    if (!lotNumber) {
-
-        for (let i = 0; i < parts.length; i++) {
-
-            const value = parts[i];
-
-            const match = value.match(
-                /(WO2?|RC)[-_][A-Z0-9-]+/i
-            );
-
-            if (match) {
-
-                lotNumber = match[0];
-
-                break;
-            }
-        }
-    }
-
-
-    // ==========================================
-    // ไม่พบ WO / WO2 / RC
+    // NOT FOUND
     // ==========================================
 
     if (!lotNumber) {
 
         Swal.fire({
+
             icon: 'warning',
+
             title: 'ไม่พบ WO / WO2 / RC',
-            text: 'ไม่พบหมายเลข WO, WO2 หรือ RC ใน QR Code นี้',
-            confirmButtonText: 'สแกนใหม่'
+
+            text:
+                'ไม่พบหมายเลข WO, WO2 หรือ RC ใน QR Code นี้',
+
+            confirmButtonText:
+                'สแกนใหม่'
+
         }).then(() => {
 
             initScanner();
@@ -492,29 +562,124 @@
         });
 
         return;
+
     }
 
 
     // ==========================================
-    // DATA
+    // RESET UNIT2
+    // ==========================================
+
+    currentScanData.unit2 =
+        "";
+
+
+    const unit2Container =
+        document.getElementById(
+            'unit2-container'
+        );
+
+    const unit2Select =
+        document.getElementById(
+            'unit2-select'
+        );
+
+
+    unit2Select.value =
+        "";
+
+
+    // ==========================================
+    // COMMON
     // ==========================================
 
     currentScanData.partNumber =
         parts[0] || "";
 
-    currentScanData.qrQty =
-        parts[1] || "";
-
-    currentScanData.unit =
-        parts[2] || "";
 
     currentScanData.lotNumber =
         lotNumber;
 
-    currentScanData.serialNumber =
-        parts.length >= 5
-            ? parts[4]
-            : "-";
+
+    // ==========================================
+    // WO / WO2
+    // ==========================================
+
+    if (
+        qrType === "WO" ||
+        qrType === "WO2"
+    ) {
+
+        currentScanData.qrQty =
+            parts[1] || "";
+
+        currentScanData.unit =
+            parts[2] || "";
+
+        currentScanData.serialNumber =
+            parts.length >= 5
+                ? parts[4]
+                : "-";
+
+
+        // ซ่อน Unit2
+        unit2Container
+            .classList
+            .add('hidden');
+
+    }
+
+
+    // ==========================================
+    // RC
+    // ==========================================
+
+    if (
+        qrType === "RC"
+    ) {
+
+        /*
+            RC FORMAT
+
+            1 = Part Number
+            2 = RC Number
+            3 = RM01
+            4 = E4
+            5 = Qty
+            6 = POD
+            7 = Description
+            8 = Serial
+        */
+
+
+        // Qty = ช่องที่ 5
+        currentScanData.qrQty =
+            parts[4] || "";
+
+
+        // Serial = ตัวสุดท้าย
+        currentScanData.serialNumber =
+            parts[parts.length - 1] || "-";
+
+
+        /*
+            Unit จะถูกกำหนดจาก
+            RC_UNIT_MAP ใน Code.gs
+
+            ดังนั้นส่งค่าจาก Index
+            เป็นค่าว่างไว้ก่อน
+        */
+
+        currentScanData.unit =
+            "";
+
+
+        // แสดง Unit2
+        unit2Container
+            .classList
+            .remove('hidden');
+
+    }
 
 
     // ==========================================
@@ -542,7 +707,9 @@
     // SHOW INPUT VIEW
     // ==========================================
 
-    showView('view-input');
+    showView(
+        'view-input'
+    );
 
 }
 
@@ -583,7 +750,32 @@ function submitCount() {
 
         return;
     }
+// ==========================================
+// VALIDATE UNIT2 - RC ONLY
+// ==========================================
 
+if (
+    currentScanData.lotNumber &&
+    /^RC([-_]|$)/i.test(currentScanData.lotNumber) &&
+    !currentScanData.unit2
+) {
+
+    Swal.fire({
+
+        icon: 'warning',
+
+        title: 'กรุณาเลือก Unit2',
+
+        text: 'QR Code นี้เป็น RC กรุณาเลือกหน่วย Unit2 ก่อนบันทึก',
+
+        confirmButtonText: 'ตกลง',
+
+        confirmButtonColor: '#3085d6'
+
+    });
+
+    return;
+}
 
     // ==========================================
     // PAYLOAD
@@ -777,6 +969,19 @@ function submitCount() {
     });
 
 }
+        // ==========================================
+// UNIT2 DROPDOWN
+// ==========================================
+
+document
+    .getElementById('unit2-select')
+    .addEventListener('change', function () {
+
+        currentScanData.unit2 =
+            this.value;
+
+    });
+
 
         function handleSaveSuccess(response) {
             document.getElementById('loading-overlay').classList.add('hidden');
