@@ -580,15 +580,27 @@
 
     }
 
+            // ==========================================
+// RESET UNIT2 + RC UNIT
+// ==========================================
 
-    // ==========================================
-    // RESET UNIT2
-    // ==========================================
+currentScanData.unit2 = "";
 
-    currentScanData.unit2 =
-        "";
+currentScanData.unit = "";
 
 
+// ซ่อน RC Unit ก่อนทุกครั้ง
+document
+    .getElementById('rc-unit-display')
+    .classList
+    .add('hidden');
+
+
+// ล้างข้อความ Unit
+document
+    .getElementById('display-unit')
+    .textContent = "-";
+            
     const unit2Container =
         document.getElementById(
             'unit2-container'
@@ -614,36 +626,51 @@
 
     currentScanData.lotNumber =
         lotNumber;
+// ==========================================
+// WO / WO2
+// ==========================================
+
+if (
+    qrType === "WO" ||
+    qrType === "WO2"
+) {
+
+    currentScanData.qrQty =
+        parts[1] || "";
+
+    currentScanData.unit =
+        parts[2] || "";
+
+    currentScanData.serialNumber =
+        parts.length >= 5
+            ? parts[4]
+            : "-";
 
 
     // ==========================================
-    // WO / WO2
+    // ซ่อน Unit จาก Part Master
     // ==========================================
 
-    if (
-        qrType === "WO" ||
-        qrType === "WO2"
-    ) {
+    document
+        .getElementById('rc-unit-display')
+        .classList
+        .add('hidden');
 
-        currentScanData.qrQty =
-            parts[1] || "";
-
-        currentScanData.unit =
-            parts[2] || "";
-
-        currentScanData.serialNumber =
-            parts.length >= 5
-                ? parts[4]
-                : "-";
+    document
+        .getElementById('display-unit')
+        .textContent = "-";
 
 
-        // ซ่อน Unit2
-        unit2Container
-            .classList
-            .add('hidden');
+    // ==========================================
+    // ซ่อน Unit2
+    // ==========================================
 
-    }
+    unit2Container
+        .classList
+        .add('hidden');
 
+}
+            
 // ==========================================
 // RC
 // ==========================================
@@ -709,6 +736,13 @@ getPartUnitFromMaster(
         .getElementById('display-unit')
         .textContent =
         unit;
+
+
+    // แสดง Unit เฉพาะ RC
+    document
+        .getElementById('rc-unit-display')
+        .classList
+        .remove('hidden');
 
 })
 .catch(error => {
