@@ -297,6 +297,7 @@
         let html5QrCode = null;
         let availableCameras = [];
         let currentCameraIndex = 0;
+        let isSubmitting = false;
 
         // --- View Navigation ---
         function showView(viewId) {
@@ -911,6 +912,13 @@ function getPartUnitFromMaster(partNumber) {
 }
 
 function submitCount() {
+        // ==========================================
+    // PREVENT DOUBLE SUBMIT
+    // ==========================================
+
+    if (isSubmitting) {
+        return;
+    }
 
     const input =
         document.getElementById('actual-qty');
@@ -994,15 +1002,48 @@ if (
         payload
     );
 
-
     // ==========================================
-    // LOADING
-    // ==========================================
+// LOCK SUBMIT
+// ==========================================
 
-    document
-        .getElementById('loading-overlay')
-        .classList
-        .remove('hidden');
+isSubmitting = true;
+
+const submitButton =
+    document.getElementById('btn-submit');
+
+submitButton.disabled = true;
+
+submitButton.innerHTML = `
+    <svg xmlns="http://www.w3.org/2000/svg"
+         class="h-6 w-6 animate-spin"
+         fill="none"
+         viewBox="0 0 24 24"
+         stroke="currentColor">
+        <circle
+            cx="12"
+            cy="12"
+            r="10"
+            stroke="currentColor"
+            stroke-width="4"
+            class="opacity-25">
+        </circle>
+        <path
+            fill="currentColor"
+            d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z">
+        </path>
+    </svg>
+
+    กำลังบันทึก...
+`;
+
+// ==========================================
+// LOADING
+// ==========================================
+
+document
+    .getElementById('loading-overlay')
+    .classList
+    .remove('hidden');
 
 
     // ==========================================
@@ -1090,6 +1131,7 @@ if (
 
 
     .then(result => {
+            isSubmitting = false;
 
         document
             .getElementById(
@@ -1135,6 +1177,33 @@ if (
             'SAVE ERROR:',
             error
         );
+
+        // ==========================================
+    // UNLOCK SUBMIT
+    // ==========================================
+
+    isSubmitting = false;
+
+    const submitButton =
+        document.getElementById('btn-submit');
+
+    submitButton.disabled = false;
+
+    submitButton.innerHTML = `
+        <svg xmlns="http://www.w3.org/2000/svg"
+             class="h-6 w-6"
+             fill="none"
+             viewBox="0 0 24 24"
+             stroke="currentColor">
+            <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M5 13l4 4L19 7" />
+        </svg>
+
+        บันทึกข้อมูล
+    `;
 
 
         document
