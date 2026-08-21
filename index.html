@@ -31,8 +31,8 @@
 
 #reader video {
     width: 100% !important;
-    height: auto !important;
-    object-fit: cover !important;
+    height: 100% !important;
+    object-fit: contain !important;
 }
         
         /* Custom SweetAlert styles for mobile */
@@ -457,7 +457,21 @@
                 const newCameraId = availableCameras[currentCameraIndex].id;
                 
                 html5QrCode.stop().then(() => {
-                    const config = { fps: 10, qrbox: { width: 340, height: 220 }, aspectRatio: 1.0 };
+                    const config = {
+    fps: 15,
+    qrbox: function(viewfinderWidth, viewfinderHeight) {
+
+        const size = Math.floor(
+            Math.min(viewfinderWidth, viewfinderHeight) * 0.85
+        );
+
+        return {
+            width: size,
+            height: size
+        };
+    },
+    aspectRatio: 1.0
+};
                     html5QrCode.start(newCameraId, config, onScanSuccess, onScanFailure);
                 });
             }
