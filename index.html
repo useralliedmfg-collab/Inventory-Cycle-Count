@@ -552,9 +552,8 @@ function submitCount() {
         document.getElementById('actual-qty');
 
     const actualQty =
-        input.value;
+        input.value.trim();
 
-    // ปิด Keyboard
     input.blur();
 
 
@@ -564,14 +563,22 @@ function submitCount() {
 
     if (
         actualQty === "" ||
-        parseInt(actualQty) < 0
+        isNaN(actualQty) ||
+        Number(actualQty) < 0
     ) {
 
         Swal.fire({
+
             icon: 'warning',
+
             title: 'กรุณาระบุจำนวน',
-            text: 'จำนวนที่ตรวจนับต้องเป็นตัวเลขที่มากกว่าหรือเท่ากับ 0',
-            confirmButtonColor: '#3085d6'
+
+            text:
+                'จำนวนที่ตรวจนับต้องเป็นตัวเลขที่มากกว่าหรือเท่ากับ 0',
+
+            confirmButtonColor:
+                '#3085d6'
+
         });
 
         return;
@@ -594,7 +601,7 @@ function submitCount() {
 
 
     console.log(
-        "SENDING DATA:",
+        'SEND DATA:',
         payload
     );
 
@@ -610,15 +617,15 @@ function submitCount() {
 
 
     // ==========================================
-    // GOOGLE APPS SCRIPT URL
+    // GOOGLE APPS SCRIPT
     // ==========================================
 
     const SCRIPT_URL =
-        'https://script.google.com/macros/s/AKfycbz7CynfxDXv-NmuHit75sWIbVWEI1BWy43F13QzfSKbXypPBWM6xWrIDW2cXuKGAFZp/exec';
+        'https://script.google.com/macros/s/AKfycbzXgFiJWsDft8DL7MZia3hlM3pBC0_rVYHhKL-dA2-fX1sCpwNki7NoD2lRbnfxUDriSg/exec';
 
 
     // ==========================================
-    // SEND DATA
+    // SEND
     // ==========================================
 
     fetch(
@@ -626,31 +633,146 @@ function submitCount() {
         {
             method: 'POST',
 
-            mode: 'no-cors',
-
             headers: {
                 'Content-Type':
                     'application/x-www-form-urlencoded;charset=UTF-8'
             },
 
-            body: new URLSearchParams({
+            body:
+                new URLSearchParams({
 
-                data:
-                    JSON.stringify(payload)
+                    data:
+                        JSON.stringify(payload)
 
-            })
+                })
         }
     )
 
-    .then(() => {
+    .then(async response => {
 
-        handleSaveSuccess();
+        console.log(
+            'HTTP STATUS:',
+            response.status
+        );
+
+
+        const text =
+            await response.text();
+
+
+        console.log(
+            'SERVER RESPONSE:',
+            text
+        );
+
+
+        let result;
+
+
+        try {
+
+            result =
+                JSON.parse(text);
+
+        } catch (e) {
+
+            throw new Error(
+                'Google Apps Script ไม่ส่ง JSON กลับมา'
+            );
+
+        }
+
+
+        if (
+            result.status !== 'success'
+        ) {
+
+            throw new Error(
+                result.message ||
+                'บันทึกข้อมูลไม่สำเร็จ'
+            );
+
+        }
+
+
+        return result;
 
     })
 
-    .catch((error) => {
 
-        handleSaveError(error);
+    .then(result => {
+
+        document
+            .getElementById(
+                'loading-overlay'
+            )
+            .classList
+            .add('hidden');
+
+
+        Swal.fire({
+
+            icon: 'success',
+
+            title: 'บันทึกสำเร็จ',
+
+            html:
+                'บันทึกข้อมูลลง Sheet <b>' +
+                result.sheet +
+                '</b> เรียบร้อยแล้ว',
+
+            timer: 1800,
+
+            showConfirmButton: false
+
+        })
+
+        .then(() => {
+
+            showView(
+                'view-scanner'
+            );
+
+            initScanner();
+
+        });
+
+    })
+
+
+    .catch(error => {
+
+        console.error(
+            'SAVE ERROR:',
+            error
+        );
+
+
+        document
+            .getElementById(
+                'loading-overlay'
+            )
+            .classList
+            .add('hidden');
+
+
+        Swal.fire({
+
+            icon: 'error',
+
+            title: 'บันทึกข้อมูลไม่สำเร็จ',
+
+            text:
+                error.message ||
+                error.toString(),
+
+            confirmButtonText:
+                'ตกลง',
+
+            confirmButtonColor:
+                '#d33'
+
+        });
 
     });
 
