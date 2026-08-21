@@ -1,0 +1,520 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Inventory Cycle Count</title>
+    <!-- Tailwind CSS for Mobile-First Styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Html5Qrcode for robust mobile camera scanning (QR & Barcode) -->
+    <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+    <!-- SweetAlert2 for beautiful non-blocking popups -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <!-- Google Fonts: Prompt -->
+    <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600&display=swap" rel="stylesheet">
+    
+    <style>
+        body {
+            font-family: 'Prompt', sans-serif;
+            background-color: #f3f4f6; /* bg-gray-100 */
+            touch-action: pan-y; /* Prevent horizontal scroll, allow vertical */
+        }
+        /* Style for the scanner container to ensure it fits well on mobile */
+        #reader {
+    width: 100%;
+    max-width: 420px;
+    min-height: 420px;
+    border-radius: 16px;
+    overflow: hidden;
+    background: #000;
+}
+
+#reader video {
+    width: 100% !important;
+    height: auto !important;
+    object-fit: cover !important;
+}
+        
+        /* Custom SweetAlert styles for mobile */
+        .swal2-popup {
+            font-family: 'Prompt', sans-serif !important;
+            border-radius: 1rem !important;
+        }
+        /* ==========================================
+   ANDROID INPUT FIX
+   ========================================== */
+
+#view-input {
+    position: relative;
+    min-height: 0;
+}
+
+/* ป้องกันหน้าโดนดัน/เลื่อนแปลก ๆ ตอน Keyboard เปิด */
+#actual-qty {
+    position: relative;
+    z-index: 5;
+    -webkit-user-select: text;
+    user-select: text;
+}
+
+/* ให้ปุ่มอยู่เหนือ element อื่น */
+#btn-submit {
+    position: relative;
+    z-index: 10;
+    touch-action: manipulation;
+}
+    </style>
+</head>
+<body class="text-gray-800 antialiased min-h-screen flex flex-col items-center">
+
+    <div class="w-full max-w-md bg-white shadow-sm flex flex-col items-center py-4 px-4 sticky top-0 z-10">
+        <img src="https://www.alliedmfg.co.th/wp-content/uploads/2026/07/AMS-LOGO-V1.png" alt="AMS Logo" class="h-10 object-contain mb-1">
+        <h1 class="text-lg font-semibold text-blue-900 tracking-wide">Inventory Cycle Count</h1>
+    </div>
+
+    <!-- Main Application Container -->
+    <main class="w-full max-w-md flex-1 bg-white shadow-md flex flex-col relative">
+
+        <!-- VIEW 1: SETUP / LOGIN -->
+        <div id="view-setup" class="p-6 flex flex-col space-y-5 flex-1">
+            <h2 class="text-xl font-medium text-gray-700 border-b pb-2">ข้อมูลผู้ตรวจนับ</h2>
+            
+            <div>
+                <label class="block text-sm font-medium text-gray-600 mb-1">รหัสพนักงาน (User)</label>
+                <select
+    id="user-select"
+    onchange="updateLocations()"
+    class="w-full border border-gray-300 rounded-lg p-3 text-lg bg-gray-50 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+>
+                    <option value="" disabled selected>-- เลือกพนักงาน --</option>
+                    <option value="USER_001">USER_001 (Admin)</option>
+                    <option value="USER_002">USER_002 (Staff)</option>
+                    <option value="USER_003">USER_003 (Staff)</option>
+                </select>
+            </div>
+
+            <div>
+                <label class="block text-sm font-medium text-gray-600 mb-1">พื้นที่ปฏิบัติงาน (Location)</label>
+                <select
+    id="location-select"
+    class="w-full border border-gray-300 rounded-lg p-3 text-lg bg-gray-50 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+    disabled
+>
+                    <option value="" disabled selected>-- กรุณาเลือกพนักงานก่อน --</option>
+                </select>
+            </div>
+
+            <div>
+                <label class="block text-sm font-medium text-gray-600 mb-1">ชื่อผู้รับผิดชอบ (Responsible Person)</label>
+                <input
+    type="text"
+    id="responsible-name"
+    placeholder="ระบุชื่อผู้ตรวจ"
+    enterkeyhint="done"
+    onkeydown="if(event.key === 'Enter') { event.preventDefault(); goToScanner(); }"
+    class="w-full border border-gray-300 rounded-lg p-3 text-lg bg-gray-50 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+>
+            </div>
+
+            <div class="flex-1"></div> <!-- Spacer -->
+
+            <button onclick="goToScanner()" class="w-full bg-blue-600 text-white font-semibold rounded-xl p-4 text-xl shadow-lg active:bg-blue-700 transition-colors flex justify-center items-center gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+                </svg>
+                เริ่มเปิดกล้องสแกน
+            </button>
+        </div>
+
+        <!-- VIEW 2: SCANNER -->
+        <div id="view-scanner" class="hidden p-4 flex flex-col flex-1 h-full bg-gray-900">
+            <div class="text-center mb-4">
+                <h2 class="text-white text-lg font-semibold tracking-wider">SCAN QR CODE / BARCODE</h2>
+                <p class="text-gray-400 text-sm">นำบาร์โค้ดมาให้อยู่ในกรอบเพื่อสแกน</p>
+            </div>
+
+            <!-- The element where the camera stream will be injected -->
+            <div class="flex-1 flex flex-col justify-center items-center w-full relative">
+                <div id="reader"></div>
+                
+                <!-- Error Overlay (Hidden by default) -->
+                <div id="camera-error" class="hidden absolute inset-0 bg-black/80 flex flex-col items-center justify-center p-6 text-center z-20">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 text-red-500 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                    </svg>
+                    <p class="text-white mb-4" id="camera-error-msg">ไม่สามารถเปิดกล้องได้<br>กรุณาอนุญาตการใช้งานกล้อง</p>
+                    <button onclick="initScanner()" class="bg-blue-600 text-white px-6 py-2 rounded-lg font-medium shadow active:bg-blue-700">ลองเปิดกล้องอีกครั้ง</button>
+                </div>
+            </div>
+
+            <div class="mt-6 mb-4 flex justify-between gap-4">
+                <button onclick="stopScannerAndGoBack()" class="flex-1 bg-gray-700 text-white font-medium rounded-lg p-3 active:bg-gray-600 transition-colors">
+                    ย้อนกลับ
+                </button>
+                <button onclick="switchCamera()" id="btn-switch-cam" class="flex-1 bg-gray-700 text-white font-medium rounded-lg p-3 active:bg-gray-600 transition-colors flex justify-center items-center gap-2 hidden">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                    </svg>
+                    สลับกล้อง
+                </button>
+            </div>
+        </div>
+
+        <!-- VIEW 3: INPUT COUNT -->
+        <div id="view-input" class="hidden p-6 flex flex-col flex-1 h-full">
+            
+            <div class="bg-blue-50 border border-blue-100 rounded-xl p-5 mb-6 text-center shadow-sm">
+                <p class="text-sm text-blue-600 font-medium mb-1">LOT NUMBER</p>
+                <h2 id="display-lot" class="text-3xl font-bold text-gray-900 break-all">WO-000000</h2>
+                <p class="text-xs text-gray-500 mt-2">Part: <span id="display-part"></span></p>
+            </div>
+
+            <div class="mb-8">
+                <label class="block text-center text-lg font-semibold text-gray-700 mb-3">จำนวนที่ตรวจนับได้จริง</label>
+                <!-- inputmode="numeric" ensures numeric keyboard on iOS/Android -->
+                <input
+    type="number"
+    id="actual-qty"
+    inputmode="numeric"
+    pattern="[0-9]*"
+    enterkeyhint="done"
+    onkeydown="if(event.key === 'Enter') { event.preventDefault(); submitCount(); }"
+    class="w-full border-2 border-blue-300 rounded-xl p-4 text-center text-4xl font-bold text-gray-800 bg-white focus:ring-4 focus:ring-blue-200 focus:border-blue-500 outline-none transition-all shadow-inner"
+    placeholder="0"
+>
+            </div>
+            
+            <div class="flex-1"></div>
+
+            <div class="flex gap-4">
+                 <button onclick="cancelInput()" class="w-1/3 bg-gray-200 text-gray-700 font-semibold rounded-xl p-4 text-lg active:bg-gray-300 transition-colors">
+                    ยกเลิก
+                </button>
+                <button
+    type="button"
+    onclick="submitCount()"
+    id="btn-submit"
+    class="w-2/3 bg-green-600 text-white font-semibold rounded-xl p-4 text-xl shadow-lg active:bg-green-700 transition-colors flex justify-center items-center gap-2"
+>
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                    </svg>
+                    บันทึกข้อมูล
+                </button>
+            </div>
+        </div>
+
+        <!-- LOADING OVERLAY -->
+        <div id="loading-overlay" class="hidden absolute inset-0 bg-white/90 z-50 flex flex-col items-center justify-center">
+            <div class="animate-spin rounded-full h-14 w-14 border-b-4 border-blue-600 mb-4"></div>
+            <p class="text-blue-800 font-medium text-lg animate-pulse">กำลังบันทึกข้อมูล...</p>
+        </div>
+    </main>
+
+    <script>
+        // --- State Management ---
+        const MOCK_USERS = {
+            "USER_001": ["A1-1", "A1-2", "A1-3", "B1-1", "B1-2", "B1-3"],
+            "USER_002": ["C1-1", "C1-2", "C1-3"],
+            "USER_003": ["D1-1", "D1-2", "D1-3", "D1-4"]
+        };
+
+        let currentSession = {
+            user: "",
+            location: "",
+            responsiblePerson: ""
+        };
+
+        let currentScanData = {
+            partNumber: "",
+            qrQty: "",
+            unit: "",
+            lotNumber: "",
+            serialNumber: ""
+        };
+
+        let html5QrCode = null;
+        let availableCameras = [];
+        let currentCameraIndex = 0;
+
+        // --- View Navigation ---
+        function showView(viewId) {
+            document.getElementById('view-setup').classList.add('hidden');
+            document.getElementById('view-scanner').classList.add('hidden');
+            document.getElementById('view-input').classList.add('hidden');
+            document.getElementById(viewId).classList.remove('hidden');
+            document.getElementById(viewId).classList.add('flex');
+        }
+
+        function updateLocations() {
+            const user = document.getElementById('user-select').value;
+            const locSelect = document.getElementById('location-select');
+            locSelect.innerHTML = '<option value="" disabled selected>-- เลือกพื้นที่ --</option>';
+            
+            if (MOCK_USERS[user]) {
+                MOCK_USERS[user].forEach(loc => {
+                    const opt = document.createElement('option');
+                    opt.value = loc;
+                    opt.textContent = loc;
+                    locSelect.appendChild(opt);
+                });
+                locSelect.disabled = false;
+            } else {
+                locSelect.disabled = true;
+            }
+        }
+
+        // --- STREAMING_CHUNK:Scanner Logic via Html5Qrcode ---
+        function goToScanner() {
+            const user = document.getElementById('user-select').value;
+            const loc = document.getElementById('location-select').value;
+            const resp = document.getElementById('responsible-name').value.trim();
+
+            if (!user || !loc || !resp) {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'ข้อมูลไม่ครบถ้วน',
+                    text: 'กรุณากรอกข้อมูลผู้ตรวจนับให้ครบถ้วนก่อนเริ่มสแกน',
+                    confirmButtonColor: '#3085d6'
+                });
+                return;
+            }
+
+            currentSession.user = user;
+            currentSession.location = loc;
+            currentSession.responsiblePerson = resp;
+
+            showView('view-scanner');
+            initScanner();
+        }
+
+        function initScanner() {
+
+    const reader = document.getElementById("reader");
+    const errorBox = document.getElementById("camera-error");
+
+    errorBox.classList.add("hidden");
+
+    // ล้างพื้นที่กล้องก่อน
+    reader.innerHTML = "";
+
+    // สร้าง scanner ใหม่
+    html5QrCode = new Html5Qrcode("reader");
+
+    const config = {
+        fps: 10,
+        qrbox: {
+            width: 340,
+            height: 220
+        },
+        aspectRatio: 1.0
+    };
+
+    html5QrCode.start(
+        { facingMode: "environment" },
+        config,
+
+        function(decodedText) {
+
+            console.log("SCAN:", decodedText);
+
+            html5QrCode.stop()
+                .then(() => {
+                    html5QrCode.clear();
+                    processScannedData(decodedText);
+                })
+                .catch(() => {
+                    processScannedData(decodedText);
+                });
+
+        },
+
+        function(errorMessage) {
+            // ไม่ต้องทำอะไร
+        }
+
+    ).then(() => {
+
+        console.log("CAMERA OK");
+
+    }).catch((error) => {
+
+        console.error("CAMERA ERROR:", error);
+
+        errorBox.classList.remove("hidden");
+
+        document.getElementById("camera-error-msg").innerHTML =
+            "เปิดกล้องไม่ได้<br><br>" +
+            "กรุณากดอนุญาตการใช้งานกล้อง<br>" +
+            "แล้วลองใหม่อีกครั้ง";
+
+    });
+}
+
+        function switchCamera() {
+            if (availableCameras.length > 1 && html5QrCode) {
+                currentCameraIndex = (currentCameraIndex + 1) % availableCameras.length;
+                const newCameraId = availableCameras[currentCameraIndex].id;
+                
+                html5QrCode.stop().then(() => {
+                    const config = { fps: 10, qrbox: { width: 340, height: 220 }, aspectRatio: 1.0 };
+                    html5QrCode.start(newCameraId, config, onScanSuccess, onScanFailure);
+                });
+            }
+        }
+
+        function stopScannerAndGoBack() {
+            if (html5QrCode) {
+                html5QrCode.stop().then(() => {
+                    html5QrCode.clear();
+                    showView('view-setup');
+                }).catch(err => {
+                    showView('view-setup');
+                });
+            } else {
+                showView('view-setup');
+            }
+        }
+
+        // --- STREAMING_CHUNK:Handling Scan Data and Parsing ---
+        function onScanSuccess(decodedText, decodedResult) {
+            // Stop scanning immediately to prevent duplicate scans
+            html5QrCode.stop().then(() => {
+                html5QrCode.clear();
+                processScannedData(decodedText);
+            }).catch(err => {
+                console.error("Failed to stop scanner", err);
+                processScannedData(decodedText);
+            });
+        }
+
+        function onScanFailure(error) {
+            // This is called constantly when no code is in frame. 
+            // We ignore it silently for UX.
+        }
+
+        function processScannedData(text) {
+            // Expected Format: Part Number,Qty,Unit,Lot Number,Serial Number
+            // Example: 3DET23244818601,2000,PCS,WO-26070376,3DET23244818601B26080005
+            
+            const parts = text.split(',');
+            
+            if (parts.length < 4) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'รูปแบบไม่ถูกต้อง',
+                    text: 'ข้อมูล QR/Barcode ที่สแกนไม่ตรงกับรูปแบบที่กำหนดไว้',
+                    confirmButtonText: 'สแกนใหม่'
+                }).then(() => {
+                    initScanner(); // Restart scanner
+                });
+                return;
+            }
+
+            // Extract Data
+            currentScanData.partNumber = parts[0].trim();
+            currentScanData.qrQty = parts[1].trim();
+            currentScanData.unit = parts[2].trim();
+            currentScanData.lotNumber = parts[3].trim(); // Index 3 is the 4th item
+            currentScanData.serialNumber = parts.length >= 5 ? parts[4].trim() : "-";
+
+            // Update UI
+            document.getElementById('display-lot').textContent = currentScanData.lotNumber;
+            document.getElementById('display-part').textContent = currentScanData.partNumber;
+            document.getElementById('actual-qty').value = ""; // Clear input
+
+            // Show Input View
+            showView('view-input');
+            
+            // Auto focus input on mobile (might require user interaction depending on OS, but we try)
+           // ไม่ Auto Focus
+// ให้ผู้ใช้แตะช่องจำนวนเอง
+        }
+
+        // --- STREAMING_CHUNK:Data Submission to Google Sheets ---
+        function cancelInput() {
+            showView('view-scanner');
+            initScanner();
+        }
+
+function submitCount() {
+
+    const input = document.getElementById('actual-qty');
+    const actualQty = input.value;
+
+    // ปิด Keyboard บน Android ก่อน
+    input.blur();
+
+    if (actualQty === "" || parseInt(actualQty) < 0) {
+        Swal.fire({
+            icon: 'warning',
+            title: 'กรุณาระบุจำนวน',
+            text: 'จำนวนที่ตรวจนับต้องเป็นตัวเลขที่มากกว่าหรือเท่ากับ 0',
+            confirmButtonColor: '#3085d6'
+        });
+        return;
+    }
+
+    // Combine session data and scan data
+    const payload = {
+        ...currentSession,
+        ...currentScanData,
+        actualQty: actualQty
+    };
+
+    document.getElementById('loading-overlay').classList.remove('hidden');
+
+    const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbz7CynfxDXv-NmuHit75sWIbVWEI1BWy43F13QzfSKbXypPBWM6xWrIDW2cXuKGAFZp/exec';
+
+    fetch(SCRIPT_URL, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8'
+        },
+        body: new URLSearchParams({
+            data: JSON.stringify(payload)
+        })
+    })
+    .then(() => {
+        handleSaveSuccess({
+            status: 'success'
+        });
+    })
+    .catch((error) => {
+        handleSaveError(error);
+    });
+}
+
+        function handleSaveSuccess(response) {
+            document.getElementById('loading-overlay').classList.add('hidden');
+            
+            if (response.status === 'success') {
+                Swal.fire({
+                    icon: 'success',
+                    title: 'บันทึกสำเร็จ',
+                    text: 'บันทึกผลการตรวจนับเรียบร้อยแล้ว',
+                    timer: 1500,
+                    showConfirmButton: false
+                }).then(() => {
+                    // Go back to scanner for next item
+                    showView('view-scanner');
+                    initScanner();
+                });
+            } else {
+                handleSaveError(response.message);
+            }
+        }
+
+        function handleSaveError(error) {
+            document.getElementById('loading-overlay').classList.add('hidden');
+            Swal.fire({
+                icon: 'error',
+                title: 'เกิดข้อผิดพลาด',
+                text: 'ไม่สามารถบันทึกข้อมูลได้: ' + error,
+                confirmButtonColor: '#d33'
+            });
+        }
+    </script>
+</body>
+</html>
