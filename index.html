@@ -168,6 +168,21 @@
                 <p class="text-sm text-blue-600 font-medium mb-1">LOT NUMBER</p>
                 <h2 id="display-lot" class="text-3xl font-bold text-gray-900 break-all">WO-000000</h2>
                 <p class="text-xs text-gray-500 mt-2">Part: <span id="display-part"></span></p>
+                <!-- UNIT FROM PART MASTER - RC ONLY -->
+<div id="rc-unit-display" class="hidden mt-3">
+
+    <p class="text-sm text-blue-600 font-medium">
+        UNIT
+    </p>
+
+    <p
+        id="display-unit"
+        class="text-2xl font-bold text-gray-900"
+    >
+        -
+    </p>
+
+</div>
             </div>
             <!-- ==========================================
      UNIT2 - RC ONLY
@@ -629,57 +644,105 @@
 
     }
 
+// ==========================================
+// RC
+// ==========================================
+
+if (
+    qrType === "RC"
+) {
+
+    /*
+        RC FORMAT
+
+        1 = Part Number
+        2 = RC Number
+        3 = RM01
+        4 = E4
+        5 = Qty
+        6 = POD
+        7 = Description
+        8 = Serial
+    */
+
+    // Qty = ช่องที่ 5
+    currentScanData.qrQty =
+        parts[4] || "";
+
+    // Serial = ตัวสุดท้าย
+    currentScanData.serialNumber =
+        parts[parts.length - 1] || "-";
 
     // ==========================================
-    // RC
+    // UNIT
     // ==========================================
 
-    if (
-        qrType === "RC"
-    ) {
+    currentScanData.unit = "";
 
-        /*
-            RC FORMAT
+    // แสดง Unit2
+    unit2Container
+        .classList
+        .remove('hidden');
 
-            1 = Part Number
-            2 = RC Number
-            3 = RM01
-            4 = E4
-            5 = Qty
-            6 = POD
-            7 = Description
-            8 = Serial
-        */
+    // แสดงช่อง Unit
+    document
+        .getElementById('rc-unit-display')
+        .classList
+        .remove('hidden');
 
+    document
+        .getElementById('display-unit')
+        .textContent = "กำลังค้นหา...";
+    // ==========================================
+// LOAD UNIT FROM PART MASTER
+// ==========================================
 
-        // Qty = ช่องที่ 5
-        currentScanData.qrQty =
-            parts[4] || "";
+getPartUnitFromMaster(
+    currentScanData.partNumber
+)
+.then(unit => {
 
+    currentScanData.unit =
+        unit;
 
-        // Serial = ตัวสุดท้าย
-        currentScanData.serialNumber =
-            parts[parts.length - 1] || "-";
+    document
+        .getElementById('display-unit')
+        .textContent =
+        unit;
 
+})
+.catch(error => {
 
-        /*
-            Unit จะถูกกำหนดจาก
-            RC_UNIT_MAP ใน Code.gs
+    currentScanData.unit =
+        "";
 
-            ดังนั้นส่งค่าจาก Index
-            เป็นค่าว่างไว้ก่อน
-        */
+    document
+        .getElementById('display-unit')
+        .textContent =
+        "-";
 
-        currentScanData.unit =
-            "";
+    Swal.fire({
 
+        icon: 'error',
 
-        // แสดง Unit2
-        unit2Container
-            .classList
-            .remove('hidden');
+        title: 'ไม่พบ Unit',
 
-    }
+        text:
+            error.message,
+
+        confirmButtonText:
+            'สแกนใหม่'
+
+    })
+    .then(() => {
+
+        cancelInput();
+
+    });
+
+});
+
+}
 
 
     // ==========================================
@@ -710,6 +773,71 @@
     showView(
         'view-input'
     );
+
+}
+        // ==========================================
+// GET UNIT FROM PART MASTER
+// ==========================================
+
+function getPartUnitFromMaster(partNumber) {
+
+    const SCRIPT_URL =
+        'https://script.google.com/macros/s/AKfycbzXgFiJWsDft8DL7MZia3hlM3pBC0_rVYHhKL-dA2-fX1sCpwNki7NoD2lRbnfxUDriSg/exec';
+
+    return fetch(
+        SCRIPT_URL,
+        {
+            method: 'POST',
+
+            headers: {
+                'Content-Type':
+                    'application/x-www-form-urlencoded;charset=UTF-8'
+            },
+
+            body:
+                new URLSearchParams({
+
+                    data:
+                        JSON.stringify({
+
+                            action:
+                                'getPartUnit',
+
+                            partNumber:
+                                partNumber
+
+                        })
+
+                })
+        }
+    )
+    .then(response => response.json())
+    .then(result => {
+
+        if (
+            result.status !== 'success'
+        ) {
+
+            throw new Error(
+                result.message ||
+                'ไม่สามารถค้นหา Unit ได้'
+            );
+
+        }
+
+        if (!result.unit) {
+
+            throw new Error(
+                'ไม่พบ Unit ของ Part Number: ' +
+                partNumber +
+                ' ใน Part_Master'
+            );
+
+        }
+
+        return result.unit;
+
+    });
 
 }
 
