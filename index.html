@@ -82,7 +82,7 @@
             <div>
                 <label class="block text-sm font-medium text-gray-600 mb-1">โซนตรวจนับ (Zone)</label>
                 <select
-    id="user-select"
+    id="zone-select"
     onchange="updateLocations()"
     class="w-full border border-gray-300 rounded-lg p-3 text-lg bg-gray-50 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
 >
@@ -101,7 +101,7 @@
     class="w-full border border-gray-300 rounded-lg p-3 text-lg bg-gray-50 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
     disabled
 >
-                    <option value="" disabled selected>-- กรุณาเลือกพนักงานก่อน --</option>
+                    <option value="" disabled selected>-- กรุณาเลือกโซนก่อน --</option>
                 </select>
             </div>
 
@@ -270,7 +270,7 @@
 };
 
         let currentSession = {
-            user: "",
+            zone: "",
             location: "",
             responsiblePerson: ""
         };
@@ -297,30 +297,52 @@
         }
 
         function updateLocations() {
-            const user = document.getElementById('user-select').value;
-            const locSelect = document.getElementById('location-select');
-            locSelect.innerHTML = '<option value="" disabled selected>-- เลือกพื้นที่ --</option>';
-            
-            if (MOCK_USERS[user]) {
-                MOCK_USERS[user].forEach(loc => {
-                    const opt = document.createElement('option');
-                    opt.value = loc;
-                    opt.textContent = loc;
-                    locSelect.appendChild(opt);
-                });
-                locSelect.disabled = false;
-            } else {
-                locSelect.disabled = true;
-            }
-        }
+
+    const zone =
+        document.getElementById('zone-select').value;
+
+    const locSelect =
+        document.getElementById('location-select');
+
+    locSelect.innerHTML =
+        '<option value="" disabled selected>-- เลือกพื้นที่ --</option>';
+
+    if (MOCK_ZONES[zone]) {
+
+        MOCK_ZONES[zone].forEach(loc => {
+
+            const opt =
+                document.createElement('option');
+
+            opt.value = loc;
+            opt.textContent = loc;
+
+            locSelect.appendChild(opt);
+
+        });
+
+        locSelect.disabled = false;
+
+    } else {
+
+        locSelect.disabled = true;
+
+    }
+}
 
         // --- STREAMING_CHUNK:Scanner Logic via Html5Qrcode ---
         function goToScanner() {
-            const user = document.getElementById('user-select').value;
-            const loc = document.getElementById('location-select').value;
-            const resp = document.getElementById('responsible-name').value.trim();
 
-            if (!user || !loc || !resp) {
+    const zone =
+        document.getElementById('zone-select').value;
+
+    const loc =
+        document.getElementById('location-select').value;
+
+    const resp =
+        document.getElementById('responsible-name').value.trim();
+
+            if (!zone || !loc || !resp) {
                 Swal.fire({
                     icon: 'warning',
                     title: 'ข้อมูลไม่ครบถ้วน',
@@ -330,7 +352,7 @@
                 return;
             }
 
-            currentSession.user = user;
+            currentSession.zone = zone;
             currentSession.location = loc;
             currentSession.responsiblePerson = resp;
 
