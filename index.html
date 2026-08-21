@@ -395,174 +395,265 @@
         }
 
         function processScannedData(text) {
-            // Expected Format: Part Number,Qty,Unit,Lot Number,Serial Number
-            // Example: 3DET23244818601,2000,PCS,WO-26070376,3DET23244818601B26080005
-            
-            const parts = text.split(',').map(x => x.trim());
 
-if (parts.length < 2) {
-    Swal.fire({
-        icon: 'error',
-        title: 'รูปแบบไม่ถูกต้อง',
-        text: 'ข้อมูล QR/Barcode ที่สแกนไม่ถูกต้อง',
-        confirmButtonText: 'สแกนใหม่'
-    }).then(() => {
-        initScanner();
-    });
-    return;
-}
+    console.log("QR DATA:", text);
 
-// ==========================================
-// ค้นหา WO / WO2 / RC จากทุกตำแหน่ง
-// ==========================================
+    // ==========================================
+    // แยกข้อมูล QR
+    // ==========================================
 
-let lotNumber = "";
+    const parts = text
+        .split(',')
+        .map(x => x.trim());
 
-for (let i = 0; i < parts.length; i++) {
+    if (parts.length < 2) {
 
-    const value = parts[i];
+        Swal.fire({
+            icon: 'error',
+            title: 'รูปแบบไม่ถูกต้อง',
+            text: 'ข้อมูล QR / Barcode ไม่ถูกต้อง',
+            confirmButtonText: 'สแกนใหม่'
+        }).then(() => {
+            initScanner();
+        });
 
-    // รองรับ
-    // WO-xxxx
-    // WO2-xxxx
-    // RC-xxxx
-    // RCxxxx
-    if (/^(WO2?|RC)[-_]/i.test(value)) {
-        lotNumber = value;
-        break;
+        return;
     }
-}
 
-// ถ้ายังหาไม่เจอ ลองค้นหา WO / RC ที่อยู่ติดกับข้อความอื่น
-if (!lotNumber) {
+
+    // ==========================================
+    // ค้นหา WO / WO2 / RC
+    // จากทุกตำแหน่งของ QR
+    // ==========================================
+
+    let lotNumber = "";
 
     for (let i = 0; i < parts.length; i++) {
 
         const value = parts[i];
 
-        const match = value.match(/(WO2?|RC)[-_][A-Z0-9-]+/i);
+        /*
+            รองรับ:
 
-        if (match) {
-            lotNumber = match[0];
+            WO-XXXX
+            WO2-XXXX
+            RC-XXXX
+        */
+
+        if (/^(WO2?|RC)[-_]/i.test(value)) {
+
+            lotNumber = value;
+
             break;
         }
     }
-}
 
-// ==========================================
-// ถ้าไม่พบ WO / RC
-// ==========================================
 
-if (!lotNumber) {
+    // ==========================================
+    // กรณีข้อมูลมีข้อความอื่นปนอยู่
+    // เช่น ABC-WO-123456
+    // ==========================================
 
-    Swal.fire({
-        icon: 'warning',
-        title: 'ไม่พบ WO / RC',
-        text: 'ไม่พบหมายเลข WO หรือ RC ใน QR Code นี้',
-        confirmButtonText: 'สแกนใหม่'
-    }).then(() => {
-        initScanner();
-    });
+    if (!lotNumber) {
 
-    return;
-}
+        for (let i = 0; i < parts.length; i++) {
 
-// ==========================================
-// Extract Data
-// ==========================================
+            const value = parts[i];
 
-currentScanData.partNumber = parts[0] || "";
-currentScanData.qrQty = parts[1] || "";
-currentScanData.unit = parts[2] || "";
+            const match = value.match(
+                /(WO2?|RC)[-_][A-Z0-9-]+/i
+            );
 
-currentScanData.lotNumber = lotNumber;
+            if (match) {
 
-currentScanData.serialNumber =
-    parts.length >= 5 ? parts[4] : "-";
+                lotNumber = match[0];
 
-// ==========================================
-// Update UI
-// ==========================================
-
-document.getElementById('display-lot').textContent =
-    currentScanData.lotNumber;
-
-document.getElementById('display-part').textContent =
-    currentScanData.partNumber;
-
-document.getElementById('actual-qty').value = "";
-
-// ==========================================
-// Show Input View
-// ==========================================
-
-showView('view-input');
-
-            // Update UI
-            document.getElementById('display-lot').textContent = currentScanData.lotNumber;
-            document.getElementById('display-part').textContent = currentScanData.partNumber;
-            document.getElementById('actual-qty').value = ""; // Clear input
-
-            // Show Input View
-            showView('view-input');
-            
-            // Auto focus input on mobile (might require user interaction depending on OS, but we try)
-           // ไม่ Auto Focus
-// ให้ผู้ใช้แตะช่องจำนวนเอง
+                break;
+            }
         }
+    }
 
-        // --- STREAMING_CHUNK:Data Submission to Google Sheets ---
-        function cancelInput() {
-            showView('view-scanner');
+
+    // ==========================================
+    // ไม่พบ WO / WO2 / RC
+    // ==========================================
+
+    if (!lotNumber) {
+
+        Swal.fire({
+            icon: 'warning',
+            title: 'ไม่พบ WO / WO2 / RC',
+            text: 'ไม่พบหมายเลข WO, WO2 หรือ RC ใน QR Code นี้',
+            confirmButtonText: 'สแกนใหม่'
+        }).then(() => {
+
             initScanner();
-        }
+
+        });
+
+        return;
+    }
+
+
+    // ==========================================
+    // DATA
+    // ==========================================
+
+    currentScanData.partNumber =
+        parts[0] || "";
+
+    currentScanData.qrQty =
+        parts[1] || "";
+
+    currentScanData.unit =
+        parts[2] || "";
+
+    currentScanData.lotNumber =
+        lotNumber;
+
+    currentScanData.serialNumber =
+        parts.length >= 5
+            ? parts[4]
+            : "-";
+
+
+    // ==========================================
+    // UPDATE UI
+    // ==========================================
+
+    document.getElementById(
+        'display-lot'
+    ).textContent =
+        currentScanData.lotNumber;
+
+
+    document.getElementById(
+        'display-part'
+    ).textContent =
+        currentScanData.partNumber;
+
+
+    document.getElementById(
+        'actual-qty'
+    ).value = "";
+
+
+    // ==========================================
+    // SHOW INPUT VIEW
+    // ==========================================
+
+    showView('view-input');
+
+}
 
 function submitCount() {
 
-    const input = document.getElementById('actual-qty');
-    const actualQty = input.value;
+    const input =
+        document.getElementById('actual-qty');
 
-    // ปิด Keyboard บน Android ก่อน
+    const actualQty =
+        input.value;
+
+    // ปิด Keyboard
     input.blur();
 
-    if (actualQty === "" || parseInt(actualQty) < 0) {
+
+    // ==========================================
+    // VALIDATE
+    // ==========================================
+
+    if (
+        actualQty === "" ||
+        parseInt(actualQty) < 0
+    ) {
+
         Swal.fire({
             icon: 'warning',
             title: 'กรุณาระบุจำนวน',
             text: 'จำนวนที่ตรวจนับต้องเป็นตัวเลขที่มากกว่าหรือเท่ากับ 0',
             confirmButtonColor: '#3085d6'
         });
+
         return;
     }
 
-    // Combine session data and scan data
+
+    // ==========================================
+    // PAYLOAD
+    // ==========================================
+
     const payload = {
+
         ...currentSession,
+
         ...currentScanData,
+
         actualQty: actualQty
+
     };
 
-    document.getElementById('loading-overlay').classList.remove('hidden');
 
-    const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzXgFiJWsDft8DL7MZia3hlM3pBC0_rVYHhKL-dA2-fX1sCpwNki7NoD2lRbnfxUDriSg/exec';
+    console.log(
+        "SENDING DATA:",
+        payload
+    );
 
-    fetch(SCRIPT_URL, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8'
-        },
-        body: new URLSearchParams({
-            data: JSON.stringify(payload)
-        })
-    })
+
+    // ==========================================
+    // LOADING
+    // ==========================================
+
+    document
+        .getElementById('loading-overlay')
+        .classList
+        .remove('hidden');
+
+
+    // ==========================================
+    // GOOGLE APPS SCRIPT URL
+    // ==========================================
+
+    const SCRIPT_URL =
+        'https://script.google.com/macros/s/AKfycbz7CynfxDXv-NmuHit75sWIbVWEI1BWy43F13QzfSKbXypPBWM6xWrIDW2cXuKGAFZp/exec';
+
+
+    // ==========================================
+    // SEND DATA
+    // ==========================================
+
+    fetch(
+        SCRIPT_URL,
+        {
+            method: 'POST',
+
+            mode: 'no-cors',
+
+            headers: {
+                'Content-Type':
+                    'application/x-www-form-urlencoded;charset=UTF-8'
+            },
+
+            body: new URLSearchParams({
+
+                data:
+                    JSON.stringify(payload)
+
+            })
+        }
+    )
+
     .then(() => {
-        handleSaveSuccess({
-            status: 'success'
-        });
+
+        handleSaveSuccess();
+
     })
+
     .catch((error) => {
+
         handleSaveError(error);
+
     });
+
 }
 
         function handleSaveSuccess(response) {
