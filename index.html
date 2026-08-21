@@ -297,7 +297,6 @@
         let html5QrCode = null;
         let availableCameras = [];
         let currentCameraIndex = 0;
-        let isSaving = false;
 
         // --- View Navigation ---
         function showView(viewId) {
@@ -974,25 +973,6 @@ if (
 
     return;
 }
-    // ==========================================
-// PREVENT DOUBLE SAVE
-// ==========================================
-
-if (isSaving) {
-    return;
-}
-
-isSaving = true;
-
-const submitBtn =
-    document.getElementById('btn-submit');
-
-submitBtn.disabled = true;
-
-submitBtn.classList.add(
-    'opacity-60',
-    'cursor-not-allowed'
-);
 
     // ==========================================
     // PAYLOAD
@@ -1111,147 +1091,79 @@ submitBtn.classList.add(
 
     .then(result => {
 
-    // ปิดสถานะกำลังบันทึกทันที
-    document
-        .getElementById('loading-overlay')
-        .classList
-        .add('hidden');
-
-        // ปลดล็อกปุ่มบันทึก
-    isSaving = false;
-
-    submitBtn.disabled = false;
-
-    submitBtn.classList.remove(
-        'opacity-60',
-        'cursor-not-allowed'
-    );
-
-
-    Swal.fire({
-
-        icon: 'success',
-
-        title: 'บันทึกสำเร็จ',
-
-        html:
-            'บันทึกข้อมูลลง Sheet <b>' +
-            result.sheet +
-            '</b> เรียบร้อยแล้ว',
-
-        timer: 800,
-
-        showConfirmButton: false
-
-    })
-
-    // ป้องกันการกดซ้ำเฉพาะระหว่างบันทึก
-    isSaving = false;
-
-    Swal.fire({
-        icon: 'success',
-        title: 'บันทึกสำเร็จ',
-        text: 'พร้อมสแกนรายการถัดไป',
-        timer: 1000,
-        showConfirmButton: false,
-        allowOutsideClick: false
-    }).then(() => {
-
-        // เคลียร์ข้อมูลรายการเก่า
-        currentScanData = {
-            partNumber: "",
-            qrQty: "",
-            unit: "",
-            lotNumber: "",
-            serialNumber: "",
-            unit2: ""
-        };
-
-        // เคลียร์ Unit2
-        document.getElementById('unit2-select').value = "";
-
-        // ซ่อน Unit2
         document
-            .getElementById('unit2-container')
+            .getElementById(
+                'loading-overlay'
+            )
             .classList
             .add('hidden');
 
-        // กลับไป Scanner
-        showView('view-scanner');
 
-        // เปิดกล้องใหม่
-        initScanner();
+        Swal.fire({
 
-    });
+            icon: 'success',
 
-})
+            title: 'บันทึกสำเร็จ',
 
+            html:
+                'บันทึกข้อมูลลง Sheet <b>' +
+                result.sheet +
+                '</b> เรียบร้อยแล้ว',
 
-   .catch(error => {
+            timer: 1800,
 
-    console.error(
-        'SAVE ERROR:',
-        error
-    );
+            showConfirmButton: false
 
-    document
-        .getElementById('loading-overlay')
-        .classList
-        .add('hidden');
+        })
 
-       // ปลดล็อกปุ่มบันทึก
-    isSaving = false;
+        .then(() => {
 
-    submitBtn.disabled = false;
+            showView(
+                'view-scanner'
+            );
 
-    submitBtn.classList.remove(
-        'opacity-60',
-        'cursor-not-allowed'
-    );
+            initScanner();
+
+        });
+
+    })
 
 
-    Swal.fire({
+    .catch(error => {
 
-        icon: 'error',
+        console.error(
+            'SAVE ERROR:',
+            error
+        );
 
-        title: 'บันทึกข้อมูลไม่สำเร็จ',
 
-        text:
-            error.message ||
-            error.toString(),
+        document
+            .getElementById(
+                'loading-overlay'
+            )
+            .classList
+            .add('hidden');
 
-        confirmButtonText:
-            'ตกลง',
 
-        confirmButtonColor:
-            '#d33'
+        Swal.fire({
 
-    });
+            icon: 'error',
 
-});
+            title: 'บันทึกข้อมูลไม่สำเร็จ',
 
-    // ให้สามารถกดบันทึกใหม่ได้
-    isSaving = false;
+            text:
+                error.message ||
+                error.toString(),
 
-    Swal.fire({
+            confirmButtonText:
+                'ตกลง',
 
-        icon: 'error',
+            confirmButtonColor:
+                '#d33'
 
-        title: 'บันทึกข้อมูลไม่สำเร็จ',
-
-        text:
-            error.message ||
-            error.toString(),
-
-        confirmButtonText:
-            'ตกลง',
-
-        confirmButtonColor:
-            '#d33'
+        });
 
     });
-
-});
 
 }
         // ==========================================
