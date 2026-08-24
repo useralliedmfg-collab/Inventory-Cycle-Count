@@ -416,11 +416,67 @@
             // ไม่ต้องทำอะไร
         }
 
-    ).then(() => {
+    }).then(() => {
 
-        console.log("CAMERA OK");
+    console.log("📷 CAMERA OK");
 
-    }).catch((error) => {
+    const video = document.querySelector("#reader video");
+
+    if (!video || !video.srcObject) {
+        console.log("ไม่พบ video stream");
+        return;
+    }
+
+    const track = video.srcObject.getVideoTracks()[0];
+
+    if (!track) {
+        console.log("ไม่พบ camera track");
+        return;
+    }
+
+    const capabilities = track.getCapabilities();
+
+    console.log("📷 CAMERA CAPABILITIES:", capabilities);
+
+    // ==========================================
+    // AUTO FOCUS
+    // ==========================================
+
+    if (
+        capabilities.focusMode &&
+        capabilities.focusMode.includes("continuous")
+    ) {
+
+        track.applyConstraints({
+            advanced: [
+                {
+                    focusMode: "continuous"
+                }
+            ]
+        })
+        .then(() => {
+
+            console.log("🎯 AUTO FOCUS ON");
+
+        })
+        .catch(error => {
+
+            console.log(
+                "❌ AUTO FOCUS ERROR:",
+                error
+            );
+
+        });
+
+    } else {
+
+        console.log(
+            "⚠️ กล้องนี้ไม่รองรับ Continuous Auto Focus"
+        );
+
+    }
+
+}).catch((error) => {
 
         console.error("CAMERA ERROR:", error);
 
