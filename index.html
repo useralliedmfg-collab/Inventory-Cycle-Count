@@ -384,23 +384,43 @@
     // สร้าง scanner ใหม่
     html5QrCode = new Html5Qrcode("reader");
 
+    // ==========================================
+    // 1. ปรับ Config สแกนเนอร์เพิ่มประสิทธิภาพ
+    // ==========================================
     const config = {
-        fps: 10,
-        qrbox: {
-            width: 340,
-            height: 220
+        fps: 30, // เพิ่ม FPS เป็น 30 ช่วยลด Motion Blur เวลาถือกล้องสั่น
+        experimentalFeatures: {
+            // สำคัญมาก: เปิดใช้ Native Barcode Detector ของอุปกรณ์ (มือถือ) 
+            // จะอ่าน QR จาง/เล็ก/ไกล ได้ดีขึ้นหลายเท่าตัว
+            useBarCodeDetectorIfSupported: true 
         },
-        aspectRatio: 1.0
+        qrbox: function(viewfinderWidth, viewfinderHeight) {
+            // ลดขนาดกรอบลงเป็น 70% เพื่อบังคับให้ผู้ใช้ถือกล้องใกล้ขึ้น ทำให้ Auto Focus ทำงานง่ายขึ้น
+            const size = Math.min(viewfinderWidth, viewfinderHeight) * 0.70;
+            return {
+                width: Math.floor(size),
+                height: Math.floor(size)
+            };
+        },
+        aspectRatio: 1.0,
+        // ย้ายการบังคับความละเอียดของกล้อง (FHD) มาไว้ใน videoConstraints ตามมาตรฐานของ Library
+        videoConstraints: {
+            facingMode: "environment",
+            width: { min: 1280, ideal: 1920, max: 3840 },
+            height: { min: 720, ideal: 1080, max: 2160 }
+        }
     };
 
+    // ==========================================
+    // 2. บังคับการเปิดกล้องหลัง (Library ต้องการ Object ที่มีแค่ 1 key เท่านั้น)
+    // ==========================================
+    const cameraConfig = { facingMode: "environment" };
+
     html5QrCode.start(
-        { facingMode: "environment" },
+        cameraConfig,
         config,
-
         function(decodedText) {
-
             console.log("SCAN:", decodedText);
-
             html5QrCode.stop()
                 .then(() => {
                     html5QrCode.clear();
@@ -409,28 +429,59 @@
                 .catch(() => {
                     processScannedData(decodedText);
                 });
-
         },
-
         function(errorMessage) {
-            // ไม่ต้องทำอะไร
+            // ไม่ต้องทำอะไร (ซ่อน error การหาสแกนไม่เจอในแต่ละเฟรม)
         }
-
     ).then(() => {
-
         console.log("CAMERA OK");
 
+        // ==========================================
+        // 3. ปรับแต่ง Auto Focus แบบ Advance
+        // ==========================================
+        const video = document.querySelector("#reader video");
+        if (video && video.srcObject) {
+            const track = video.srcObject.getVideoTracks()[0];
+            if (track) {
+                try {
+                    const capabilities = track.getCapabilities();
+                    const advancedConstraints = {};
+
+                    // ตรวจสอบว่ารองรับการควบคุม Focus หรือไม่
+                    if (capabilities.focusMode) {
+                        // พยายามใช้ continuous (ถ่ายวิดีโอทั่วไป) หรือ macro (จ่อใกล้สำหรับ QR เล็ก) 
+                        if (capabilities.focusMode.includes("continuous")) {
+                            advancedConstraints.focusMode = "continuous";
+                        } else if (capabilities.focusMode.includes("macro")) {
+                            advancedConstraints.focusMode = "macro";
+                        }
+                    }
+
+                    // ส่งคำสั่งปรับโฟกัส หากอุปกรณ์รองรับ
+                    if (Object.keys(advancedConstraints).length > 0) {
+                        track.applyConstraints({
+                            advanced: [advancedConstraints]
+                        })
+                        .then(() => {
+                            console.log("ADVANCED CAMERA CONSTRAINTS APPLIED:", advancedConstraints);
+                        })
+                        .catch((error) => {
+                            console.log("ไม่สามารถตั้งค่า Auto Focus ได้", error);
+                        });
+                    }
+                } catch (err) {
+                    console.log("อุปกรณ์ไม่อนุญาตให้อ่าน capabilities ของกล้อง", err);
+                }
+            }
+        }
+
     }).catch((error) => {
-
         console.error("CAMERA ERROR:", error);
-
         errorBox.classList.remove("hidden");
-
         document.getElementById("camera-error-msg").innerHTML =
             "เปิดกล้องไม่ได้<br><br>" +
             "กรุณากดอนุญาตการใช้งานกล้อง<br>" +
             "แล้วลองใหม่อีกครั้ง";
-
     });
 }
 
