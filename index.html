@@ -385,18 +385,17 @@
     html5QrCode = new Html5Qrcode("reader");
 
     const config = {
-    fps: 20,
+        fps: 10,
+        qrbox: {
+            width: 340,
+            height: 220
+        },
+        aspectRatio: 1.0
+    };
 
-    qrbox: undefined,
-
-    aspectRatio: 1.0
-};
-            
     html5QrCode.start(
-    {
-        facingMode: "environment"
-    },
-    config,
+        { facingMode: "environment" },
+        config,
 
         function(decodedText) {
 
@@ -419,64 +418,9 @@
 
     ).then(() => {
 
-    console.log("CAMERA OK");
+        console.log("CAMERA OK");
 
-    // ==========================================
-    // AUTO FOCUS
-    // ==========================================
-    const video = document.querySelector("#reader video");
-
-    if (video && video.srcObject) {
-
-        const track = video.srcObject.getVideoTracks()[0];
-
-        if (track) {
-
-            const capabilities = track.getCapabilities();
-
-if (
-    capabilities.focusMode &&
-    capabilities.focusMode.includes("continuous")
-) {
-
-    track.applyConstraints({
-        advanced: [
-            {
-                focusMode: "continuous"
-            }
-        ]
-    })
-    .then(() => {
-        console.log("AUTO FOCUS: ON");
-    })
-    .catch((error) => {
-        console.log(
-            "ไม่สามารถเปิด Auto Focus ได้",
-            error
-        );
-    });
-
-} else {
-
-    console.log(
-        "อุปกรณ์นี้ไม่รองรับการควบคุม Auto Focus"
-    );
-
-}
-            .then(() => {
-                console.log("AUTO FOCUS: ON");
-            })
-            .catch((error) => {
-                console.log(
-                    "AUTO FOCUS ไม่รองรับในอุปกรณ์นี้",
-                    error
-                );
-            });
-
-        }
-    }
-
-}).catch((error) => {
+    }).catch((error) => {
 
         console.error("CAMERA ERROR:", error);
 
