@@ -95,7 +95,7 @@
                 <select
     id="zone-select"
     onchange="updateLocations()"
-    class="relative z-20 w-full border border-gray-300 rounded-lg p-3 text-lg bg-gray-50 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+    class="w-full border border-gray-300 rounded-lg p-3 text-lg bg-gray-50 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
 >
                     <option value="" disabled selected>-- เลือกโซนตรวจนับ --</option>
     <option value="ZONE_A">Zone A</option>
@@ -109,11 +109,10 @@
                 <label class="block text-sm font-medium text-gray-600 mb-1">พื้นที่ปฏิบัติงาน (Location)</label>
                 <select
     id="location-select"
-    class="relative z-20 w-full border border-gray-300 rounded-lg p-3 text-lg bg-gray-50 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
-    disabled
+    class="w-full border border-gray-300 rounded-lg p-3 text-lg bg-gray-50 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
 >
-                    <option value="" disabled selected>-- กรุณาเลือกโซนก่อน --</option>
-                </select>
+    <option value="" disabled selected>-- กรุณาเลือกโซนก่อน --</option>
+</select>
             </div>
 
             <div>
@@ -326,36 +325,61 @@
 
         function updateLocations() {
 
-    const zone =
-        document.getElementById('zone-select').value;
+    const zoneSelect =
+        document.getElementById('zone-select');
 
-    const locSelect =
+    const locationSelect =
         document.getElementById('location-select');
 
-    locSelect.innerHTML =
-        '<option value="" disabled selected>-- เลือกพื้นที่ --</option>';
+    const zone =
+        zoneSelect.value;
 
-    if (MOCK_ZONES[zone]) {
+    console.log("ZONE SELECTED:", zone);
 
-        MOCK_ZONES[zone].forEach(loc => {
+    // ล้าง Location เดิม
+    locationSelect.innerHTML = '';
 
-            const opt =
-                document.createElement('option');
+    // สร้างตัวเลือกเริ่มต้น
+    const defaultOption =
+        document.createElement('option');
 
-            opt.value = loc;
-            opt.textContent = loc;
+    defaultOption.value = '';
+    defaultOption.textContent =
+        '-- เลือกพื้นที่ --';
 
-            locSelect.appendChild(opt);
+    defaultOption.disabled = true;
+    defaultOption.selected = true;
 
-        });
+    locationSelect.appendChild(defaultOption);
 
-        locSelect.disabled = false;
+    // ตรวจสอบ Zone
+    if (!zone || !MOCK_ZONES[zone]) {
 
-    } else {
+        locationSelect.disabled = true;
 
-        locSelect.disabled = true;
-
+        return;
     }
+
+    // เพิ่ม Location
+    MOCK_ZONES[zone].forEach(function(location) {
+
+        const option =
+            document.createElement('option');
+
+        option.value = location;
+        option.textContent = location;
+
+        locationSelect.appendChild(option);
+
+    });
+
+    // เปิด Location
+    locationSelect.disabled = false;
+
+    console.log(
+        "LOCATION ENABLED:",
+        locationSelect.disabled
+    );
 }
 
         // --- STREAMING_CHUNK:Scanner Logic via Html5Qrcode ---
