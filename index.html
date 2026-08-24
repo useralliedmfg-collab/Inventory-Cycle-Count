@@ -148,7 +148,29 @@
 
             <!-- The element where the camera stream will be injected -->
             <div class="flex-1 flex flex-col justify-center items-center w-full relative">
-                <div id="reader"></div>
+                <div id="reader"></div
+                <div class="flex items-center justify-center gap-2 mt-3">
+    <button
+        onclick="setCameraZoom(1)"
+        class="bg-gray-700 text-white px-4 py-2 rounded-lg text-sm"
+    >
+        1×
+    </button>
+
+    <button
+        onclick="setCameraZoom(1.5)"
+        class="bg-gray-700 text-white px-4 py-2 rounded-lg text-sm"
+    >
+        1.5×
+    </button>
+
+    <button
+        onclick="setCameraZoom(2)"
+        class="bg-gray-700 text-white px-4 py-2 rounded-lg text-sm"
+    >
+        2×
+    </button>
+</div>
                 
                 <!-- Error Overlay (Hidden by default) -->
                 <div id="camera-error" class="hidden absolute inset-0 bg-black/80 flex flex-col items-center justify-center p-6 text-center z-20">
@@ -487,7 +509,7 @@
 
                 const capabilities =
                     track.getCapabilities();
-
+                
                 const settings =
                     track.getSettings();
 
