@@ -300,12 +300,29 @@
 
         // --- View Navigation ---
         function showView(viewId) {
-            document.getElementById('view-setup').classList.add('hidden');
-            document.getElementById('view-scanner').classList.add('hidden');
-            document.getElementById('view-input').classList.add('hidden');
-            document.getElementById(viewId).classList.remove('hidden');
-            document.getElementById(viewId).classList.add('flex');
-        }
+
+    const views = [
+        'view-setup',
+        'view-scanner',
+        'view-input'
+    ];
+
+    views.forEach(id => {
+
+        const view =
+            document.getElementById(id);
+
+        view.classList.add('hidden');
+        view.classList.remove('flex');
+
+    });
+
+    const target =
+        document.getElementById(viewId);
+
+    target.classList.remove('hidden');
+    target.classList.add('flex');
+}
 
         function updateLocations() {
 
