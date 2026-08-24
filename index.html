@@ -69,7 +69,7 @@
 
     <div class="w-full max-w-md bg-white shadow-sm flex flex-col items-center py-4 px-4 sticky top-0 z-10">
         <img src="https://www.alliedmfg.co.th/wp-content/uploads/2026/07/AMS-LOGO-V1.png" alt="AMS Logo" class="h-10 object-contain mb-1">
-        <h1 class="text-lg font-semibold text-blue-900 tracking-wide">Inventory Cycle Count</h1>
+        <h1 class="text-lg font-semibold text-blue-900 tracking-wide">Inventory Cycle Count555</h1>
     </div>
 
     <!-- Main Application Container -->
@@ -548,6 +548,85 @@ console.log("=================================");
 
             const capabilities =
                 track.getCapabilities();
+
+            // ==========================================
+// STEP 10 - CAMERA FOCUS DIAGNOSTIC
+// ==========================================
+
+console.log("=================================");
+console.log("📷 CAMERA DIAGNOSTIC");
+console.log("=================================");
+
+console.log(
+    "Camera Settings:",
+    track.getSettings()
+);
+
+console.log(
+    "Camera Capabilities:",
+    capabilities
+);
+
+console.log(
+    "Focus Mode:",
+    capabilities.focusMode || "NOT SUPPORTED"
+);
+
+console.log(
+    "Focus Distance:",
+    capabilities.focusDistance || "NOT SUPPORTED"
+);
+
+console.log(
+    "Zoom:",
+    capabilities.zoom || "NOT SUPPORTED"
+);
+
+console.log(
+    "Width:",
+    capabilities.width
+);
+
+console.log(
+    "Height:",
+    capabilities.height
+);
+
+console.log("=================================");
+
+            // ==========================================
+// FOCUS SUPPORT CHECK
+// ==========================================
+
+if (
+    capabilities.focusMode &&
+    capabilities.focusMode.includes("continuous")
+) {
+
+    console.log(
+        "✅ RESULT: CONTINUOUS AUTO FOCUS SUPPORTED"
+    );
+
+} else {
+
+    console.log(
+        "❌ RESULT: CONTINUOUS AUTO FOCUS NOT SUPPORTED"
+    );
+
+}
+
+if (capabilities.focusDistance) {
+
+    console.log(
+        "✅ RESULT: FOCUS DISTANCE CONTROL SUPPORTED"
+    );
+
+} else {
+
+    console.log(
+        "⚠️ RESULT: FOCUS DISTANCE CONTROL NOT SUPPORTED"
+    );
+}
 
             console.log(
                 "CAMERA CAPABILITIES:",
