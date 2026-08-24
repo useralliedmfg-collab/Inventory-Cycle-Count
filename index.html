@@ -418,9 +418,40 @@
 
     ).then(() => {
 
-        console.log("CAMERA OK");
+    console.log("CAMERA OK");
 
-    }).catch((error) => {
+    // ==========================================
+    // AUTO FOCUS
+    // ==========================================
+    const video = document.querySelector("#reader video");
+
+    if (video && video.srcObject) {
+
+        const track = video.srcObject.getVideoTracks()[0];
+
+        if (track) {
+
+            track.applyConstraints({
+                advanced: [
+                    {
+                        focusMode: "continuous"
+                    }
+                ]
+            })
+            .then(() => {
+                console.log("AUTO FOCUS: ON");
+            })
+            .catch((error) => {
+                console.log(
+                    "AUTO FOCUS ไม่รองรับในอุปกรณ์นี้",
+                    error
+                );
+            });
+
+        }
+    }
+
+}).catch((error) => {
 
         console.error("CAMERA ERROR:", error);
 
