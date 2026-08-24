@@ -69,7 +69,7 @@
 
     <div class="w-full max-w-md bg-white shadow-sm flex flex-col items-center py-4 px-4 sticky top-0 z-10">
         <img src="https://www.alliedmfg.co.th/wp-content/uploads/2026/07/AMS-LOGO-V1.png" alt="AMS Logo" class="h-10 object-contain mb-1">
-        <h1 class="text-lg font-semibold text-blue-900 tracking-wide">Inventory Cycle Count</h1>
+        <h1 class="text-lg font-semibold text-blue-900 tracking-wide">Inventory Cycle Count0000</h1>
     </div>
 
     <!-- Main Application Container -->
@@ -407,45 +407,49 @@
 
     const config = {
 
-        // ความถี่ในการตรวจจับ
-        fps: 15,
+    // ตรวจภาพเร็วขึ้น
+    fps: 20,
 
-        // เพิ่มพื้นที่อ่าน QR
-        qrbox: function(viewfinderWidth, viewfinderHeight) {
+    // กรอบสแกนเล็กลง
+    // ช่วยให้ผู้ใช้เล็ง QR ได้ง่าย
+    qrbox: function(viewfinderWidth, viewfinderHeight) {
 
-    return {
-        width: Math.floor(viewfinderWidth * 0.95),
-        height: Math.floor(viewfinderHeight * 0.85)
-    };
+        const width =
+            Math.floor(viewfinderWidth * 0.75);
 
-},
+        const height =
+            Math.floor(viewfinderHeight * 0.55);
 
-        // ไม่บังคับ aspect ratio
-        aspectRatio: undefined,
+        return {
+            width: width,
+            height: height
+        };
 
-        // ให้ library ใช้ BarcodeDetector ถ้า Browser รองรับ
-        useBarCodeDetectorIfSupported: false,
-
-        // ==========================================
-        // HIGH RESOLUTION CAMERA
-        // ==========================================
-
-        videoConstraints: {
-    facingMode: {
-        ideal: "environment"
     },
 
-    width: {
-        ideal: 1920
-    },
+    aspectRatio: undefined,
 
-    height: {
-        ideal: 1080
-    },
+    // ใช้ decoder ปกติของ html5-qrcode
+    useBarCodeDetectorIfSupported: false,
 
-    focusMode: "continuous"
-}
-    };
+    // กล้อง
+    videoConstraints: {
+
+        facingMode: {
+            ideal: "environment"
+        },
+
+        width: {
+            ideal: 1280
+        },
+
+        height: {
+            ideal: 720
+        },
+
+        focusMode: "continuous"
+    }
+};
 
     // ==========================================
     // START CAMERA
