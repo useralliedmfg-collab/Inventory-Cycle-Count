@@ -320,6 +320,104 @@
         let availableCameras = [];
         let currentCameraIndex = 0;
 
+// ==========================================
+// CAMERA ZOOM
+// ==========================================
+        function setCameraZoom(zoomLevel) {
+
+    if (!html5QrCode) {
+        console.log("ยังไม่พบ Camera");
+        return;
+    }
+
+    try {
+
+        const track =
+            html5QrCode.getRunningTrack();
+
+        if (!track) {
+            console.log("ไม่พบ Camera Track");
+            return;
+        }
+
+        const capabilities =
+            track.getCapabilities();
+
+        // ตรวจสอบว่ากล้องรองรับ Zoom หรือไม่
+        if (!capabilities.zoom) {
+
+            console.log(
+                "กล้องนี้ไม่รองรับ Zoom"
+            );
+
+            Swal.fire({
+                icon: 'info',
+                title: 'ไม่รองรับ Zoom',
+                text: 'กล้องหรือ Browser นี้ไม่รองรับการควบคุม Zoom',
+                confirmButtonText: 'ตกลง'
+            });
+
+            return;
+        }
+
+        // จำกัดค่า Zoom ให้อยู่ในช่วงที่กล้องรองรับ
+        const minZoom =
+            capabilities.zoom.min || 1;
+
+        const maxZoom =
+            capabilities.zoom.max || 1;
+
+        const finalZoom =
+            Math.max(
+                minZoom,
+                Math.min(
+                    zoomLevel,
+                    maxZoom
+                )
+            );
+
+        console.log(
+            "กำลังตั้ง Zoom:",
+            finalZoom
+        );
+
+        track.applyConstraints({
+
+            advanced: [
+                {
+                    zoom: finalZoom
+                }
+            ]
+
+        })
+        .then(() => {
+
+            console.log(
+                "ZOOM OK:",
+                finalZoom
+            );
+
+        })
+        .catch(error => {
+
+            console.error(
+                "ZOOM ERROR:",
+                error
+            );
+
+        });
+
+    }
+    catch (error) {
+
+        console.error(
+            "ZOOM NOT SUPPORTED:",
+            error
+        );
+
+    }
+}
+
         // --- View Navigation ---
         function showView(viewId) {
             document.getElementById('view-setup').classList.add('hidden');
