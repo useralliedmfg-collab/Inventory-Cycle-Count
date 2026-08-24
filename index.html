@@ -274,33 +274,10 @@
     <script>
         // --- State Management ---
         const MOCK_ZONES = {
-    "ZONE_A": [
-        "A1-1",
-        "A1-2",
-        "A1-3",
-        "A1-4",
-        "A1-5",
-        "A1-6"
-    ],
-
-    "ZONE_B": [
-        "B1-1",
-        "B1-2",
-        "B1-3"
-    ],
-
-    "ZONE_C": [
-        "C1-1",
-        "C1-2",
-        "C1-3"
-    ],
-
-    "ZONE_D": [
-        "D1-1",
-        "D1-2",
-        "D1-3",
-        "D1-4"
-    ]
+    "ZONE_A": ["A1-1", "A1-2", "A1-3"],
+    "ZONE_B": ["B1-1", "B1-2", "B1-3"],
+    "ZONE_C": ["C1-1", "C1-2", "C1-3"],
+    "ZONE_D": ["D1-1", "D1-2", "D1-3", "D1-4"]
 };
 
         let currentSession = {
@@ -407,96 +384,108 @@
     // สร้าง scanner ใหม่
     html5QrCode = new Html5Qrcode("reader");
 
-    // ==========================================
-    // 1. ปรับ Config สแกนเนอร์เพิ่มประสิทธิภาพ
-    // ==========================================
     const config = {
-    fps: 10,
+    fps: 20,
+
     qrbox: function(viewfinderWidth, viewfinderHeight) {
-        const size = Math.min(viewfinderWidth, viewfinderHeight) * 0.70;
+
+        const size = Math.min(
+            viewfinderWidth,
+            viewfinderHeight
+        ) * 0.75;
 
         return {
             width: Math.floor(size),
             height: Math.floor(size)
         };
-    }
-};
+    },
 
-    // ==========================================
-    // 2. บังคับความละเอียดของกล้อง (Camera Constraints)
-    // ==========================================
-    const cameraConstraints = {
-    facingMode: { ideal: "environment" }
+    aspectRatio: 1.0,
+
+    videoConstraints: {
+        facingMode: {
+            ideal: "environment"
+        },
+        width: {
+            ideal: 1920
+        },
+        height: {
+            ideal: 1080
+        }
+    }
 };
 
     html5QrCode.start(
-    cameraConstraints,
-    config,
-    function(decodedText) {
-        console.log("SCAN:", decodedText);
-
-        html5QrCode.stop()
-            .then(() => {
-                html5QrCode.clear();
-                processScannedData(decodedText);
-            })
-            .catch(() => {
-                processScannedData(decodedText);
-            });
+    {
+        facingMode: "environment"
     },
-    function(errorMessage) {
-        // ไม่ต้องทำอะไร
-    }
-)
-    ).then(() => {
-        console.log("CAMERA OK");
+    config,
 
-        // ==========================================
-        // 3. ปรับแต่ง Auto Focus แบบ Advance
-        // ==========================================
-        const video = document.querySelector("#reader video");
-        if (video && video.srcObject) {
-            const track = video.srcObject.getVideoTracks()[0];
-            if (track) {
-                try {
-                    const capabilities = track.getCapabilities();
-                    const advancedConstraints = {};
+        function(decodedText) {
 
-                    // ตรวจสอบว่ารองรับการควบคุม Focus หรือไม่
-                    if (capabilities.focusMode) {
-                        // พยายามใช้ continuous (ถ่ายวิดีโอทั่วไป) หรือ macro (จ่อใกล้สำหรับ QR เล็ก) 
-                        if (capabilities.focusMode.includes("continuous")) {
-                            advancedConstraints.focusMode = "continuous";
-                        } else if (capabilities.focusMode.includes("macro")) {
-                            advancedConstraints.focusMode = "macro";
-                        }
-                    }
+            console.log("SCAN:", decodedText);
 
-                    // ส่งคำสั่งปรับโฟกัส หากอุปกรณ์รองรับ
-                    if (Object.keys(advancedConstraints).length > 0) {
-                        track.applyConstraints({
-                            advanced: [advancedConstraints]
-                        })
-                        .then(() => {
-                            console.log("ADVANCED CAMERA CONSTRAINTS APPLIED:", advancedConstraints);
-                        })
-                        .catch((error) => {
-                            console.log("ไม่สามารถตั้งค่า Auto Focus ได้", error);
-                        });
-                    }
-                } catch (err) {
-                    console.log("อุปกรณ์ไม่อนุญาตให้อ่าน capabilities ของกล้อง", err);
-                }
-            }
+            html5QrCode.stop()
+                .then(() => {
+                    html5QrCode.clear();
+                    processScannedData(decodedText);
+                })
+                .catch(() => {
+                    processScannedData(decodedText);
+                });
+
+        },
+
+        function(errorMessage) {
+            // ไม่ต้องทำอะไร
         }
 
-    }).catch((error) => {
+    ).then(() => {
+
+    console.log("CAMERA OK");
+
+    // ==========================================
+    // AUTO FOCUS
+    // ==========================================
+    const video = document.querySelector("#reader video");
+
+    if (video && video.srcObject) {
+
+        const track = video.srcObject.getVideoTracks()[0];
+
+        if (track) {
+
+            track.applyConstraints({
+                advanced: [
+                    {
+                        focusMode: "continuous"
+                    }
+                ]
+            })
+            .then(() => {
+                console.log("AUTO FOCUS: ON");
+            })
+            .catch((error) => {
+                console.log(
+                    "AUTO FOCUS ไม่รองรับในอุปกรณ์นี้",
+                    error
+                );
+            });
+
+        }
+    }
+
+}).catch((error) => {
+
         console.error("CAMERA ERROR:", error);
+
         errorBox.classList.remove("hidden");
+
         document.getElementById("camera-error-msg").innerHTML =
             "เปิดกล้องไม่ได้<br><br>" +
             "กรุณากดอนุญาตการใช้งานกล้อง<br>" +
             "แล้วลองใหม่อีกครั้ง";
+
     });
 }
 
