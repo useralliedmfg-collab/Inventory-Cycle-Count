@@ -69,7 +69,7 @@
 
     <div class="w-full max-w-md bg-white shadow-sm flex flex-col items-center py-4 px-4 sticky top-0 z-10">
         <img src="https://www.alliedmfg.co.th/wp-content/uploads/2026/07/AMS-LOGO-V1.png" alt="AMS Logo" class="h-10 object-contain mb-1">
-        <h1 class="text-lg font-semibold text-blue-900 tracking-wide">Inventory Cycle Count0000</h1>
+        <h1 class="text-lg font-semibold text-blue-900 tracking-wide">Inventory Cycle Count888</h1>
     </div>
 
     <!-- Main Application Container -->
@@ -371,35 +371,107 @@
             initScanner();
         }
 
-        function initScanner() {
+        async function initScanner() {
 
-    const reader = document.getElementById("reader");
-    const errorBox = document.getElementById("camera-error");
+    const reader =
+        document.getElementById("reader");
+
+    const errorBox =
+        document.getElementById("camera-error");
+
+    const errorMsg =
+        document.getElementById("camera-error-msg");
+
+
+    // ==========================================
+    // RESET ERROR
+    // ==========================================
 
     errorBox.classList.add("hidden");
 
-    // ป้องกัน scanner เดิมค้าง
+
+    // ==========================================
+    // STOP OLD SCANNER
+    // ==========================================
+
     if (html5QrCode) {
+
         try {
-            html5QrCode.clear();
-        } catch (e) {
-            console.log("Clear old scanner:", e);
+
+            const state =
+                html5QrCode.getState();
+
+            // ถ้ากล้องกำลังทำงาน
+            if (
+                state ===
+                Html5QrcodeScannerState.SCANNING
+            ) {
+
+                await html5QrCode.stop();
+
+            }
+
+        } catch (error) {
+
+            console.log(
+                "Stop old scanner:",
+                error
+            );
+
         }
+
+        try {
+
+            html5QrCode.clear();
+
+        } catch (error) {
+
+            console.log(
+                "Clear old scanner:",
+                error
+            );
+
+        }
+
+        html5QrCode = null;
+
     }
+
+
+    // ==========================================
+    // CLEAR READER
+    // ==========================================
 
     reader.innerHTML = "";
 
-    html5QrCode = new Html5Qrcode("reader");
 
     // ==========================================
-    // CAMERA CONFIG
+    // RESET SCAN LOCK
+    // ==========================================
+
+    window.isProcessingScan = false;
+
+
+    // ==========================================
+    // CREATE NEW SCANNER
+    // ==========================================
+
+    html5QrCode =
+        new Html5Qrcode("reader");
+
+
+    // ==========================================
+    // CAMERA
     // ==========================================
 
     const cameraConfig = {
-    facingMode: {
-        ideal: "environment"
-    }
-};
+
+        facingMode: {
+            ideal: "environment"
+        }
+
+    };
+
 
     // ==========================================
     // SCANNER CONFIG
@@ -407,112 +479,208 @@
 
     const config = {
 
-    // ตรวจภาพเร็วขึ้น
-    fps: 20,
+        // ตรวจภาพเร็ว
+        fps: 15,
 
-    // กรอบสแกนเล็กลง
-    // ช่วยให้ผู้ใช้เล็ง QR ได้ง่าย
-    qrbox: function(viewfinderWidth, viewfinderHeight) {
 
-        const width =
-            Math.floor(viewfinderWidth * 0.75);
+        // ======================================
+        // QR SCAN AREA
+        // ======================================
+        //
+        // ไม่เล็กเกินไป
+        // เพื่อให้ QR ขนาดเล็กยังอยู่ในพื้นที่อ่าน
+        //
 
-        const height =
-            Math.floor(viewfinderHeight * 0.55);
+        qrbox: function (
+            viewfinderWidth,
+            viewfinderHeight
+        ) {
 
-        return {
-            width: width,
-            height: height
-        };
+            const width =
+                Math.floor(
+                    viewfinderWidth * 0.85
+                );
 
-    },
+            const height =
+                Math.floor(
+                    viewfinderHeight * 0.60
+                );
 
-    aspectRatio: undefined,
+            return {
 
-    // ใช้ decoder ปกติของ html5-qrcode
-    useBarCodeDetectorIfSupported: false,
+                width:
+                    width,
 
-    // กล้อง
-    videoConstraints: {
+                height:
+                    height
 
-        facingMode: {
-            ideal: "environment"
+            };
+
         },
 
-        width: {
-            ideal: 1280
-        },
 
-        height: {
-            ideal: 720
-        },
+        // ======================================
+        // ไม่บังคับสัดส่วน
+        // ======================================
 
-        focusMode: "continuous"
-    }
-};
+        aspectRatio:
+            undefined,
+
+
+        // ======================================
+        // ใช้ decoder ของ html5-qrcode
+        // ======================================
+
+        useBarCodeDetectorIfSupported:
+            false,
+
+
+        // ======================================
+        // CAMERA QUALITY
+        // ======================================
+
+        videoConstraints: {
+
+            facingMode: {
+                ideal: "environment"
+            },
+
+            // ความละเอียดสูง
+            // ช่วย QR ขนาดเล็ก
+
+            width: {
+                ideal: 1920
+            },
+
+            height: {
+                ideal: 1080
+            },
+
+            // ขอ Continuous Focus
+            focusMode:
+                "continuous"
+
+        }
+
+    };
+
 
     // ==========================================
     // START CAMERA
     // ==========================================
 
-    html5QrCode.start(
+    try {
 
-        cameraConfig,
+        await html5QrCode.start(
 
-        config,
+            cameraConfig,
 
-        function(decodedText, decodedResult) {
+            config,
 
-            console.log("QR FOUND:", decodedText);
 
-            // ป้องกันยิงซ้ำ
-            if (window.isProcessingScan) {
-                return;
-            }
+            // ==================================
+            // SCAN SUCCESS
+            // ==================================
 
-            window.isProcessingScan = true;
+            async function (
+                decodedText,
+                decodedResult
+            ) {
 
-            // หยุดกล้องทันที
-            html5QrCode.stop()
-                .then(() => {
+                console.log(
+                    "QR FOUND:",
+                    decodedText
+                );
 
-                    html5QrCode.clear();
 
-                    processScannedData(decodedText);
+                // ------------------------------
+                // ป้องกันยิงซ้ำ
+                // ------------------------------
 
-                })
-                .catch(error => {
+                if (
+                    window.isProcessingScan
+                ) {
+
+                    return;
+
+                }
+
+
+                window.isProcessingScan =
+                    true;
+
+
+                // ------------------------------
+                // STOP CAMERA
+                // ------------------------------
+
+                try {
+
+                    await html5QrCode.stop();
+
+                } catch (error) {
 
                     console.log(
-                        "Stop scanner error:",
+                        "Stop scanner:",
                         error
                     );
 
-                    processScannedData(decodedText);
+                }
 
-                });
 
-        },
+                // ------------------------------
+                // CLEAR CAMERA
+                // ------------------------------
 
-        function(errorMessage) {
+                try {
 
-            // ไม่ต้องแสดง error ทุก frame
-            // เพราะ callback นี้ทำงานตลอดเวลาที่หา QR ไม่เจอ
+                    html5QrCode.clear();
 
-        }
+                } catch (error) {
 
-    )
+                    console.log(
+                        "Clear scanner:",
+                        error
+                    );
 
-    // ==========================================
-    // CAMERA START SUCCESS
-    // ==========================================
+                }
 
-    .then(async () => {
 
-    console.log("CAMERA STARTED");
+                // ------------------------------
+                // PROCESS QR
+                // ------------------------------
 
-        // reset scan lock
-        window.isProcessingScan = false;
+                processScannedData(
+                    decodedText
+                );
+
+            },
+
+
+            // ==================================
+            // SCAN FAILURE
+            // ==================================
+
+            function (errorMessage) {
+
+                // ไม่ต้องทำอะไร
+                //
+                // callback นี้ทำงานทุกครั้ง
+                // ที่ยังหา QR ไม่เจอ
+
+            }
+
+        );
+
+
+        // ==========================================
+        // CAMERA STARTED
+        // ==========================================
+
+        console.log(
+            "✅ CAMERA STARTED"
+        );
+
 
         // ==========================================
         // GET VIDEO TRACK
@@ -523,66 +691,80 @@
             const track =
                 html5QrCode.getRunningTrack();
 
+
             if (!track) {
 
                 console.log(
-                    "No running video track"
+                    "⚠️ Running video track not found"
                 );
 
                 return;
+
             }
+
 
             const capabilities =
                 track.getCapabilities();
+
 
             console.log(
                 "CAMERA CAPABILITIES:",
                 capabilities
             );
 
-            // ==========================================
-// AUTO FOCUS
-// ==========================================
 
-if (
-    capabilities.focusMode &&
-    capabilities.focusMode.includes("continuous")
-) {
+            // ======================================
+            // AUTO FOCUS
+            // ======================================
 
-    try {
+            if (
+                capabilities.focusMode &&
+                capabilities.focusMode.includes(
+                    "continuous"
+                )
+            ) {
 
-        await track.applyConstraints({
-            advanced: [
-                {
-                    focusMode: "continuous"
+                try {
+
+                    await track.applyConstraints({
+
+                        advanced: [
+
+                            {
+                                focusMode:
+                                    "continuous"
+                            }
+
+                        ]
+
+                    });
+
+
+                    console.log(
+                        "✅ AUTO FOCUS: ON"
+                    );
+
+                } catch (error) {
+
+                    console.log(
+                        "⚠️ Continuous Focus failed:",
+                        error
+                    );
+
                 }
-            ]
-        });
 
-        console.log(
-            "✅ Continuous Auto Focus: ON"
-        );
+            } else {
 
-    } catch (error) {
+                console.log(
+                    "ℹ️ Continuous Focus not supported"
+                );
 
-        console.log(
-            "⚠️ Auto Focus failed:",
-            error
-        );
+            }
 
-    }
 
-} else {
-
-    console.log(
-        "⚠️ Continuous Auto Focus ไม่รองรับในกล้องนี้"
-    );
-
-}
-
-            // ==========================================
+            // ======================================
             // AUTO EXPOSURE
-            // ==========================================
+            // ======================================
 
             if (
                 capabilities.exposureMode &&
@@ -591,41 +773,41 @@ if (
                 )
             ) {
 
-                track.applyConstraints({
+                try {
 
-                    advanced: [
+                    await track.applyConstraints({
 
-                        {
-                            exposureMode:
-                                "continuous"
-                        }
+                        advanced: [
 
-                    ]
+                            {
+                                exposureMode:
+                                    "continuous"
+                            }
 
-                })
+                        ]
 
-                .then(() => {
+                    });
+
 
                     console.log(
-                        "Auto Exposure: ON"
+                        "✅ AUTO EXPOSURE: ON"
                     );
 
-                })
-
-                .catch(error => {
+                } catch (error) {
 
                     console.log(
-                        "Auto Exposure failed:",
+                        "⚠️ Auto Exposure failed:",
                         error
                     );
 
-                });
+                }
 
             }
 
-            // ==========================================
+
+            // ======================================
             // AUTO WHITE BALANCE
-            // ==========================================
+            // ======================================
 
             if (
                 capabilities.whiteBalanceMode &&
@@ -634,35 +816,58 @@ if (
                 )
             ) {
 
-                track.applyConstraints({
+                try {
 
-                    advanced: [
+                    await track.applyConstraints({
 
-                        {
-                            whiteBalanceMode:
-                                "continuous"
-                        }
+                        advanced: [
 
-                    ]
+                            {
+                                whiteBalanceMode:
+                                    "continuous"
+                            }
 
-                })
+                        ]
 
-                .then(() => {
+                    });
+
 
                     console.log(
-                        "Auto White Balance: ON"
+                        "✅ AUTO WHITE BALANCE: ON"
                     );
 
-                })
-
-                .catch(error => {
+                } catch (error) {
 
                     console.log(
-                        "White Balance failed:",
+                        "⚠️ White Balance failed:",
                         error
                     );
 
-                });
+                }
+
+            }
+
+
+            // ======================================
+            // CAMERA SETTINGS
+            // ======================================
+
+            try {
+
+                const settings =
+                    track.getSettings();
+
+                console.log(
+                    "📷 CAMERA SETTINGS:",
+                    settings
+                );
+
+            } catch (error) {
+
+                console.log(
+                    "Camera settings unavailable:",
+                    error
+                );
 
             }
 
@@ -677,79 +882,137 @@ if (
 
         }
 
-    })
+    }
+
 
     // ==========================================
-    // CAMERA ERROR
+    // CAMERA START ERROR
     // ==========================================
 
-    .catch((error) => {
+    catch (error) {
 
         console.error(
-            "CAMERA ERROR:",
+            "❌ CAMERA ERROR:",
             error
         );
 
-        errorBox.classList.remove("hidden");
 
-        let errorMsg =
-            "เปิดกล้องไม่ได้<br><br>" +
-            "กรุณาอนุญาตการใช้งานกล้อง<br>" +
+        errorBox.classList.remove(
+            "hidden"
+        );
+
+
+        let message =
+            "ไม่สามารถเปิดกล้องได้<br><br>" +
+            "กรุณาอนุญาตการใช้งานกล้อง " +
             "แล้วลองใหม่อีกครั้ง";
 
-        const errStr =
-            error.toString().toLowerCase();
+
+        const err =
+            String(error)
+                .toLowerCase();
+
+
+        // ======================================
+        // PERMISSION
+        // ======================================
 
         if (
-            errStr.includes(
+
+            err.includes(
                 "notallowederror"
-            ) ||
-            errStr.includes(
-                "permission dismissed"
-            ) ||
-            errStr.includes(
+            )
+
+            ||
+
+            err.includes(
                 "permission denied"
             )
+
+            ||
+
+            err.includes(
+                "permission dismissed"
+            )
+
         ) {
 
-            errorMsg =
+            message =
                 "ไม่สามารถเข้าถึงกล้องได้<br><br>" +
                 "กรุณาอนุญาตการใช้งานกล้อง " +
                 "แล้ว Refresh หน้าเว็บอีกครั้ง";
 
         }
 
+
+        // ======================================
+        // CAMERA NOT FOUND
+        // ======================================
+
         else if (
-            errStr.includes(
+
+            err.includes(
                 "notfounderror"
             )
+
+            ||
+
+            err.includes(
+                "no camera"
+            )
+
         ) {
 
-            errorMsg =
+            message =
                 "ไม่พบกล้องในอุปกรณ์นี้<br><br>" +
                 "กรุณาตรวจสอบว่ากล้องสามารถใช้งานได้";
 
         }
 
+
+        // ======================================
+        // CAMERA CONSTRAINT ERROR
+        // ======================================
+
         else if (
-            errStr.includes(
+
+            err.includes(
                 "overconstrainederror"
             )
+
+            ||
+
+            err.includes(
+                "constraint"
+            )
+
         ) {
 
-            errorMsg =
-                "กล้องไม่รองรับความละเอียดที่กำหนด<br><br>" +
+            message =
+                "กล้องไม่รองรับการตั้งค่าที่กำหนด<br><br>" +
                 "กรุณาลองเปิดกล้องใหม่อีกครั้ง";
 
         }
 
-        document
-            .getElementById(
-                "camera-error-msg"
-            )
-            .innerHTML = errorMsg;
 
-    });
+        // ======================================
+        // UNKNOWN ERROR
+        // ======================================
+
+        else {
+
+            message =
+                "เกิดข้อผิดพลาดในการเปิดกล้อง<br><br>" +
+                "กรุณาลองใหม่อีกครั้ง";
+
+        }
+
+
+        errorMsg.innerHTML =
+            message;
+
+    }
+
 }
 
         function switchCamera() {
