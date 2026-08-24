@@ -22,8 +22,8 @@
         /* Style for the scanner container to ensure it fits well on mobile */
         #reader {
     width: 100%;
-    max-width: 420px;
-    min-height: 420px;
+    max-width: 360px;
+    height: 360px;
     border-radius: 16px;
     overflow: hidden;
     background: #000;
@@ -31,7 +31,7 @@
 
 #reader video {
     width: 100% !important;
-    height: auto !important;
+    height: 100% !important;
     object-fit: cover !important;
 }
         
@@ -69,7 +69,7 @@
 
     <div class="w-full max-w-md bg-white shadow-sm flex flex-col items-center py-4 px-4 sticky top-0 z-10">
         <img src="https://www.alliedmfg.co.th/wp-content/uploads/2026/07/AMS-LOGO-V1.png" alt="AMS Logo" class="h-10 object-contain mb-1">
-        <h1 class="text-lg font-semibold text-blue-900 tracking-wide">Inventory Cycle Count777</h1>
+        <h1 class="text-lg font-semibold text-blue-900 tracking-wide">Inventory Cycle Count000</h1>
     </div>
 
     <!-- Main Application Container -->
@@ -571,12 +571,14 @@ async function nativeScanLoop(video) {
         // เพิ่มพื้นที่อ่าน QR
         qrbox: function(viewfinderWidth, viewfinderHeight) {
 
-    const width = Math.floor(viewfinderWidth * 0.80);
-    const height = Math.floor(viewfinderHeight * 0.60);
+    const size = Math.min(
+        viewfinderWidth,
+        viewfinderHeight
+    ) * 0.70;
 
     return {
-        width: width,
-        height: height
+        width: Math.floor(size),
+        height: Math.floor(size)
     };
 
 },
@@ -592,21 +594,19 @@ async function nativeScanLoop(video) {
         // ==========================================
 
         videoConstraints: {
+
     facingMode: {
         ideal: "environment"
     },
 
     width: {
-        ideal: 1280
+        ideal: 1920
     },
 
     height: {
-        ideal: 720
-    },
-
-    focusMode: "continuous"
+        ideal: 1080
+    }
 }
-    };
 
     // ==========================================
     // START CAMERA
@@ -762,38 +762,55 @@ console.log(
 
 console.log("=================================");
 
-            // ==========================================
-// FOCUS SUPPORT CHECK
+// ==========================================
+// STEP 12 - FORCE AUTO FOCUS
 // ==========================================
 
-if (
-    capabilities.focusMode &&
-    capabilities.focusMode.includes("continuous")
-) {
+try {
+
+    const capabilities =
+        track.getCapabilities();
 
     console.log(
-        "✅ RESULT: CONTINUOUS AUTO FOCUS SUPPORTED"
+        "FOCUS MODE:",
+        capabilities.focusMode
     );
 
-} else {
+    if (
+        capabilities.focusMode &&
+        capabilities.focusMode.includes("continuous")
+    ) {
 
-    console.log(
-        "❌ RESULT: CONTINUOUS AUTO FOCUS NOT SUPPORTED"
-    );
+        await track.applyConstraints({
+            advanced: [
+                {
+                    focusMode: "continuous"
+                }
+            ]
+        });
+
+        console.log(
+            "✅ AUTO FOCUS: CONTINUOUS"
+        );
+
+    }
+
+    else {
+
+        console.log(
+            "⚠️ Continuous Focus not supported"
+        );
+
+    }
 
 }
-
-if (capabilities.focusDistance) {
-
-    console.log(
-        "✅ RESULT: FOCUS DISTANCE CONTROL SUPPORTED"
-    );
-
-} else {
+catch (error) {
 
     console.log(
-        "⚠️ RESULT: FOCUS DISTANCE CONTROL NOT SUPPORTED"
+        "Auto Focus error:",
+        error
     );
+
 }
 
             console.log(
