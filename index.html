@@ -68,7 +68,7 @@
 
     <div class="w-full max-w-md bg-white shadow-sm flex flex-col items-center py-4 px-4 sticky top-0 z-10">
         <img src="https://www.alliedmfg.co.th/wp-content/uploads/2026/07/AMS-LOGO-V1.png" alt="AMS Logo" class="h-10 object-contain mb-1">
-        <h1 class="text-lg font-semibold text-blue-900 tracking-wide">Inventory Cycle Count2</h1>
+        <h1 class="text-lg font-semibold text-blue-900 tracking-wide">Inventory Cycle Count3333</h1>
     </div>
 
     <!-- Main Application Container -->
@@ -514,10 +514,16 @@ async function initScanner() {
     // ==========================================
 
     const cameraConfig = {
-        facingMode: {
-            exact: "environment"
-        }
-    };
+    facingMode: {
+        ideal: "environment"
+    },
+    width: {
+        ideal: 1920
+    },
+    height: {
+        ideal: 1080
+    }
+};
 
     // ==========================================
     // SCANNER CONFIG
@@ -528,11 +534,14 @@ async function initScanner() {
     // อ่านภาพถี่ขึ้น
     fps: 30,
 
-    // ให้พื้นที่ตรวจจับใหญ่
+    // ให้ html5-qrcode ตรวจเกือบเต็มภาพ
     qrbox: function(viewfinderWidth, viewfinderHeight) {
 
-        const width = Math.floor(viewfinderWidth * 0.95);
-        const height = Math.floor(viewfinderHeight * 0.80);
+        const width =
+            Math.floor(viewfinderWidth * 0.95);
+
+        const height =
+            Math.floor(viewfinderHeight * 0.90);
 
         return {
             width: width,
@@ -540,13 +549,10 @@ async function initScanner() {
         };
     },
 
-    // ไม่บังคับ aspect ratio
     aspectRatio: undefined,
 
-    // ใช้ decoder ของ html5-qrcode
     useBarCodeDetectorIfSupported: false,
 
-    // เพิ่มความละเอียดในการอ่าน
     disableFlip: false
 };
 
@@ -703,48 +709,54 @@ async function initScanner() {
             );
 
             // ======================================
-            // AUTO FOCUS
-            // ======================================
+// AUTO FOCUS
+// ======================================
 
-            if (
-                capabilities.focusMode &&
-                capabilities.focusMode.includes(
-                    "continuous"
-                )
-            ) {
+if (capabilities.focusMode) {
 
-                try {
+    console.log(
+        "FOCUS MODES:",
+        capabilities.focusMode
+    );
 
-                    await track.applyConstraints({
+    if (
+        capabilities.focusMode.includes("continuous")
+    ) {
 
-                        advanced: [
-                            {
-                                focusMode:
-                                    "continuous"
-                            }
-                        ]
+        try {
 
-                    });
+            await track.applyConstraints({
 
-                    console.log(
-                        "✅ AUTO FOCUS: CONTINUOUS"
-                    );
+                advanced: [
+                    {
+                        focusMode: "continuous"
+                    }
+                ]
 
-                } catch (e) {
+            });
 
-                    console.log(
-                        "⚠️ Continuous focus failed:",
-                        e
-                    );
-                }
+            console.log(
+                "✅ AUTO FOCUS: CONTINUOUS"
+            );
 
-            } else {
+        } catch (e) {
 
-                console.log(
-                    "⚠️ Continuous autofocus not supported"
-                );
+            console.log(
+                "⚠️ Continuous focus failed:",
+                e
+            );
 
-            }
+        }
+
+    } else {
+
+        console.log(
+            "⚠️ Continuous autofocus not supported"
+        );
+
+    }
+
+}
 
             // ======================================
             // AUTO EXPOSURE
@@ -1719,7 +1731,7 @@ document
         showView('view-scanner');
 
 setTimeout(() => {
-    openNativeCamera();
+    initScanner();
 }, 300);
 
     });
