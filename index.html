@@ -34,6 +34,84 @@
     height: auto !important;
     object-fit: cover !important;
 }
+
+        /* ==========================================
+   QR FOCUS CURSOR
+   ========================================== */
+
+.qr-focus-cursor {
+    position: absolute;
+    width: 180px;
+    height: 180px;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    pointer-events: none;
+    z-index: 15;
+}
+
+/* มุมกรอบ */
+.focus-corner {
+    position: absolute;
+    width: 35px;
+    height: 35px;
+    border-color: #22c55e;
+    border-style: solid;
+}
+
+/* มุมซ้ายบน */
+.focus-corner.top-left {
+    top: 0;
+    left: 0;
+    border-width: 4px 0 0 4px;
+}
+
+/* มุมขวาบน */
+.focus-corner.top-right {
+    top: 0;
+    right: 0;
+    border-width: 4px 4px 0 0;
+}
+
+/* มุมซ้ายล่าง */
+.focus-corner.bottom-left {
+    bottom: 0;
+    left: 0;
+    border-width: 0 0 4px 4px;
+}
+
+/* มุมขวาล่าง */
+.focus-corner.bottom-right {
+    bottom: 0;
+    right: 0;
+    border-width: 0 4px 4px 0;
+}
+
+/* จุดตรงกลาง */
+.focus-dot {
+    position: absolute;
+    width: 8px;
+    height: 8px;
+    background: #22c55e;
+    border-radius: 50%;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    box-shadow: 0 0 10px rgba(34,197,94,0.8);
+}
+
+/* ข้อความ */
+.focus-text {
+    position: absolute;
+    width: 220px;
+    left: 50%;
+    bottom: -40px;
+    transform: translateX(-50%);
+    text-align: center;
+    color: white;
+    font-size: 13px;
+    text-shadow: 0 1px 3px black;
+}
         
         /* Custom SweetAlert styles for mobile */
         .swal2-popup {
@@ -149,6 +227,20 @@
             <!-- The element where the camera stream will be injected -->
             <div class="flex-1 flex flex-col justify-center items-center w-full relative">
                 <div id="reader"></div>
+
+<!-- QR Focus Cursor -->
+<div class="qr-focus-cursor">
+    <div class="focus-corner top-left"></div>
+    <div class="focus-corner top-right"></div>
+    <div class="focus-corner bottom-left"></div>
+    <div class="focus-corner bottom-right"></div>
+
+    <div class="focus-dot"></div>
+
+    <div class="focus-text">
+        เล็ง QR ให้อยู่ตรงกลาง
+    </div>
+</div>
                 
                 <!-- Error Overlay (Hidden by default) -->
                 <div id="camera-error" class="hidden absolute inset-0 bg-black/80 flex flex-col items-center justify-center p-6 text-center z-20">
