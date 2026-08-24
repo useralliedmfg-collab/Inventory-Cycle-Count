@@ -385,17 +385,31 @@
     html5QrCode = new Html5Qrcode("reader");
 
     const config = {
-        fps: 10,
-        qrbox: {
-            width: 340,
-            height: 220
+    fps: 15,
+
+    qrbox: {
+        width: 340,
+        height: 220
+    },
+
+    aspectRatio: 1.0,
+
+    videoConstraints: {
+        facingMode: "environment",
+        width: {
+            ideal: 1920
         },
-        aspectRatio: 1.0
-    };
+        height: {
+            ideal: 1080
+        }
+    }
+};
 
     html5QrCode.start(
-        { facingMode: "environment" },
-        config,
+    {
+        facingMode: "environment"
+    },
+    config,
 
         function(decodedText) {
 
