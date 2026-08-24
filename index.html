@@ -208,7 +208,6 @@
                 <select
     id="location-select"
     class="w-full border border-gray-300 rounded-lg p-3 text-lg bg-gray-50 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
-    disabled
 >
                     <option value="" disabled selected>-- กรุณาเลือกโซนก่อน --</option>
                 </select>
@@ -412,12 +411,18 @@
 
         // --- View Navigation ---
         function showView(viewId) {
-            document.getElementById('view-setup').classList.add('hidden');
-            document.getElementById('view-scanner').classList.add('hidden');
-            document.getElementById('view-input').classList.add('hidden');
-            document.getElementById(viewId).classList.remove('hidden');
-            document.getElementById(viewId).classList.add('flex');
-        }
+
+    document.getElementById('view-setup').classList.add('hidden');
+    document.getElementById('view-scanner').classList.add('hidden');
+    document.getElementById('view-input').classList.add('hidden');
+
+    document.getElementById('view-setup').classList.remove('flex');
+    document.getElementById('view-scanner').classList.remove('flex');
+    document.getElementById('view-input').classList.remove('flex');
+
+    document.getElementById(viewId).classList.remove('hidden');
+    document.getElementById(viewId).classList.add('flex');
+}
 
         function updateLocations() {
 
