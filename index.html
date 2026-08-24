@@ -87,7 +87,7 @@
     border-width: 0 4px 4px 0;
 }
 
-/* จุดตรงกลาง */
+/* จุดโฟกัสกระพริบ */
 .focus-dot {
     position: absolute;
     width: 8px;
@@ -97,7 +97,27 @@
     left: 50%;
     top: 50%;
     transform: translate(-50%, -50%);
+    
     box-shadow: 0 0 10px rgba(34,197,94,0.8);
+
+    animation: focusBlink 1.2s ease-in-out infinite;
+}
+
+/* Animation จุดโฟกัส */
+@keyframes focusBlink {
+
+    0%, 100% {
+        opacity: 1;
+        transform: translate(-50%, -50%) scale(1);
+        box-shadow: 0 0 8px rgba(34,197,94,0.7);
+    }
+
+    50% {
+        opacity: 0.25;
+        transform: translate(-50%, -50%) scale(1.8);
+        box-shadow: 0 0 18px rgba(34,197,94,1);
+    }
+
 }
 
 /* ข้อความ */
