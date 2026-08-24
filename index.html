@@ -411,50 +411,43 @@
     // 1. ปรับ Config สแกนเนอร์เพิ่มประสิทธิภาพ
     // ==========================================
     const config = {
-        fps: 30, // เพิ่ม FPS เป็น 30 ช่วยลด Motion Blur เวลาถือกล้องสั่น
-        experimentalFeatures: {
-            // สำคัญมาก: เปิดใช้ Native Barcode Detector ของอุปกรณ์ (มือถือ) 
-            // จะอ่าน QR จาง/เล็ก/ไกล ได้ดีขึ้นหลายเท่าตัว
-            useBarCodeDetectorIfSupported: true 
-        },
-        qrbox: function(viewfinderWidth, viewfinderHeight) {
-            // ลดขนาดกรอบลงเป็น 70% เพื่อบังคับให้ผู้ใช้ถือกล้องใกล้ขึ้น ทำให้ Auto Focus ทำงานง่ายขึ้น
-            const size = Math.min(viewfinderWidth, viewfinderHeight) * 0.70;
-            return {
-                width: Math.floor(size),
-                height: Math.floor(size)
-            };
-        },
-        aspectRatio: 1.0
-    };
+    fps: 10,
+    qrbox: function(viewfinderWidth, viewfinderHeight) {
+        const size = Math.min(viewfinderWidth, viewfinderHeight) * 0.70;
+
+        return {
+            width: Math.floor(size),
+            height: Math.floor(size)
+        };
+    }
+};
 
     // ==========================================
     // 2. บังคับความละเอียดของกล้อง (Camera Constraints)
     // ==========================================
     const cameraConstraints = {
-        facingMode: { ideal: "environment" },
-        // บังคับขอความละเอียดสูง (FHD) เป็นอย่างน้อย ถ้ากล้องรองรับ เพื่อให้เห็น QR ขนาดเล็กชัดเจน
-        width: { min: 1280, ideal: 1920, max: 3840 },
-        height: { min: 720, ideal: 1080, max: 2160 }
-    };
+    facingMode: { ideal: "environment" }
+};
 
     html5QrCode.start(
-        cameraConstraints,
-        config,
-        function(decodedText) {
-            console.log("SCAN:", decodedText);
-            html5QrCode.stop()
-                .then(() => {
-                    html5QrCode.clear();
-                    processScannedData(decodedText);
-                })
-                .catch(() => {
-                    processScannedData(decodedText);
-                });
-        },
-        function(errorMessage) {
-            // ไม่ต้องทำอะไร (ซ่อน error การหาสแกนไม่เจอในแต่ละเฟรม)
-        }
+    cameraConstraints,
+    config,
+    function(decodedText) {
+        console.log("SCAN:", decodedText);
+
+        html5QrCode.stop()
+            .then(() => {
+                html5QrCode.clear();
+                processScannedData(decodedText);
+            })
+            .catch(() => {
+                processScannedData(decodedText);
+            });
+    },
+    function(errorMessage) {
+        // ไม่ต้องทำอะไร
+    }
+)
     ).then(() => {
         console.log("CAMERA OK");
 
