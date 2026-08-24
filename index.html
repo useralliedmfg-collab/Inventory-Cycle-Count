@@ -559,13 +559,35 @@
 
         if (track) {
 
-            track.applyConstraints({
-                advanced: [
-                    {
-                        focusMode: "continuous"
-                    }
-                ]
-            })
+            const capabilities = track.getCapabilities();
+
+const focusConstraints = {};
+
+if (capabilities.focusMode) {
+    focusConstraints.focusMode = "continuous";
+}
+
+if (capabilities.zoom) {
+    focusConstraints.zoom = Math.min(
+        capabilities.zoom.max,
+        Math.max(
+            capabilities.zoom.min,
+            capabilities.zoom.min +
+            (capabilities.zoom.max - capabilities.zoom.min) * 0.15
+        )
+    );
+}
+
+track.applyConstraints({
+    advanced: [focusConstraints]
+})
+.then(() => {
+    console.log("FOCUS + ZOOM: ON");
+})
+.catch(error => {
+    console.log("ไม่สามารถปรับ Focus/Zoom ได้", error);
+});
+            
             .then(() => {
                 console.log("AUTO FOCUS: ON");
             })
