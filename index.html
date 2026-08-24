@@ -69,7 +69,7 @@
 
     <div class="w-full max-w-md bg-white shadow-sm flex flex-col items-center py-4 px-4 sticky top-0 z-10">
         <img src="https://www.alliedmfg.co.th/wp-content/uploads/2026/07/AMS-LOGO-V1.png" alt="AMS Logo" class="h-10 object-contain mb-1">
-        <h1 class="text-lg font-semibold text-blue-900 tracking-wide">Inventory Cycle Count555</h1>
+        <h1 class="text-lg font-semibold text-blue-900 tracking-wide">Inventory Cycle Count777</h1>
     </div>
 
     <!-- Main Application Container -->
@@ -295,8 +295,166 @@
     unit2: ""
 };
         let html5QrCode = null;
-        let availableCameras = [];
-        let currentCameraIndex = 0;
+let availableCameras = [];
+let currentCameraIndex = 0;
+
+let nativeBarcodeDetector = null;
+let nativeScanTimer = null;
+let nativeScanning = false
+
+        // ==========================================
+// STEP 11 - NATIVE QR SCANNER
+// ==========================================
+
+async function startNativeQRScanner() {
+
+    const video =
+        document.querySelector("#reader video");
+
+    if (!video) {
+
+        console.log(
+            "Native scanner: video not ready"
+        );
+
+        return false;
+    }
+
+    // Browser ต้องรองรับ BarcodeDetector
+    if (
+        !("BarcodeDetector" in window)
+    ) {
+
+        console.log(
+            "BarcodeDetector NOT supported"
+        );
+
+        return false;
+    }
+
+    try {
+
+        // ตรวจว่า Browser รองรับ QR จริงหรือไม่
+        const formats =
+            await BarcodeDetector.getSupportedFormats();
+
+        console.log(
+            "SUPPORTED BARCODE FORMATS:",
+            formats
+        );
+
+        if (!formats.includes("qr_code")) {
+
+            console.log(
+                "QR CODE NOT SUPPORTED"
+            );
+
+            return false;
+        }
+
+        nativeBarcodeDetector =
+            new BarcodeDetector({
+                formats: ["qr_code"]
+            });
+
+        nativeScanning = true;
+
+        console.log(
+            "✅ NATIVE QR SCANNER: ON"
+        );
+
+        nativeScanLoop(video);
+
+        return true;
+
+    }
+
+    catch (error) {
+
+        console.error(
+            "Native scanner error:",
+            error
+        );
+
+        return false;
+    }
+}
+        // ==========================================
+// NATIVE QR SCAN LOOP
+// ==========================================
+
+async function nativeScanLoop(video) {
+
+    if (!nativeScanning) {
+        return;
+    }
+
+    if (
+        video.readyState <
+        HTMLMediaElement.HAVE_ENOUGH_DATA
+    ) {
+
+        nativeScanTimer =
+            requestAnimationFrame(
+                () => nativeScanLoop(video)
+            );
+
+        return;
+    }
+
+    try {
+
+        const barcodes =
+            await nativeBarcodeDetector.detect(
+                video
+            );
+
+        if (
+            barcodes &&
+            barcodes.length > 0
+        ) {
+
+            const decodedText =
+                barcodes[0].rawValue;
+
+            console.log(
+                "🎯 NATIVE QR FOUND:",
+                decodedText
+            );
+
+            nativeScanning = false;
+
+            if (nativeScanTimer) {
+
+                cancelAnimationFrame(
+                    nativeScanTimer
+                );
+
+                nativeScanTimer = null;
+            }
+
+            processScannedData(
+                decodedText
+            );
+
+            return;
+        }
+
+    }
+
+    catch (error) {
+
+        console.log(
+            "Native QR detection:",
+            error
+        );
+    }
+
+    nativeScanTimer =
+        requestAnimationFrame(
+            () => nativeScanLoop(video)
+        );
+}
 
         // --- View Navigation ---
         function showView(viewId) {
@@ -512,6 +670,16 @@
 
         // reset scan lock
         window.isProcessingScan = false;
+
+        // ==========================================
+    // START NATIVE QR DETECTOR
+    // ==========================================
+
+    setTimeout(() => {
+
+        startNativeQRScanner();
+
+    }, 500);
 
         // ==========================================
         // GET VIDEO TRACK
