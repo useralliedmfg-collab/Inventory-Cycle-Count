@@ -323,42 +323,53 @@
 // ==========================================
 // CAMERA ZOOM
 // ==========================================
-        function setCameraZoom(zoomLevel) {
 
-    if (!html5QrCode) {
-        console.log("ยังไม่พบ Camera");
-        return;
-    }
+if (
+    capabilities.zoom &&
+    capabilities.zoom.max > 1
+) {
 
-    try {
+    console.log(
+        "กล้องรองรับ Zoom:",
+        capabilities.zoom
+    );
 
-        const track =
-            html5QrCode.getRunningTrack();
+    const targetZoom = Math.min(
+        2,
+        capabilities.zoom.max
+    );
 
-        if (!track) {
-            console.log("ไม่พบ Camera Track");
-            return;
-        }
+    track.applyConstraints({
+        advanced: [
+            {
+                zoom: targetZoom
+            }
+        ]
+    })
+    .then(() => {
 
-        const capabilities =
-            track.getCapabilities();
+        console.log(
+            "ZOOM ON:",
+            targetZoom
+        );
 
-        // ตรวจสอบว่ากล้องรองรับ Zoom หรือไม่
-        if (!capabilities.zoom) {
+    })
+    .catch(error => {
 
-            console.log(
-                "กล้องนี้ไม่รองรับ Zoom"
-            );
+        console.log(
+            "ZOOM ERROR:",
+            error
+        );
 
-            Swal.fire({
-                icon: 'info',
-                title: 'ไม่รองรับ Zoom',
-                text: 'กล้องหรือ Browser นี้ไม่รองรับการควบคุม Zoom',
-                confirmButtonText: 'ตกลง'
-            });
+    });
 
-            return;
-        }
+} else {
+
+    console.log(
+        "กล้องนี้ไม่รองรับ Zoom ผ่าน Browser"
+    );
+
+}
 
         // จำกัดค่า Zoom ให้อยู่ในช่วงที่กล้องรองรับ
         const minZoom =
