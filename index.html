@@ -110,9 +110,10 @@
                 <select
     id="location-select"
     class="w-full border border-gray-300 rounded-lg p-3 text-lg bg-gray-50 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+    disabled
 >
-    <option value="" disabled selected>-- กรุณาเลือกโซนก่อน --</option>
-</select>
+                    <option value="" disabled selected>-- กรุณาเลือกโซนก่อน --</option>
+                </select>
             </div>
 
             <div>
@@ -299,87 +300,45 @@
 
         // --- View Navigation ---
         function showView(viewId) {
-
-    const views = [
-        'view-setup',
-        'view-scanner',
-        'view-input'
-    ];
-
-    views.forEach(id => {
-
-        const view =
-            document.getElementById(id);
-
-        view.classList.add('hidden');
-        view.classList.remove('flex');
-
-    });
-
-    const target =
-        document.getElementById(viewId);
-
-    target.classList.remove('hidden');
-    target.classList.add('flex');
-}
+            document.getElementById('view-setup').classList.add('hidden');
+            document.getElementById('view-scanner').classList.add('hidden');
+            document.getElementById('view-input').classList.add('hidden');
+            document.getElementById(viewId).classList.remove('hidden');
+            document.getElementById(viewId).classList.add('flex');
+        }
 
         function updateLocations() {
 
-    const zoneSelect =
-        document.getElementById('zone-select');
+    const zone =
+        document.getElementById('zone-select').value;
 
-    const locationSelect =
+    const locSelect =
         document.getElementById('location-select');
 
-    const zone =
-        zoneSelect.value;
+    locSelect.innerHTML =
+        '<option value="" disabled selected>-- เลือกพื้นที่ --</option>';
 
-    console.log("ZONE SELECTED:", zone);
+    if (MOCK_ZONES[zone]) {
 
-    // ล้าง Location เดิม
-    locationSelect.innerHTML = '';
+        MOCK_ZONES[zone].forEach(loc => {
 
-    // สร้างตัวเลือกเริ่มต้น
-    const defaultOption =
-        document.createElement('option');
+            const opt =
+                document.createElement('option');
 
-    defaultOption.value = '';
-    defaultOption.textContent =
-        '-- เลือกพื้นที่ --';
+            opt.value = loc;
+            opt.textContent = loc;
 
-    defaultOption.disabled = true;
-    defaultOption.selected = true;
+            locSelect.appendChild(opt);
 
-    locationSelect.appendChild(defaultOption);
+        });
 
-    // ตรวจสอบ Zone
-    if (!zone || !MOCK_ZONES[zone]) {
+        locSelect.disabled = false;
 
-        locationSelect.disabled = true;
+    } else {
 
-        return;
+        locSelect.disabled = true;
+
     }
-
-    // เพิ่ม Location
-    MOCK_ZONES[zone].forEach(function(location) {
-
-        const option =
-            document.createElement('option');
-
-        option.value = location;
-        option.textContent = location;
-
-        locationSelect.appendChild(option);
-
-    });
-
-    // เปิด Location
-    locationSelect.disabled = false;
-
-    console.log(
-        "LOCATION ENABLED:",
-        locationSelect.disabled
-    );
 }
 
         // --- STREAMING_CHUNK:Scanner Logic via Html5Qrcode ---
@@ -422,8 +381,13 @@
     // ล้างพื้นที่กล้องก่อน
     reader.innerHTML = "";
 
-    // สร้าง scanner ใหม่
-    html5QrCode = new Html5Qrcode("reader");
+    // สร้าง scanner ใหม่ถ้ายังไม่มี
+    if (!html5QrCode) {
+        html5QrCode = new Html5Qrcode("reader");
+    }
+
+    // แยก Config ตัวแรกให้มีแค่ Key เดียวตามที่ไลบรารีบังคับ
+    const cameraConfig = { facingMode: "environment" };
 
     const config = {
         fps: 10,
@@ -431,11 +395,19 @@
             width: 340,
             height: 220
         },
-        aspectRatio: 1.0
+        aspectRatio: 1.0,
+        // เปิดใช้ Native Barcode Detector (ช่วยให้อ่านบาร์โค้ดจางๆ ได้ดีขึ้นบน Android)
+        useBarCodeDetectorIfSupported: true,
+        // บังคับความละเอียดสูง (High Res) ช่วยให้กล้องเห็นรายละเอียด QR เล็กๆ ได้ชัด
+        videoConstraints: {
+            width: { min: 1280, ideal: 1920 },
+            height: { min: 720, ideal: 1080 },
+            facingMode: "environment"
+        }
     };
 
     html5QrCode.start(
-        { facingMode: "environment" },
+        cameraConfig,
         config,
 
         function(decodedText) {
@@ -457,76 +429,43 @@
             // ไม่ต้องทำอะไร
         }
 
-    }).then(() => {
+    ).then(() => {
 
-    console.log("📷 CAMERA OK");
-
-    const video = document.querySelector("#reader video");
-
-    if (!video || !video.srcObject) {
-        console.log("ไม่พบ video stream");
-        return;
-    }
-
-    const track = video.srcObject.getVideoTracks()[0];
-
-    if (!track) {
-        console.log("ไม่พบ camera track");
-        return;
-    }
-
-    const capabilities = track.getCapabilities();
-
-    console.log("📷 CAMERA CAPABILITIES:", capabilities);
-
-    // ==========================================
-    // AUTO FOCUS
-    // ==========================================
-
-    if (
-        capabilities.focusMode &&
-        capabilities.focusMode.includes("continuous")
-    ) {
-
-        track.applyConstraints({
-            advanced: [
-                {
-                    focusMode: "continuous"
+        console.log("CAMERA OK");
+        
+        // พยายามเปิด Continuous Auto Focus ให้เลนส์พยายามโฟกัสวัตถุตรงหน้าตลอดเวลา
+        try {
+            const track = html5QrCode.getRunningTrack();
+            if (track) {
+                const capabilities = track.getCapabilities();
+                if (capabilities.focusMode && capabilities.focusMode.includes('continuous')) {
+                    track.applyConstraints({
+                        advanced: [{ focusMode: 'continuous' }]
+                    }).catch(e => console.log("Focus constraints error", e));
                 }
-            ]
-        })
-        .then(() => {
+            }
+        } catch (err) {
+            console.log("Auto focus not supported", err);
+        }
 
-            console.log("🎯 AUTO FOCUS ON");
-
-        })
-        .catch(error => {
-
-            console.log(
-                "❌ AUTO FOCUS ERROR:",
-                error
-            );
-
-        });
-
-    } else {
-
-        console.log(
-            "⚠️ กล้องนี้ไม่รองรับ Continuous Auto Focus"
-        );
-
-    }
-
-}).catch((error) => {
+    }).catch((error) => {
 
         console.error("CAMERA ERROR:", error);
 
         errorBox.classList.remove("hidden");
+        
+        // ดักจับ Error แจ้งเตือนสาเหตุที่ถูกต้อง
+        let errorMsg = "เปิดกล้องไม่ได้<br><br>กรุณากดอนุญาตการใช้งานกล้อง<br>แล้วลองใหม่อีกครั้ง";
+        let errStr = error.toString().toLowerCase();
+        
+        // ดักจับกรณี Permission dismissed หรือ NotAllowedError
+        if (errStr.includes("notallowederror") || errStr.includes("permission dismissed") || errStr.includes("permission denied")) {
+            errorMsg = "คุณได้ปิดหรือปฏิเสธการขอสิทธิ์เข้าถึงกล้อง<br><br>กรุณา <b>รีเฟรชหน้าเว็บ (Refresh)</b> หรือไปที่การตั้งค่า Browser เพื่ออนุญาตการใช้งานกล้อง";
+        } else if (errStr.includes("notfounderror")) {
+            errorMsg = "ไม่พบกล้องในอุปกรณ์นี้<br><br>โปรดตรวจสอบว่าอุปกรณ์ของคุณมีกล้องและใช้งานได้ปกติ";
+        }
 
-        document.getElementById("camera-error-msg").innerHTML =
-            "เปิดกล้องไม่ได้<br><br>" +
-            "กรุณากดอนุญาตการใช้งานกล้อง<br>" +
-            "แล้วลองใหม่อีกครั้ง";
+        document.getElementById("camera-error-msg").innerHTML = errorMsg;
 
     });
 }
