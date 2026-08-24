@@ -68,7 +68,7 @@
 
     <div class="w-full max-w-md bg-white shadow-sm flex flex-col items-center py-4 px-4 sticky top-0 z-10">
         <img src="https://www.alliedmfg.co.th/wp-content/uploads/2026/07/AMS-LOGO-V1.png" alt="AMS Logo" class="h-10 object-contain mb-1">
-        <h1 class="text-lg font-semibold text-blue-900 tracking-wide">Inventory Cycle Count0000000</h1>
+        <h1 class="text-lg font-semibold text-blue-900 tracking-wide">Inventory Cycle Count1111</h1>
     </div>
 
     <!-- Main Application Container -->
@@ -148,6 +148,14 @@
             <!-- The element where the camera stream will be injected -->
             <div class="flex-1 flex flex-col justify-center items-center w-full relative">
                 <div id="reader"></div>
+                <!-- Native Phone Camera -->
+<input
+    type="file"
+    id="native-camera-input"
+    accept="image/*"
+    capture="environment"
+    class="hidden"
+>
                 
                 <!-- Error Overlay (Hidden by default) -->
                 <div id="camera-error" class="hidden absolute inset-0 bg-black/80 flex flex-col items-center justify-center p-6 text-center z-20">
@@ -401,9 +409,64 @@ window.addEventListener("DOMContentLoaded", function () {
            showView('view-scanner');
 
 setTimeout(() => {
-    initScanner();
+    openNativeCamera();
 }, 300);
         }
+        function openNativeCamera() {
+    const cameraInput =
+        document.getElementById('native-camera-input');
+
+    if (!cameraInput) {
+        console.error('ไม่พบ native-camera-input');
+        return;
+    }
+
+    console.log('📷 เปิด Native Camera');
+
+    cameraInput.click();
+}
+        document
+    .getElementById('native-camera-input')
+    .addEventListener('change', async function(event) {
+
+        const file = event.target.files[0];
+
+        if (!file) return;
+
+        try {
+
+            const scanner =
+                new Html5Qrcode("reader");
+
+            const decodedText =
+                await scanner.scanFile(file, true);
+
+            console.log(
+                "QR FROM NATIVE CAMERA:",
+                decodedText
+            );
+
+            processScannedData(decodedText);
+
+        } catch (error) {
+
+            console.error(error);
+
+            Swal.fire({
+                icon: 'warning',
+                title: 'อ่าน QR ไม่สำเร็จ',
+                text: 'กรุณาถ่าย QR ให้ชัดแล้วลองใหม่',
+                confirmButtonText: 'ลองใหม่'
+            }).then(() => {
+                openNativeCamera();
+            });
+
+        }
+
+        event.target.value = "";
+
+    });
+
 async function initScanner() {
 
     const reader = document.getElementById("reader");
@@ -1655,10 +1718,9 @@ document
         // กลับไปหน้าสแกน
         showView('view-scanner');
 
-        // เปิดกล้องใหม่
-        setTimeout(() => {
-            initScanner();
-        }, 300);
+setTimeout(() => {
+    openNativeCamera();
+}, 300);
 
     });
 
