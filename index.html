@@ -69,7 +69,7 @@
 
     <div class="w-full max-w-md bg-white shadow-sm flex flex-col items-center py-4 px-4 sticky top-0 z-10">
         <img src="https://www.alliedmfg.co.th/wp-content/uploads/2026/07/AMS-LOGO-V1.png" alt="AMS Logo" class="h-10 object-contain mb-1">
-        <h1 class="text-lg font-semibold text-blue-900 tracking-wide">Inventory Cycle Count22</h1>
+        <h1 class="text-lg font-semibold text-blue-900 tracking-wide">Inventory Cycle Count55555</h1>
     </div>
 
     <!-- Main Application Container -->
@@ -399,7 +399,7 @@ window.addEventListener("DOMContentLoaded", function () {
             currentSession.responsiblePerson = resp;
 
             showView('view-scanner');
-            initScanner();
+openNativeCamera();
         }
 async function initScanner() {
 
@@ -1693,6 +1693,64 @@ document
                 confirmButtonColor: '#d33'
             });
         }
+        // ==========================================
+// STEP 1: NATIVE CAMERA TEST
+// ==========================================
+
+async function openNativeCamera() {
+
+    try {
+
+        // ขอใช้กล้องหลังของมือถือ
+        const stream = await navigator.mediaDevices.getUserMedia({
+            video: {
+                facingMode: {
+                    ideal: "environment"
+                }
+            },
+            audio: false
+        });
+
+        console.log("✅ CAMERA OPENED");
+
+        // ดูว่า Browser ได้กล้องจริงหรือไม่
+        const video = document.createElement("video");
+
+        video.autoplay = true;
+        video.playsInline = true;
+        video.muted = true;
+
+        video.srcObject = stream;
+
+        video.style.width = "100%";
+        video.style.maxWidth = "420px";
+        video.style.borderRadius = "16px";
+
+        // เอากล้องไปแสดงใน reader
+        const reader =
+            document.getElementById("reader");
+
+        reader.innerHTML = "";
+
+        reader.appendChild(video);
+
+    } catch (error) {
+
+        console.error(
+            "CAMERA ERROR:",
+            error
+        );
+
+        Swal.fire({
+            icon: "error",
+            title: "เปิดกล้องไม่ได้",
+            text:
+                "กรุณาอนุญาตการใช้กล้องของเว็บไซต์",
+            confirmButtonText: "ตกลง"
+        });
+
+    }
+}
     </script>
 </body>
 </html>
