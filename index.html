@@ -69,7 +69,7 @@
 
     <div class="w-full max-w-md bg-white shadow-sm flex flex-col items-center py-4 px-4 sticky top-0 z-10">
         <img src="https://www.alliedmfg.co.th/wp-content/uploads/2026/07/AMS-LOGO-V1.png" alt="AMS Logo" class="h-10 object-contain mb-1">
-        <h1 class="text-lg font-semibold text-blue-900 tracking-wide">Inventory Cycle Count000</h1>
+        <h1 class="text-lg font-semibold text-blue-900 tracking-wide">Inventory Cycle Count111</h1>
     </div>
 
     <!-- Main Application Container -->
@@ -298,164 +298,13 @@
 let availableCameras = [];
 let currentCameraIndex = 0;
 
-let nativeBarcodeDetector = null;
-let nativeScanTimer = null;
-let nativeScanning = false
+let qrProcessingCanvas = null;
+let qrProcessingContext = null;
+let qrProcessingTimer = null;
+let qrProcessingActive = false;
+let qrDetector = null;
 
-        // ==========================================
-// STEP 11 - NATIVE QR SCANNER
-// ==========================================
-
-async function startNativeQRScanner() {
-
-    const video =
-        document.querySelector("#reader video");
-
-    if (!video) {
-
-        console.log(
-            "Native scanner: video not ready"
-        );
-
-        return false;
-    }
-
-    // Browser ต้องรองรับ BarcodeDetector
-    if (
-        !("BarcodeDetector" in window)
-    ) {
-
-        console.log(
-            "BarcodeDetector NOT supported"
-        );
-
-        return false;
-    }
-
-    try {
-
-        // ตรวจว่า Browser รองรับ QR จริงหรือไม่
-        const formats =
-            await BarcodeDetector.getSupportedFormats();
-
-        console.log(
-            "SUPPORTED BARCODE FORMATS:",
-            formats
-        );
-
-        if (!formats.includes("qr_code")) {
-
-            console.log(
-                "QR CODE NOT SUPPORTED"
-            );
-
-            return false;
-        }
-
-        nativeBarcodeDetector =
-            new BarcodeDetector({
-                formats: ["qr_code"]
-            });
-
-        nativeScanning = true;
-
-        console.log(
-            "✅ NATIVE QR SCANNER: ON"
-        );
-
-        nativeScanLoop(video);
-
-        return true;
-
-    }
-
-    catch (error) {
-
-        console.error(
-            "Native scanner error:",
-            error
-        );
-
-        return false;
-    }
-}
-        // ==========================================
-// NATIVE QR SCAN LOOP
-// ==========================================
-
-async function nativeScanLoop(video) {
-
-    if (!nativeScanning) {
-        return;
-    }
-
-    if (
-        video.readyState <
-        HTMLMediaElement.HAVE_ENOUGH_DATA
-    ) {
-
-        nativeScanTimer =
-            requestAnimationFrame(
-                () => nativeScanLoop(video)
-            );
-
-        return;
-    }
-
-    try {
-
-        const barcodes =
-            await nativeBarcodeDetector.detect(
-                video
-            );
-
-        if (
-            barcodes &&
-            barcodes.length > 0
-        ) {
-
-            const decodedText =
-                barcodes[0].rawValue;
-
-            console.log(
-                "🎯 NATIVE QR FOUND:",
-                decodedText
-            );
-
-            nativeScanning = false;
-
-            if (nativeScanTimer) {
-
-                cancelAnimationFrame(
-                    nativeScanTimer
-                );
-
-                nativeScanTimer = null;
-            }
-
-            processScannedData(
-                decodedText
-            );
-
-            return;
-        }
-
-    }
-
-    catch (error) {
-
-        console.log(
-            "Native QR detection:",
-            error
-        );
-    }
-
-    nativeScanTimer =
-        requestAnimationFrame(
-            () => nativeScanLoop(video)
-        );
-}
-
+        
         // --- View Navigation ---
         function showView(viewId) {
             document.getElementById('view-setup').classList.add('hidden');
@@ -565,48 +414,48 @@ async function nativeScanLoop(video) {
 
     const config = {
 
-        // ความถี่ในการตรวจจับ
-        fps: 15,
+    fps: 20,
 
-        // เพิ่มพื้นที่อ่าน QR
-        qrbox: function(viewfinderWidth, viewfinderHeight) {
+    qrbox: function(viewfinderWidth, viewfinderHeight) {
 
-    const size = Math.min(
-        viewfinderWidth,
-        viewfinderHeight
-    ) * 0.70;
+        const size = Math.min(
+            viewfinderWidth,
+            viewfinderHeight
+        ) * 0.90;
 
-    return {
-        width: Math.floor(size),
-        height: Math.floor(size)
-    };
+        return {
+            width: Math.floor(size),
+            height: Math.floor(size)
+        };
 
-},
+    },
 
-        // ไม่บังคับ aspect ratio
-        aspectRatio: undefined,
+    aspectRatio: undefined,
 
-        // ให้ library ใช้ BarcodeDetector ถ้า Browser รองรับ
-        useBarCodeDetectorIfSupported: false,
+    disableFlip: true,
 
-        // ==========================================
-        // HIGH RESOLUTION CAMERA
-        // ==========================================
+    useBarCodeDetectorIfSupported: false,
 
-        videoConstraints: {
+    videoConstraints: {
 
     facingMode: {
         ideal: "environment"
     },
 
     width: {
-        ideal: 1920
+        ideal: 2560
     },
 
     height: {
-        ideal: 1080
+        ideal: 1440
+    },
+
+    frameRate: {
+        ideal: 30
     }
+
 }
+};
 
     // ==========================================
     // START CAMERA
@@ -670,16 +519,6 @@ async function nativeScanLoop(video) {
 
         // reset scan lock
         window.isProcessingScan = false;
-
-        // ==========================================
-    // START NATIVE QR DETECTOR
-    // ==========================================
-
-    setTimeout(() => {
-
-        startNativeQRScanner();
-
-    }, 500);
 
         // ==========================================
         // GET VIDEO TRACK
@@ -763,19 +602,21 @@ console.log(
 console.log("=================================");
 
 // ==========================================
-// STEP 12 - FORCE AUTO FOCUS
+// AUTO FOCUS
 // ==========================================
 
 try {
 
-    const capabilities =
-        track.getCapabilities();
+    const capabilities = track.getCapabilities();
 
-    console.log(
-        "FOCUS MODE:",
-        capabilities.focusMode
-    );
+    console.log("=================================");
+    console.log("📷 CAMERA FOCUS");
+    console.log("=================================");
+    console.log("Focus Mode:", capabilities.focusMode);
+    console.log("Focus Distance:", capabilities.focusDistance);
+    console.log("=================================");
 
+    // Continuous Auto Focus
     if (
         capabilities.focusMode &&
         capabilities.focusMode.includes("continuous")
@@ -789,16 +630,12 @@ try {
             ]
         });
 
-        console.log(
-            "✅ AUTO FOCUS: CONTINUOUS"
-        );
+        console.log("✅ AUTO FOCUS: CONTINUOUS");
 
-    }
-
-    else {
+    } else {
 
         console.log(
-            "⚠️ Continuous Focus not supported"
+            "⚠️ Continuous Auto Focus ไม่รองรับโดยกล้อง/Browser นี้"
         );
 
     }
@@ -807,116 +644,11 @@ try {
 catch (error) {
 
     console.log(
-        "Auto Focus error:",
+        "⚠️ Auto Focus error:",
         error
     );
 
 }
-
-            console.log(
-                "CAMERA CAPABILITIES:",
-                capabilities
-            );
-
-// ==========================================
-// SMART AUTO FOCUS
-// ==========================================
-
-if (capabilities.focusMode) {
-
-    console.log(
-        "SUPPORTED FOCUS MODES:",
-        capabilities.focusMode
-    );
-
-    // ------------------------------------------
-    // CONTINUOUS AUTO FOCUS
-    // ------------------------------------------
-
-    if (
-        capabilities.focusMode.includes("continuous")
-    ) {
-
-        track.applyConstraints({
-
-            advanced: [
-                {
-                    focusMode: "continuous"
-                }
-            ]
-
-        })
-        .then(() => {
-
-            console.log(
-                "✅ CONTINUOUS AUTO FOCUS: ON"
-            );
-
-        })
-        .catch(error => {
-
-            console.log(
-                "❌ Continuous focus failed:",
-                error
-            );
-
-        });
-
-    }
-
-    // ------------------------------------------
-    // FALLBACK: SINGLE FOCUS
-    // ------------------------------------------
-
-    else if (
-        capabilities.focusMode.includes("single-shot")
-    ) {
-
-        track.applyConstraints({
-
-            advanced: [
-                {
-                    focusMode: "single-shot"
-                }
-            ]
-
-        })
-        .then(() => {
-
-            console.log(
-                "⚠️ SINGLE-SHOT FOCUS: ON"
-            );
-
-        })
-        .catch(error => {
-
-            console.log(
-                "❌ Single-shot focus failed:",
-                error
-            );
-
-        });
-
-    }
-
-    else {
-
-        console.log(
-            "⚠️ Camera does not support focus control"
-        );
-
-    }
-
-}
-
-else {
-
-    console.log(
-        "⚠️ Camera does not expose focusMode"
-    );
-
-}
-
             // ==========================================
 // CHECK FOCUS DISTANCE
 // ==========================================
@@ -1102,18 +834,6 @@ if (capabilities.focusDistance) {
     });
 }
 
-        function switchCamera() {
-            if (availableCameras.length > 1 && html5QrCode) {
-                currentCameraIndex = (currentCameraIndex + 1) % availableCameras.length;
-                const newCameraId = availableCameras[currentCameraIndex].id;
-                
-                html5QrCode.stop().then(() => {
-                    const config = { fps: 10, qrbox: { width: 340, height: 220 }, aspectRatio: 1.0 };
-                    html5QrCode.start(newCameraId, config, onScanSuccess, onScanFailure);
-                });
-            }
-        }
-
         function stopScannerAndGoBack() {
             if (html5QrCode) {
                 html5QrCode.stop().then(() => {
@@ -1126,24 +846,7 @@ if (capabilities.focusDistance) {
                 showView('view-setup');
             }
         }
-
-        // --- STREAMING_CHUNK:Handling Scan Data and Parsing ---
-        function onScanSuccess(decodedText, decodedResult) {
-            // Stop scanning immediately to prevent duplicate scans
-            html5QrCode.stop().then(() => {
-                html5QrCode.clear();
-                processScannedData(decodedText);
-            }).catch(err => {
-                console.error("Failed to stop scanner", err);
-                processScannedData(decodedText);
-            });
-        }
-
-        function onScanFailure(error) {
-            // This is called constantly when no code is in frame. 
-            // We ignore it silently for UX.
-        }
-
+        
         function processScannedData(text) {
 
     // พร้อมรับการสแกนครั้งใหม่
