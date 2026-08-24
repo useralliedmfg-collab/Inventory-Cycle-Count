@@ -499,17 +499,9 @@
     const config = {
     fps: 20,
 
-    qrbox: function(viewfinderWidth, viewfinderHeight) {
-
-        const size = Math.min(
-            viewfinderWidth,
-            viewfinderHeight
-        ) * 0.75;
-
-        return {
-            width: Math.floor(size),
-            height: Math.floor(size)
-        };
+    qrbox: {
+        width: 300,
+        height: 300
     },
 
     aspectRatio: 1.0,
