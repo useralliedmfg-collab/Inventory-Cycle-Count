@@ -27,123 +27,12 @@
     border-radius: 16px;
     overflow: hidden;
     background: #000;
-    position: relative;
-}
-        .scanner-area {
-    position: relative;
-    width: 100%;
-    max-width: 420px;
 }
 
 #reader video {
     width: 100% !important;
-    height: 100% !important;
+    height: auto !important;
     object-fit: cover !important;
-}
-
-/* ซ่อน UI เดิมบางส่วนของ Html5Qrcode */
-#reader__dashboard_section_csr {
-    display: none !important;
-}
-
-#reader__dashboard_section_swaplink {
-    display: none !important;
-}
-
-/* กรอบสแกนของเรา */
-.scanner-overlay {
-    position: absolute;
-    inset: 0;
-    z-index: 10;
-    pointer-events: none;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-}
-
-.scanner-frame {
-    width: 78%;
-    aspect-ratio: 1 / 1;
-    position: relative;
-}
-
-/* มุมกรอบ */
-.scanner-frame::before,
-.scanner-frame::after {
-    content: "";
-    position: absolute;
-    inset: 0;
-    border: 3px solid transparent;
-    border-radius: 18px;
-    pointer-events: none;
-}
-
-/* เส้นวิ่ง */
-.scanner-line {
-    position: absolute;
-    left: 5%;
-    right: 5%;
-    height: 3px;
-    top: 10%;
-    background: #22c55e;
-    box-shadow:
-        0 0 8px #22c55e,
-        0 0 18px #22c55e;
-    animation: scanLine 2s ease-in-out infinite;
-}
-
-@keyframes scanLine {
-    0% {
-        top: 10%;
-        opacity: 0.5;
-    }
-
-    50% {
-        top: 90%;
-        opacity: 1;
-    }
-
-    100% {
-        top: 10%;
-        opacity: 0.5;
-    }
-}
-
-/* มุมทั้ง 4 */
-.corner {
-    position: absolute;
-    width: 32px;
-    height: 32px;
-    border-color: #22c55e;
-    border-style: solid;
-}
-
-.corner-tl {
-    top: 0;
-    left: 0;
-    border-width: 4px 0 0 4px;
-    border-radius: 12px 0 0 0;
-}
-
-.corner-tr {
-    top: 0;
-    right: 0;
-    border-width: 4px 4px 0 0;
-    border-radius: 0 12px 0 0;
-}
-
-.corner-bl {
-    bottom: 0;
-    left: 0;
-    border-width: 0 0 4px 4px;
-    border-radius: 0 0 0 12px;
-}
-
-.corner-br {
-    bottom: 0;
-    right: 0;
-    border-width: 0 4px 4px 0;
-    border-radius: 0 0 12px 0;
 }
         
         /* Custom SweetAlert styles for mobile */
@@ -257,32 +146,11 @@
                 <p class="text-gray-400 text-sm">นำบาร์โค้ดมาให้อยู่ในกรอบเพื่อสแกน</p>
             </div>
 
-            <!-- Scanner Area -->
-<div class="flex-1 flex flex-col justify-center items-center w-full relative">
-
-    <div class="scanner-area">
-
-        <div id="reader"></div>
-
-        <!-- กรอบช่วยเล็ง -->
-        <div class="scanner-overlay">
-
-            <div class="scanner-frame">
-
-                <div class="corner corner-tl"></div>
-                <div class="corner corner-tr"></div>
-                <div class="corner corner-bl"></div>
-                <div class="corner corner-br"></div>
-
-                <div class="scanner-line"></div>
-
-            </div>
-
-        </div>
-
-    </div>
-    
-    <!-- Error Overlay (Hidden by default) -->
+            <!-- The element where the camera stream will be injected -->
+            <div class="flex-1 flex flex-col justify-center items-center w-full relative">
+                <div id="reader"></div>
+                
+                <!-- Error Overlay (Hidden by default) -->
                 <div id="camera-error" class="hidden absolute inset-0 bg-black/80 flex flex-col items-center justify-center p-6 text-center z-20">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 text-red-500 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
@@ -507,305 +375,63 @@
 
     const reader = document.getElementById("reader");
     const errorBox = document.getElementById("camera-error");
-    const errorMsg = document.getElementById("camera-error-msg");
 
     errorBox.classList.add("hidden");
 
-    // ป้องกัน scanner ตัวเก่าค้าง
-    if (html5QrCode) {
-
-        try {
-            html5QrCode.clear();
-        } catch (e) {
-            console.log("CLEAR OLD SCANNER:", e);
-        }
-
-        html5QrCode = null;
-    }
-
+    // ล้างพื้นที่กล้องก่อน
     reader.innerHTML = "";
 
     // สร้าง scanner ใหม่
     html5QrCode = new Html5Qrcode("reader");
 
     const config = {
-
-        fps: 20,
-
-        qrbox: function(viewfinderWidth, viewfinderHeight) {
-
-            const size = Math.floor(
-                Math.min(
-                    viewfinderWidth,
-                    viewfinderHeight
-                ) * 0.85
-            );
-
-            return {
-                width: size,
-                height: size
-            };
+        fps: 10,
+        qrbox: {
+            width: 340,
+            height: 220
         },
-
-        aspectRatio: 1.0,
-
-        experimentalFeatures: {
-            useBarCodeDetectorIfSupported: true
-        }
+        aspectRatio: 1.0
     };
 
-    // ==========================================
-    // ขอรายการกล้องก่อน
-    // ==========================================
+    html5QrCode.start(
+        { facingMode: "environment" },
+        config,
 
-    Html5Qrcode.getCameras()
+        function(decodedText) {
 
-        .then(cameras => {
+            console.log("SCAN:", decodedText);
 
-            console.log("📷 CAMERAS FOUND:", cameras);
-
-            if (!cameras || cameras.length === 0) {
-
-                throw new Error(
-                    "ไม่พบกล้องในอุปกรณ์"
-                );
-            }
-
-            availableCameras = cameras;
-
-            // หา Rear Camera ก่อน
-            let cameraId = cameras[0].id;
-
-            const rearCamera = cameras.find(camera =>
-                /back|rear|environment/i.test(
-                    camera.label
-                )
-            );
-
-            if (rearCamera) {
-                cameraId = rearCamera.id;
-            }
-
-            currentCameraIndex =
-                cameras.findIndex(
-                    camera => camera.id === cameraId
-                );
-
-            if (currentCameraIndex < 0) {
-                currentCameraIndex = 0;
-            }
-
-            // แสดงปุ่มสลับกล้องถ้ามีมากกว่า 1
-            const switchButton =
-                document.getElementById(
-                    "btn-switch-cam"
-                );
-
-            if (cameras.length > 1) {
-
-                switchButton.classList.remove(
-                    "hidden"
-                );
-
-            } else {
-
-                switchButton.classList.add(
-                    "hidden"
-                );
-
-            }
-
-            console.log(
-                "🎥 START CAMERA:",
-                cameraId
-            );
-
-            // ==========================================
-            // START CAMERA
-            // ==========================================
-
-            return html5QrCode.start(
-
-                cameraId,
-
-                config,
-
-                function(decodedText) {
-
-                    console.log(
-                        "🎯 QR FOUND:",
-                        decodedText
-                    );
-
-                    if (window.isProcessingScan) {
-                        return;
-                    }
-
-                    window.isProcessingScan = true;
-
-                    html5QrCode.stop()
-
-                        .then(() => {
-
-                            html5QrCode.clear();
-
-                            processScannedData(
-                                decodedText
-                            );
-
-                        })
-
-                        .catch(error => {
-
-                            console.error(
-                                "STOP ERROR:",
-                                error
-                            );
-
-                            processScannedData(
-                                decodedText
-                            );
-
-                        });
-
-                },
-
-                function(errorMessage) {
-
-                    // ไม่ต้องแสดง scan error
-                    // เพราะ scanner จะพยายามอ่านต่อ
-
-                }
-
-            );
-
-        })
-
-        .then(() => {
-
-            console.log(
-                "📷 CAMERA READY"
-            );
-
-            window.isProcessingScan = false;
-
-            // ==========================================
-            // AUTO FOCUS
-            // ==========================================
-
-            const video =
-                document.querySelector(
-                    "#reader video"
-                );
-
-            if (!video || !video.srcObject) {
-
-                console.log(
-                    "VIDEO / STREAM NOT FOUND"
-                );
-
-                return;
-
-            }
-
-            const track =
-                video
-                    .srcObject
-                    .getVideoTracks()[0];
-
-            if (!track) {
-
-                console.log(
-                    "VIDEO TRACK NOT FOUND"
-                );
-
-                return;
-
-            }
-
-            const capabilities =
-                track.getCapabilities();
-
-            console.log(
-                "📷 CAMERA CAPABILITIES:",
-                capabilities
-            );
-
-            // ==========================================
-            // CONTINUOUS AUTO FOCUS
-            // ==========================================
-
-            if (
-                capabilities.focusMode &&
-                capabilities.focusMode.includes(
-                    "continuous"
-                )
-            ) {
-
-                track.applyConstraints({
-
-                    advanced: [
-                        {
-                            focusMode:
-                                "continuous"
-                        }
-                    ]
-
-                })
-
+            html5QrCode.stop()
                 .then(() => {
-
-                    console.log(
-                        "🎯 AUTO FOCUS ON"
-                    );
-
+                    html5QrCode.clear();
+                    processScannedData(decodedText);
                 })
-
-                .catch(error => {
-
-                    console.log(
-                        "AUTO FOCUS ERROR:",
-                        error
-                    );
-
+                .catch(() => {
+                    processScannedData(decodedText);
                 });
 
-            }
+        },
 
-        })
+        function(errorMessage) {
+            // ไม่ต้องทำอะไร
+        }
 
-        .catch(error => {
+    ).then(() => {
 
-            console.error(
-                "🚨 CAMERA ERROR:",
-                error
-            );
+        console.log("CAMERA OK");
 
-            errorBox.classList.remove(
-                "hidden"
-            );
+    }).catch((error) => {
 
-            // แสดง ERROR จริง
-            errorMsg.innerHTML =
+        console.error("CAMERA ERROR:", error);
 
-                "เปิดกล้องไม่ได้<br><br>" +
+        errorBox.classList.remove("hidden");
 
-                "<span class='text-yellow-300 text-sm'>" +
+        document.getElementById("camera-error-msg").innerHTML =
+            "เปิดกล้องไม่ได้<br><br>" +
+            "กรุณากดอนุญาตการใช้งานกล้อง<br>" +
+            "แล้วลองใหม่อีกครั้ง";
 
-                "Error: " +
-
-                (error.name || "UnknownError") +
-
-                "<br>" +
-
-                (error.message || error.toString()) +
-
-                "</span><br><br>" +
-
-                "กรุณาตรวจสอบสิทธิ์การใช้กล้อง";
-
-        });
-
+    });
 }
 
         function switchCamera() {
@@ -833,9 +459,24 @@
             }
         }
 
-        function processScannedData(text) {
+        // --- STREAMING_CHUNK:Handling Scan Data and Parsing ---
+        function onScanSuccess(decodedText, decodedResult) {
+            // Stop scanning immediately to prevent duplicate scans
+            html5QrCode.stop().then(() => {
+                html5QrCode.clear();
+                processScannedData(decodedText);
+            }).catch(err => {
+                console.error("Failed to stop scanner", err);
+                processScannedData(decodedText);
+            });
+        }
 
-    window.isProcessingScan = false;
+        function onScanFailure(error) {
+            // This is called constantly when no code is in frame. 
+            // We ignore it silently for UX.
+        }
+
+        function processScannedData(text) {
 
     console.log("QR DATA:", text);
 
