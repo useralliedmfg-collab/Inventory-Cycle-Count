@@ -549,32 +549,56 @@
     console.log("CAMERA OK");
 
     // ==========================================
-    // AUTO FOCUS
-    // ==========================================
-    const video = document.querySelector("#reader video");
+// QR AUTO FOCUS
+// ==========================================
+const video = document.querySelector("#reader video");
 
-    if (video && video.srcObject) {
+if (video && video.srcObject) {
 
-        const track = video.srcObject.getVideoTracks()[0];
+    const track = video.srcObject.getVideoTracks()[0];
 
-        if (track) {
+    if (track) {
+
+        const capabilities = track.getCapabilities();
+
+        console.log("CAMERA CAPABILITIES:", capabilities);
+
+        // กล้องรองรับ Focus Mode หรือไม่
+        if (
+            capabilities.focusMode &&
+            capabilities.focusMode.includes("continuous")
+        ) {
 
             track.applyConstraints({
-    advanced: [
-        {
-            focusMode: "continuous"
+                advanced: [
+                    {
+                        focusMode: "continuous"
+                    }
+                ]
+            })
+            .then(() => {
+
+                console.log("QR AUTO FOCUS: ON");
+
+            })
+            .catch(error => {
+
+                console.log(
+                    "AUTO FOCUS ใช้งานไม่ได้",
+                    error
+                );
+
+            });
+
+        } else {
+
+            console.log(
+                "อุปกรณ์นี้ไม่รองรับ Continuous Auto Focus"
+            );
+
         }
-    ]
-})
-.then(() => {
-    console.log("AUTO FOCUS: ON");
-})
-.catch((error) => {
-    console.log(
-        "AUTO FOCUS ไม่รองรับในอุปกรณ์นี้",
-        error
-    );
-});
+    }
+}
             
             .then(() => {
                 console.log("AUTO FOCUS: ON");
