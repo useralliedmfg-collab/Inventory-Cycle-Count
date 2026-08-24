@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Inventory Cycle Count</title>
+    <title>Inventory Cycle Count1</title>
     <!-- Tailwind CSS for Mobile-First Styling -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Html5Qrcode for robust mobile camera scanning (QR & Barcode) -->
@@ -390,22 +390,37 @@
     const cameraConfig = { facingMode: "environment" };
 
     const config = {
-        fps: 10,
-        qrbox: {
-            width: 340,
-            height: 220
-        },
-        aspectRatio: 1.0,
-        // เปิดใช้ Native Barcode Detector (ช่วยให้อ่านบาร์โค้ดจางๆ ได้ดีขึ้นบน Android)
-        useBarCodeDetectorIfSupported: true,
-        // บังคับความละเอียดสูง (High Res) ช่วยให้กล้องเห็นรายละเอียด QR เล็กๆ ได้ชัด
-        videoConstraints: {
-            width: { min: 1280, ideal: 1920 },
-            height: { min: 720, ideal: 1080 },
-            facingMode: "environment"
-        }
-    };
+    fps: 15,
 
+    qrbox: function(viewfinderWidth, viewfinderHeight) {
+
+        // ให้กรอบสแกนใหญ่ขึ้น
+        let boxWidth = Math.floor(viewfinderWidth * 0.85);
+        let boxHeight = Math.floor(viewfinderHeight * 0.55);
+
+        return {
+            width: boxWidth,
+            height: boxHeight
+        };
+    },
+
+    aspectRatio: 1.0,
+
+    useBarCodeDetectorIfSupported: true,
+
+    videoConstraints: {
+        facingMode: {
+            ideal: "environment"
+        },
+        width: {
+            ideal: 1920
+        },
+        height: {
+            ideal: 1080
+        }
+    }
+};
+            
     html5QrCode.start(
         cameraConfig,
         config,
@@ -429,24 +444,55 @@
             // ไม่ต้องทำอะไร
         }
 
-    ).then(() => {
+    }).then(async () => {
 
-        console.log("CAMERA OK");
+    console.log("CAMERA OK");
         
-        // พยายามเปิด Continuous Auto Focus ให้เลนส์พยายามโฟกัสวัตถุตรงหน้าตลอดเวลา
-        try {
-            const track = html5QrCode.getRunningTrack();
-            if (track) {
-                const capabilities = track.getCapabilities();
-                if (capabilities.focusMode && capabilities.focusMode.includes('continuous')) {
-                    track.applyConstraints({
-                        advanced: [{ focusMode: 'continuous' }]
-                    }).catch(e => console.log("Focus constraints error", e));
-                }
-            }
-        } catch (err) {
-            console.log("Auto focus not supported", err);
+        // ==========================================
+// AUTO FOCUS
+// ==========================================
+try {
+
+    const track = html5QrCode.getRunningTrack();
+
+    if (track) {
+
+        const capabilities = track.getCapabilities();
+
+        console.log("Camera capabilities:", capabilities);
+
+        if (
+            capabilities.focusMode &&
+            capabilities.focusMode.includes("continuous")
+        ) {
+
+            await track.applyConstraints({
+                advanced: [
+                    {
+                        focusMode: "continuous"
+                    }
+                ]
+            });
+
+            console.log("AUTO FOCUS: ON");
+
+        } else {
+
+            console.log(
+                "AUTO FOCUS: Browser / Camera ไม่รองรับ"
+            );
+
         }
+    }
+
+} catch (error) {
+
+    console.log(
+        "AUTO FOCUS ERROR:",
+        error
+    );
+
+}
 
     }).catch((error) => {
 
