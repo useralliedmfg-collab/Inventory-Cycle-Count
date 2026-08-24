@@ -387,34 +387,11 @@
     const config = {
     fps: 20,
 
-    qrbox: function(viewfinderWidth, viewfinderHeight) {
+    qrbox: undefined,
 
-        const size = Math.min(
-            viewfinderWidth,
-            viewfinderHeight
-        ) * 0.75;
-
-        return {
-            width: Math.floor(size),
-            height: Math.floor(size)
-        };
-    },
-
-    aspectRatio: 1.0,
-
-    videoConstraints: {
-        facingMode: {
-            ideal: "environment"
-        },
-        width: {
-            ideal: 1920
-        },
-        height: {
-            ideal: 1080
-        }
-    }
+    aspectRatio: 1.0
 };
-
+            
     html5QrCode.start(
     {
         facingMode: "environment"
