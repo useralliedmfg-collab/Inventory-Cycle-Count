@@ -432,13 +432,37 @@
 
         if (track) {
 
-            track.applyConstraints({
-                advanced: [
-                    {
-                        focusMode: "continuous"
-                    }
-                ]
-            })
+            const capabilities = track.getCapabilities();
+
+if (
+    capabilities.focusMode &&
+    capabilities.focusMode.includes("continuous")
+) {
+
+    track.applyConstraints({
+        advanced: [
+            {
+                focusMode: "continuous"
+            }
+        ]
+    })
+    .then(() => {
+        console.log("AUTO FOCUS: ON");
+    })
+    .catch((error) => {
+        console.log(
+            "ไม่สามารถเปิด Auto Focus ได้",
+            error
+        );
+    });
+
+} else {
+
+    console.log(
+        "อุปกรณ์นี้ไม่รองรับการควบคุม Auto Focus"
+    );
+
+}
             .then(() => {
                 console.log("AUTO FOCUS: ON");
             })
