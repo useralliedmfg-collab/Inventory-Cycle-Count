@@ -69,7 +69,7 @@
 
     <div class="w-full max-w-md bg-white shadow-sm flex flex-col items-center py-4 px-4 sticky top-0 z-10">
         <img src="https://www.alliedmfg.co.th/wp-content/uploads/2026/07/AMS-LOGO-V1.png" alt="AMS Logo" class="h-10 object-contain mb-1">
-        <h1 class="text-lg font-semibold text-blue-900 tracking-wide">Inventory Cycle Count2</h1>
+        <h1 class="text-lg font-semibold text-blue-900 tracking-wide">Inventory Cycle Count</h1>
     </div>
 
     <!-- Main Application Container -->
@@ -385,17 +385,41 @@
     html5QrCode = new Html5Qrcode("reader");
 
     const config = {
-        fps: 10,
-        qrbox: {
-            width: 340,
-            height: 220
+    fps: 20,
+
+    qrbox: function(viewfinderWidth, viewfinderHeight) {
+
+        const size = Math.min(
+            viewfinderWidth,
+            viewfinderHeight
+        ) * 0.75;
+
+        return {
+            width: Math.floor(size),
+            height: Math.floor(size)
+        };
+    },
+
+    aspectRatio: 1.0,
+
+    videoConstraints: {
+        facingMode: {
+            ideal: "environment"
         },
-        aspectRatio: 1.0
-    };
+        width: {
+            ideal: 1920
+        },
+        height: {
+            ideal: 1080
+        }
+    }
+};
 
     html5QrCode.start(
-        { facingMode: "environment" },
-        config,
+    {
+        facingMode: "environment"
+    },
+    config,
 
         function(decodedText) {
 
@@ -418,9 +442,40 @@
 
     ).then(() => {
 
-        console.log("CAMERA OK");
+    console.log("CAMERA OK");
 
-    }).catch((error) => {
+    // ==========================================
+    // AUTO FOCUS
+    // ==========================================
+    const video = document.querySelector("#reader video");
+
+    if (video && video.srcObject) {
+
+        const track = video.srcObject.getVideoTracks()[0];
+
+        if (track) {
+
+            track.applyConstraints({
+                advanced: [
+                    {
+                        focusMode: "continuous"
+                    }
+                ]
+            })
+            .then(() => {
+                console.log("AUTO FOCUS: ON");
+            })
+            .catch((error) => {
+                console.log(
+                    "AUTO FOCUS ไม่รองรับในอุปกรณ์นี้",
+                    error
+                );
+            });
+
+        }
+    }
+
+}).catch((error) => {
 
         console.error("CAMERA ERROR:", error);
 
@@ -477,17 +532,8 @@
         }
 
         function processScannedData(text) {
-            const parts = text
-    .split(',')
-    .map(x => x.trim());
 
-console.log("========== QR DEBUG ==========");
-console.log("QR DATA:", text);
-console.log("QR PARTS:", parts);
-console.log("PART NUMBER:", currentScanData.partNumber);
-console.log("LOT NUMBER:", currentScanData.lotNumber);
-console.log("QR TYPE:", qrType);
-console.log("================================");
+    console.log("QR DATA:", text);
 
 
     // ==========================================
