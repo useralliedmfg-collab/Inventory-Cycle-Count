@@ -72,7 +72,7 @@
 
     <div class="w-full max-w-md bg-white shadow-sm flex flex-col items-center py-4 px-4 sticky top-0 z-10">
         <img src="https://www.alliedmfg.co.th/wp-content/uploads/2026/07/AMS-LOGO-V1.png" alt="AMS Logo" class="h-10 object-contain mb-1">
-        <h1 class="text-lg font-semibold text-blue-900 tracking-wide">Inventory Cycle Count2</h1>
+        <h1 class="text-lg font-semibold text-blue-900 tracking-wide">Inventory Cycle Count5</h1>
     </div>
 
     <!-- Main Application Container -->
@@ -310,6 +310,12 @@ let currentCameraIndex = 0;
 
 let isScanning = false;
 let hasScanned = false;
+        
+// ==========================================
+// UNIT CACHE
+// ==========================================
+
+const unitCache = {};
 
         // --- View Navigation ---
         function showView(viewId) {
@@ -1410,10 +1416,46 @@ getPartUnitFromMaster(
 // GET UNIT FROM PART MASTER
 // ==========================================
 
+// ==========================================
+// GET UNIT FROM PART MASTER
+// WITH CACHE
+// ==========================================
+
 function getPartUnitFromMaster(partNumber) {
+
+    // ------------------------------------------
+    // ถ้าเคยค้นหา Part นี้แล้ว
+    // ใช้ค่าจาก Cache ทันที
+    // ------------------------------------------
+
+    if (unitCache[partNumber]) {
+
+        console.log(
+            "UNIT CACHE HIT:",
+            partNumber,
+            unitCache[partNumber]
+        );
+
+        return Promise.resolve(
+            unitCache[partNumber]
+        );
+    }
+
+
+    // ------------------------------------------
+    // ยังไม่มีใน Cache
+    // ยิง Google Apps Script
+    // ------------------------------------------
 
     const SCRIPT_URL =
         'https://script.google.com/macros/s/AKfycbzXgFiJWsDft8DL7MZia3hlM3pBC0_rVYHhKL-dA2-fX1sCpwNki7NoD2lRbnfxUDriSg/exec';
+
+
+    console.log(
+        "UNIT SERVER SEARCH:",
+        partNumber
+    );
+
 
     return fetch(
         SCRIPT_URL,
@@ -1442,7 +1484,9 @@ function getPartUnitFromMaster(partNumber) {
                 })
         }
     )
+
     .then(response => response.json())
+
     .then(result => {
 
         if (
@@ -1456,6 +1500,7 @@ function getPartUnitFromMaster(partNumber) {
 
         }
 
+
         if (!result.unit) {
 
             throw new Error(
@@ -1465,6 +1510,22 @@ function getPartUnitFromMaster(partNumber) {
             );
 
         }
+
+
+        // ------------------------------------------
+        // SAVE TO CACHE
+        // ------------------------------------------
+
+        unitCache[partNumber] =
+            result.unit;
+
+
+        console.log(
+            "UNIT CACHE SAVE:",
+            partNumber,
+            result.unit
+        );
+
 
         return result.unit;
 
