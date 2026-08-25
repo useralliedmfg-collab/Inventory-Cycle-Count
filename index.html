@@ -23,7 +23,7 @@
         #reader {
     width: 100%;
     max-width: 420px;
-    min-height: 420px;
+    height: 420px;
     border-radius: 16px;
     overflow: hidden;
     background: #000;
@@ -31,7 +31,7 @@
 
 #reader video {
     width: 100% !important;
-    height: auto !important;
+    height: 100% !important;
     object-fit: cover !important;
 }
         
@@ -69,7 +69,7 @@
 
     <div class="w-full max-w-md bg-white shadow-sm flex flex-col items-center py-4 px-4 sticky top-0 z-10">
         <img src="https://www.alliedmfg.co.th/wp-content/uploads/2026/07/AMS-LOGO-V1.png" alt="AMS Logo" class="h-10 object-contain mb-1">
-        <h1 class="text-lg font-semibold text-blue-900 tracking-wide">Inventory Cycle Count</h1>
+        <h1 class="text-lg font-semibold text-blue-900 tracking-wide">Inventory Cycle Count555</h1>
     </div>
 
     <!-- Main Application Container -->
@@ -378,112 +378,248 @@
 
     errorBox.classList.add("hidden");
 
-    // ล้างพื้นที่กล้องก่อน
+    // หยุด scanner ตัวเก่าก่อน ถ้ามี
+    if (html5QrCode) {
+        try {
+            html5QrCode.stop().catch(() => {});
+            html5QrCode.clear();
+        } catch (e) {}
+    }
+
     reader.innerHTML = "";
 
-    // สร้าง scanner ใหม่
     html5QrCode = new Html5Qrcode("reader");
 
+    // ==========================================
+    // SCANNER CONFIG
+    // ==========================================
+
     const config = {
-    fps: 20,
 
-    qrbox: function(viewfinderWidth, viewfinderHeight) {
+        // ความเร็วในการตรวจจับ
+        fps: 20,
 
-        const size = Math.min(
-            viewfinderWidth,
-            viewfinderHeight
-        ) * 0.75;
+        // QR BOX
+        // ไม่ใหญ่เกินไป เพื่อให้ decoder โฟกัสบริเวณ QR
+        qrbox: function(viewfinderWidth, viewfinderHeight) {
 
-        return {
-            width: Math.floor(size),
-            height: Math.floor(size)
-        };
-    },
+            const size = Math.min(
+                viewfinderWidth,
+                viewfinderHeight
+            ) * 0.60;
 
-    aspectRatio: 1.0,
-
-    videoConstraints: {
-        facingMode: {
-            ideal: "environment"
+            return {
+                width: Math.floor(size),
+                height: Math.floor(size)
+            };
         },
-        width: {
-            ideal: 1920
-        },
-        height: {
-            ideal: 1080
-        }
-    }
-};
+
+        // ให้ภาพกล้องเป็นแนวตั้งได้ดีบนมือถือ
+        aspectRatio: 1.0,
+
+        // สำคัญมากสำหรับ QR เล็ก
+        disableFlip: false
+    };
+
+
+    // ==========================================
+    // START CAMERA
+    // ==========================================
 
     html5QrCode.start(
-    {
-        facingMode: "environment"
-    },
-    config,
 
-        function(decodedText) {
+        {
+            facingMode: {
+                exact: "environment"
+            }
+        },
 
-            console.log("SCAN:", decodedText);
+        config,
+
+        // ======================================
+        // SUCCESS
+        // ======================================
+
+        function(decodedText, decodedResult) {
+
+            console.log("SCAN SUCCESS:", decodedText);
+
+            // กันการยิงซ้ำ
+            if (!html5QrCode) return;
 
             html5QrCode.stop()
                 .then(() => {
+
                     html5QrCode.clear();
+
                     processScannedData(decodedText);
+
                 })
                 .catch(() => {
-                    processScannedData(decodedText);
-                });
 
+                    processScannedData(decodedText);
+
+                });
         },
 
+        // ======================================
+        // SCAN ERROR
+        // ======================================
+
         function(errorMessage) {
-            // ไม่ต้องทำอะไร
+            // ไม่ต้องแสดง error
         }
 
-    ).then(() => {
-
-    console.log("CAMERA OK");
+    )
 
     // ==========================================
-    // AUTO FOCUS
+    // CAMERA STARTED
     // ==========================================
-    const video = document.querySelector("#reader video");
 
-    if (video && video.srcObject) {
+    .then(() => {
 
-        const track = video.srcObject.getVideoTracks()[0];
+        console.log("CAMERA OK");
 
-        if (track) {
+        const video =
+            document.querySelector("#reader video");
 
-            track.applyConstraints({
-                advanced: [
-                    {
-                        focusMode: "continuous"
-                    }
-                ]
-            })
-            .then(() => {
-                console.log("AUTO FOCUS: ON");
-            })
-            .catch((error) => {
-                console.log(
-                    "AUTO FOCUS ไม่รองรับในอุปกรณ์นี้",
-                    error
-                );
-            });
+        if (!video) {
+            console.log("VIDEO ELEMENT NOT FOUND");
+            return;
+        }
+
+        // ======================================
+        // VIDEO QUALITY
+        // ======================================
+
+        video.setAttribute(
+            "playsinline",
+            "true"
+        );
+
+        video.setAttribute(
+            "autoplay",
+            "true"
+        );
+
+        video.muted = true;
+
+        // ======================================
+        // CAMERA TRACK
+        // ======================================
+
+        const stream =
+            video.srcObject;
+
+        if (!stream) {
+            console.log("STREAM NOT FOUND");
+            return;
+        }
+
+        const track =
+            stream.getVideoTracks()[0];
+
+        if (!track) {
+            console.log("VIDEO TRACK NOT FOUND");
+            return;
+        }
+
+        console.log(
+            "CAMERA SETTINGS:",
+            track.getSettings()
+        );
+
+
+        // ======================================
+        // AUTO FOCUS
+        // ======================================
+
+        if (
+            track.getCapabilities &&
+            track.getCapabilities().focusMode
+        ) {
+
+            const capabilities =
+                track.getCapabilities();
+
+            console.log(
+                "FOCUS CAPABILITIES:",
+                capabilities.focusMode
+            );
+
+            let focusMode = [];
+
+            if (
+                Array.isArray(
+                    capabilities.focusMode
+                )
+            ) {
+                focusMode =
+                    capabilities.focusMode;
+            }
+
+            // Continuous autofocus
+            if (
+                focusMode.includes(
+                    "continuous"
+                )
+            ) {
+
+                track.applyConstraints({
+
+                    advanced: [
+                        {
+                            focusMode:
+                                "continuous"
+                        }
+                    ]
+
+                })
+                .then(() => {
+
+                    console.log(
+                        "AUTO FOCUS: CONTINUOUS"
+                    );
+
+                })
+                .catch(err => {
+
+                    console.log(
+                        "AUTO FOCUS ERROR:",
+                        err
+                    );
+
+                });
+
+            }
 
         }
-    }
 
-}).catch((error) => {
+    })
 
-        console.error("CAMERA ERROR:", error);
+    // ==========================================
+    // CAMERA ERROR
+    // ==========================================
 
-        errorBox.classList.remove("hidden");
+    .catch(error => {
 
-        document.getElementById("camera-error-msg").innerHTML =
+        console.error(
+            "CAMERA ERROR:",
+            error
+        );
+
+        errorBox.classList.remove(
+            "hidden"
+        );
+
+        document.getElementById(
+            "camera-error-msg"
+        ).innerHTML =
+
             "เปิดกล้องไม่ได้<br><br>" +
+
             "กรุณากดอนุญาตการใช้งานกล้อง<br>" +
+
             "แล้วลองใหม่อีกครั้ง";
 
     });
