@@ -21,142 +21,22 @@
         }
         /* Style for the scanner container to ensure it fits well on mobile */
         #reader {
-            width: 100%;
-            max-width: 420px;
-            height: 420px;
-            border-radius: 16px;
-            overflow: hidden;
-            background: #000;
-            position: relative;
-        }
+    width: 100%;
+    max-width: 420px;
+    height: 420px;
+    border-radius: 16px;
+    overflow: hidden;
+    background: #000;
+    position: relative;
+}
 
-        #reader video {
-            width: 100% !important;
-            height: 100% !important;
-            object-fit: cover !important;
-            display: block;
-            background: #000;
-        }
-
-        /* ==========================================
-           SCANNER FOCUS OVERLAY & TARGET POINT
-           ========================================== */
-        .scanner-overlay {
-            position: absolute;
-            inset: 0;
-            pointer-events: none;
-            z-index: 10;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .scan-box {
-            width: 240px;
-            height: 240px;
-            position: relative;
-            box-shadow: 0 0 0 4000px rgba(0, 0, 0, 0.45);
-            border-radius: 16px;
-            transition: border-color 0.3s ease;
-        }
-
-        .scan-corner {
-            position: absolute;
-            width: 28px;
-            height: 28px;
-            border-color: #3b82f6;
-            border-style: solid;
-        }
-
-        .scan-corner-tl { top: -2px; left: -2px; border-width: 4px 0 0 4px; border-top-left-radius: 14px; }
-        .scan-corner-tr { top: -2px; right: -2px; border-width: 4px 4px 0 0; border-top-right-radius: 14px; }
-        .scan-corner-bl { bottom: -2px; left: -2px; border-width: 0 0 4px 4px; border-bottom-left-radius: 14px; }
-        .scan-corner-br { bottom: -2px; right: -2px; border-width: 0 4px 4px 0; border-bottom-right-radius: 14px; }
-
-        /* Center Focus Point (จุดโฟกัสกลาง) */
-        .focus-point {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            width: 20px;
-            height: 20px;
-            transform: translate(-50%, -50%);
-            pointer-events: none;
-        }
-
-        .focus-point::before {
-            content: '';
-            position: absolute;
-            top: 9px;
-            left: 0;
-            width: 20px;
-            height: 2px;
-            background: rgba(96, 165, 250, 0.8);
-        }
-
-        .focus-point::after {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 9px;
-            width: 2px;
-            height: 20px;
-            background: rgba(96, 165, 250, 0.8);
-        }
-
-        .focus-dot {
-            width: 8px;
-            height: 8px;
-            background-color: #60a5fa;
-            border-radius: 50%;
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            box-shadow: 0 0 10px #3b82f6, 0 0 20px #2563eb;
-            animation: pulse-dot 1.5s infinite;
-        }
-
-        @keyframes pulse-dot {
-            0%, 100% { transform: translate(-50%, -50%) scale(1); opacity: 0.9; }
-            50% { transform: translate(-50%, -50%) scale(1.6); opacity: 0.4; }
-        }
-
-        /* Animated Scanning Line */
-        .scan-line {
-            position: absolute;
-            left: 5%;
-            width: 90%;
-            height: 2px;
-            background: linear-gradient(90deg, transparent, #3b82f6, #60a5fa, #3b82f6, transparent);
-            box-shadow: 0 0 12px #3b82f6;
-            animation: scan-move 2.2s ease-in-out infinite alternate;
-        }
-
-        @keyframes scan-move {
-            0% { top: 8%; }
-            100% { top: 92%; }
-        }
-
-        /* Interactive Tap-to-Focus visual ring */
-        .tap-focus-ring {
-            position: absolute;
-            width: 54px;
-            height: 54px;
-            border: 2px solid #60a5fa;
-            border-radius: 50%;
-            transform: translate(-50%, -50%) scale(1.4);
-            opacity: 0;
-            pointer-events: none;
-            transition: transform 0.25s ease-out, opacity 0.25s ease-out;
-            z-index: 30;
-            box-shadow: 0 0 12px rgba(59, 130, 246, 0.6);
-        }
-
-        .tap-focus-ring.active {
-            transform: translate(-50%, -50%) scale(1);
-            opacity: 1;
-        }
+#reader video {
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: cover !important;
+    display: block;
+    background: #000;
+}
         
         /* Custom SweetAlert styles for mobile */
         .swal2-popup {
@@ -192,7 +72,7 @@
 
     <div class="w-full max-w-md bg-white shadow-sm flex flex-col items-center py-4 px-4 sticky top-0 z-10">
         <img src="https://www.alliedmfg.co.th/wp-content/uploads/2026/07/AMS-LOGO-V1.png" alt="AMS Logo" class="h-10 object-contain mb-1">
-        <h1 class="text-lg font-semibold text-blue-900 tracking-wide">Inventory Cycle Count555</h1>
+        <h1 class="text-lg font-semibold text-blue-900 tracking-wide">Inventory Cycle Count1</h1>
     </div>
 
     <!-- Main Application Container -->
@@ -266,12 +146,12 @@
         <div id="view-scanner" class="hidden p-4 flex flex-col flex-1 h-full bg-gray-900 relative z-10">
             <div class="text-center mb-4">
                 <h2 class="text-white text-lg font-semibold tracking-wider">SCAN QR CODE / BARCODE</h2>
-                <p class="text-gray-400 text-sm">นำบาร์โค้ดมาวางให้อยู่ตรงจุดโฟกัสกลางกรอบ (แตะหน้าจอเพื่อปรับโฟกัส)</p>
+                <p class="text-gray-400 text-sm">นำบาร์โค้ดมาให้อยู่ในกรอบเพื่อสแกน</p>
             </div>
 
             <!-- The element where the camera stream will be injected -->
             <div class="flex-1 flex flex-col justify-center items-center w-full relative">
-                <div id="reader" onclick="handleTapToFocus(event)" class="cursor-pointer"></div>
+                <div id="reader"></div>
                 
                 <!-- Error Overlay (Hidden by default) -->
                 <div id="camera-error" class="hidden absolute inset-0 bg-black/80 flex flex-col items-center justify-center p-6 text-center z-20">
@@ -430,197 +310,97 @@ let currentCameraIndex = 0;
 
 let isScanning = false;
 let hasScanned = false;
-let focusInterval = null;
 
         // --- View Navigation ---
-<!-- ... existing code ...=========
-// CREATE VIDEO
-// ==========================================
-
-    const video = document.createElement("video");
-
-    video.setAttribute("autoplay", "");
-    video.setAttribute("muted", "");
-    video.setAttribute("playsinline", "");
-
-    video.playsInline = true;
-    video.muted = true;
-    video.autoplay = true;
-
-    reader.appendChild(video);
-
-    // Inject Focus Target Overlay into Reader
-    injectScannerOverlay(reader);
-
-    // ==========================================
-    // CREATE ZXING
-<!-- ... existing code ...
-        // ==========================================
-        // CAMERA AUTO FOCUS
-        // ==========================================
-
-        setTimeout(
-            () => applyCameraFocus(video),
-            600
-        );
-
-    } catch (error) {
-<!-- ... existing code ...
-// ==========================================
-// INJECT SCANNER OVERLAY (จุดโฟกัส)
-// ==========================================
-
-function injectScannerOverlay(container) {
-    if (!container) return;
-    
-    // Remove old overlay if exists
-    const oldOverlay = container.querySelector(".scanner-overlay");
-    if (oldOverlay) oldOverlay.remove();
-
-    const overlay = document.createElement("div");
-    overlay.className = "scanner-overlay";
-    overlay.innerHTML = `
-        <div class="scan-box">
-            <div class="scan-corner scan-corner-tl"></div>
-            <div class="scan-corner scan-corner-tr"></div>
-            <div class="scan-corner scan-corner-bl"></div>
-            <div class="scan-corner scan-corner-br"></div>
-            <div class="scan-line"></div>
-            <div class="focus-point" title="จุดโฟกัส">
-                <div class="focus-dot"></div>
-            </div>
-        </div>
-    `;
-
-    const tapRing = document.createElement("div");
-    tapRing.id = "tap-ring";
-    tapRing.className = "tap-focus-ring";
-
-    container.appendChild(overlay);
-    container.appendChild(tapRing);
-}
-
-// ==========================================
-// AUTO FOCUS & RE-FOCUS LOOP
-// ==========================================
-
-async function applyCameraFocus(video) {
-
-    try {
-
-        if (!video || !video.srcObject) {
-            return;
+        function showView(viewId) {
+            document.getElementById('view-setup').classList.add('hidden');
+            document.getElementById('view-scanner').classList.add('hidden');
+            document.getElementById('view-input').classList.add('hidden');
+            document.getElementById(viewId).classList.remove('hidden');
+            document.getElementById(viewId).classList.add('flex');
         }
 
-        const stream = video.srcObject;
-        const tracks = stream.getVideoTracks();
+        function updateLocations() {
 
-        if (!tracks.length) return;
+    const zone =
+        document.getElementById('zone-select').value;
 
-        const track = tracks[0];
+    const locSelect =
+        document.getElementById('location-select');
 
-        // Apply High Resolution Constraints for Clearer QR Reading
-        try {
-            await track.applyConstraints({
-                width: { ideal: 1920, min: 1280 },
-                height: { ideal: 1080, min: 720 },
-                advanced: [{ focusMode: "continuous" }]
-            });
-        } catch (e) {
-            console.log("High resolution or continuous focus constraint not fully supported", e);
-        }
+    locSelect.innerHTML =
+        '<option value="" disabled selected>-- เลือกพื้นที่ --</option>';
 
-        const capabilities = track.getCapabilities ? track.getCapabilities() : {};
+    if (MOCK_ZONES[zone]) {
 
-        console.log("CAMERA CAPABILITIES:", capabilities);
+        MOCK_ZONES[zone].forEach(loc => {
 
-        // Clear existing refocus timer
-        if (focusInterval) clearInterval(focusInterval);
+            const opt =
+                document.createElement('option');
 
-        // Continuous Focus Trigger Function
-        const doFocus = async () => {
-            if (!isScanning) return;
-            try {
-                if (capabilities.focusMode && capabilities.focusMode.includes("continuous")) {
-                    await track.applyConstraints({ advanced: [{ focusMode: "continuous" }] });
-                } else if (capabilities.focusMode && capabilities.focusMode.includes("auto")) {
-                    await track.applyConstraints({ advanced: [{ focusMode: "auto" }] });
-                }
-            } catch (err) {
-                console.log("Refocus failed:", err);
-            }
-        };
+            opt.value = loc;
+            opt.textContent = loc;
 
-        // Trigger immediately
-        await doFocus();
+            locSelect.appendChild(opt);
 
-        // Periodically refresh focus every 3 seconds to keep focus sharp on QR Code
-        focusInterval = setInterval(doFocus, 3000);
+        });
 
-    } catch (error) {
+        locSelect.disabled = false;
 
-        console.log("AUTO FOCUS SETUP ERROR:", error);
+    } else {
+
+        locSelect.disabled = true;
 
     }
-
 }
 
-// ==========================================
-// TAP TO FOCUS (เมื่อผู้ใช้แตะที่หน้าจอกล้อง)
+        // --- STREAMING_CHUNK:Scanner Logic via Html5Qrcode ---
+        function goToScanner() {
+
+    const zone =
+        document.getElementById('zone-select').value;
+
+    const loc =
+        document.getElementById('location-select').value;
+
+    const resp =
+        document.getElementById('responsible-name').value.trim();
+
+            if (!zone || !loc || !resp) {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'ข้อมูลไม่ครบถ้วน',
+                    text: 'กรุณากรอกข้อมูลผู้ตรวจนับให้ครบถ้วนก่อนเริ่มสแกน',
+                    confirmButtonColor: '#3085d6'
+                });
+                return;
+            }
+
+            currentSession.zone = zone;
+            currentSession.location = loc;
+            currentSession.responsiblePerson = resp;
+
+            showView('view-scanner');
+            initScanner();
+        }
+
+        // ==========================================
+// ZXING SCANNER
 // ==========================================
 
-function handleTapToFocus(event) {
+async function initScanner() {
+
     const reader = document.getElementById("reader");
-    const ring = document.getElementById("tap-ring");
-    
-    if (!reader) return;
+    const errorBox = document.getElementById("camera-error");
 
-    const rect = reader.getBoundingClientRect();
-    const x = event.clientX - rect.left;
-    const y = event.clientY - rect.top;
+    errorBox.classList.add("hidden");
 
-    if (ring) {
-        ring.style.left = x + "px";
-        ring.style.top = y + "px";
-        ring.classList.add("active");
-
-        setTimeout(() => {
-            ring.classList.remove("active");
-        }, 600);
-    }
-
-    const video = reader.querySelector("video");
-    if (video && video.srcObject) {
-        const tracks = video.srcObject.getVideoTracks();
-        if (tracks.length > 0) {
-            const track = tracks[0];
-            const capabilities = track.getCapabilities ? track.getCapabilities() : {};
-            
-            try {
-                if (capabilities.focusMode && capabilities.focusMode.includes("auto")) {
-                    track.applyConstraints({ advanced: [{ focusMode: "auto" }] });
-                } else if (capabilities.focusMode && capabilities.focusMode.includes("continuous")) {
-                    track.applyConstraints({ advanced: [{ focusMode: "continuous" }] });
-                }
-            } catch (err) {
-                console.log("Tap focus constraint error:", err);
-            }
-        }
-    }
-}
-
-        // ==========================================
-// STOP ZXING
-// ==========================================
-
-async function stopZXingScanner() {
-
+    hasScanned = false;
     isScanning = false;
 
-    if (focusInterval) {
-        clearInterval(focusInterval);
-        focusInterval = null;
-    }
+    // ==========================================
+    // STOP OLD SCANNER
+    // ==========================================
 
     try {
 
@@ -674,6 +454,27 @@ async function stopZXingScanner() {
     video.autoplay = true;
 
     reader.appendChild(video);
+
+    // ==========================================
+// WAIT VIDEO READY → AUTO FOCUS
+// ==========================================
+
+video.addEventListener(
+    "loadedmetadata",
+    async () => {
+
+        console.log(
+            "VIDEO READY:",
+            video.videoWidth,
+            "x",
+            video.videoHeight
+        );
+
+        await applyCameraFocus(video);
+
+    },
+    { once: true }
+);
 
     // ==========================================
     // CREATE ZXING
@@ -802,14 +603,40 @@ if (backCamera) {
         isScanning = true;
 
         scannerControls =
-            await codeReader.decodeFromVideoDevice(
-                selectedCamera
-                    ? selectedCamera.deviceId
-                    : undefined,
+    await codeReader.decodeFromVideoDevice(
+        selectedCamera
+            ? selectedCamera.deviceId
+            : undefined,
 
-                video,
+        video,
 
-                function(result, error) {
+        function(result, error) {
+
+            if (result && !hasScanned) {
+
+                hasScanned = true;
+
+                const decodedText =
+                    result.getText();
+
+                console.log(
+                    "ZXING SCAN:",
+                    decodedText
+                );
+
+                stopZXingScanner()
+                    .then(() => {
+
+                        processScannedData(
+                            decodedText
+                        );
+
+                    });
+
+            }
+
+        }
+    );
 
                     // ==================================
                     // SUCCESS
@@ -859,11 +686,6 @@ if (backCamera) {
         // CAMERA AUTO FOCUS
         // ==========================================
 
-        setTimeout(
-            () => applyCameraFocus(video),
-            800
-        );
-
     } catch (error) {
 
         console.error(
@@ -882,109 +704,142 @@ if (backCamera) {
     }
 
 }
-// ==========================================
-// AUTO FOCUS
+        // ==========================================
+// CAMERA AUTO FOCUS - ENHANCED
 // ==========================================
 
 async function applyCameraFocus(video) {
 
     try {
 
-        if (
-            !video ||
-            !video.srcObject
-        ) {
-            console.log(
-                "VIDEO STREAM NOT READY"
-            );
-
+        if (!video || !video.srcObject) {
+            console.log("VIDEO STREAM NOT READY");
             return;
         }
 
-        const stream =
-            video.srcObject;
-
-        const tracks =
-            stream.getVideoTracks();
+        const stream = video.srcObject;
+        const tracks = stream.getVideoTracks();
 
         if (!tracks.length) {
+            console.log("NO VIDEO TRACK");
             return;
         }
 
-        const track =
-            tracks[0];
+        const track = tracks[0];
 
         const capabilities =
             track.getCapabilities
                 ? track.getCapabilities()
                 : {};
 
-        console.log(
-            "CAMERA CAPABILITIES:",
-            capabilities
-        );
+        console.log("CAMERA CAPABILITIES:", capabilities);
 
         // ==========================================
-        // CONTINUOUS AUTO FOCUS
+        // 1. CONTINUOUS AUTO FOCUS
         // ==========================================
 
         if (
             capabilities.focusMode &&
-            capabilities.focusMode.includes(
-                "continuous"
-            )
+            capabilities.focusMode.includes("continuous")
         ) {
 
             await track.applyConstraints({
-
                 advanced: [
                     {
-                        focusMode:
-                            "continuous"
+                        focusMode: "continuous"
                     }
                 ]
-
             });
 
-            console.log(
-                "AUTO FOCUS: CONTINUOUS"
-            );
+            console.log("FOCUS MODE: CONTINUOUS");
 
         }
 
         // ==========================================
-        // AUTO FOCUS
+        // 2. AUTO FOCUS
         // ==========================================
 
         else if (
             capabilities.focusMode &&
-            capabilities.focusMode.includes(
-                "auto"
-            )
+            capabilities.focusMode.includes("auto")
         ) {
 
             await track.applyConstraints({
-
                 advanced: [
                     {
-                        focusMode:
-                            "auto"
+                        focusMode: "auto"
                     }
                 ]
-
             });
 
-            console.log(
-                "AUTO FOCUS: AUTO"
-            );
+            console.log("FOCUS MODE: AUTO");
 
         }
 
         // ==========================================
-        // ZOOM
+        // 3. TRY HIGHER RESOLUTION
         // ==========================================
-        // ไม่บังคับ Zoom
-        // เพราะคุณต้องการ Auto Focus อย่างเดียว
+
+        try {
+
+            const videoCapabilities =
+                track.getCapabilities
+                    ? track.getCapabilities()
+                    : {};
+
+            const constraints = {};
+
+            if (
+                videoCapabilities.width &&
+                videoCapabilities.width.max
+            ) {
+
+                constraints.width = {
+                    ideal:
+                        Math.min(
+                            videoCapabilities.width.max,
+                            1920
+                        )
+                };
+
+            }
+
+            if (
+                videoCapabilities.height &&
+                videoCapabilities.height.max
+            ) {
+
+                constraints.height = {
+                    ideal:
+                        Math.min(
+                            videoCapabilities.height.max,
+                            1080
+                        )
+                };
+
+            }
+
+            if (Object.keys(constraints).length) {
+
+                await track.applyConstraints(
+                    constraints
+                );
+
+                console.log(
+                    "HIGH RESOLUTION CAMERA ENABLED",
+                    constraints
+                );
+
+            }
+
+        } catch (resolutionError) {
+
+            console.log(
+                "HIGH RESOLUTION NOT SUPPORTED:",
+                resolutionError
+            );
+
+        }
 
     } catch (error) {
 
@@ -996,6 +851,7 @@ async function applyCameraFocus(video) {
     }
 
 }
+        
         // ==========================================
 // STOP ZXING
 // ==========================================
