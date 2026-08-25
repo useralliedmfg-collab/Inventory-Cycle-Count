@@ -68,7 +68,7 @@
 
     <div class="w-full max-w-md bg-white shadow-sm flex flex-col items-center py-4 px-4 sticky top-0 z-10">
         <img src="https://www.alliedmfg.co.th/wp-content/uploads/2026/07/AMS-LOGO-V1.png" alt="AMS Logo" class="h-10 object-contain mb-1">
-        <h1 class="text-lg font-semibold text-blue-900 tracking-wide">Inventory Cycle Count11</h1>
+        <h1 class="text-lg font-semibold text-blue-900 tracking-wide">Inventory Cycle Count12</h1>
     </div>
 
     <!-- Main Application Container -->
@@ -719,140 +719,102 @@ const config = {
                 capabilities
             );
 
-            // ======================================
-// AUTO FOCUS
-// ======================================
+            // ==========================================
+// CAMERA AUTO OPTIMIZATION
+// ==========================================
 
-if (capabilities.focusMode) {
+try {
 
-    console.log(
-        "FOCUS MODES:",
-        capabilities.focusMode
-    );
+    const advanced = [];
+
+    // ======================================
+    // AUTO FOCUS
+    // ======================================
 
     if (
+        capabilities.focusMode &&
         capabilities.focusMode.includes("continuous")
     ) {
 
-        try {
+        advanced.push({
+            focusMode: "continuous"
+        });
 
-            await track.applyConstraints({
+        console.log(
+            "✅ Continuous Auto Focus available"
+        );
+    }
 
-                advanced: [
-                    {
-                        focusMode: "continuous"
-                    }
-                ]
 
-            });
+    // ======================================
+    // AUTO EXPOSURE
+    // ======================================
 
-            console.log(
-                "✅ AUTO FOCUS: CONTINUOUS"
-            );
+    if (
+        capabilities.exposureMode &&
+        capabilities.exposureMode.includes("continuous")
+    ) {
 
-        } catch (e) {
+        advanced.push({
+            exposureMode: "continuous"
+        });
 
-            console.log(
-                "⚠️ Continuous focus failed:",
-                e
-            );
+        console.log(
+            "✅ Continuous Auto Exposure available"
+        );
+    }
 
-        }
+
+    // ======================================
+    // AUTO WHITE BALANCE
+    // ======================================
+
+    if (
+        capabilities.whiteBalanceMode &&
+        capabilities.whiteBalanceMode.includes("continuous")
+    ) {
+
+        advanced.push({
+            whiteBalanceMode: "continuous"
+        });
+
+        console.log(
+            "✅ Continuous Auto White Balance available"
+        );
+    }
+
+
+    // ======================================
+    // APPLY ALL AT ONCE
+    // ======================================
+
+    if (advanced.length > 0) {
+
+        await track.applyConstraints({
+            advanced: advanced
+        });
+
+        console.log(
+            "✅ CAMERA AUTO OPTIMIZATION APPLIED",
+            advanced
+        );
 
     } else {
 
         console.log(
-            "⚠️ Continuous autofocus not supported"
+            "⚠️ Camera does not expose advanced controls"
         );
 
     }
 
+} catch (e) {
+
+    console.log(
+        "⚠️ Camera optimization skipped:",
+        e
+    );
+
 }
-
-            // ======================================
-            // AUTO EXPOSURE
-            // ======================================
-
-            if (
-                capabilities.exposureMode &&
-                capabilities.exposureMode.includes(
-                    "continuous"
-                )
-            ) {
-
-                try {
-
-                    await track.applyConstraints({
-
-                        advanced: [
-                            {
-                                exposureMode:
-                                    "continuous"
-                            }
-                        ]
-
-                    });
-
-                    console.log(
-                        "✅ AUTO EXPOSURE: CONTINUOUS"
-                    );
-
-                } catch (e) {
-
-                    console.log(
-                        "⚠️ Auto exposure failed:",
-                        e
-                    );
-                }
-            }
-
-            // ======================================
-            // AUTO WHITE BALANCE
-            // ======================================
-
-            if (
-                capabilities.whiteBalanceMode &&
-                capabilities.whiteBalanceMode.includes(
-                    "continuous"
-                )
-            ) {
-
-                try {
-
-                    await track.applyConstraints({
-
-                        advanced: [
-                            {
-                                whiteBalanceMode:
-                                    "continuous"
-                            }
-                        ]
-
-                    });
-
-                    console.log(
-                        "✅ AUTO WHITE BALANCE: CONTINUOUS"
-                    );
-
-                } catch (e) {
-
-                    console.log(
-                        "⚠️ White balance failed:",
-                        e
-                    );
-                }
-            }
-
-        } catch (cameraTrackError) {
-
-            console.log(
-                "Camera track configuration error:",
-                cameraTrackError
-            );
-
-        }
-
-    } catch (error) {
 
         // ==========================================
         // CAMERA ERROR
