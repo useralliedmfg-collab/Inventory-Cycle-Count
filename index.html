@@ -68,7 +68,7 @@
 
     <div class="w-full max-w-md bg-white shadow-sm flex flex-col items-center py-4 px-4 sticky top-0 z-10">
         <img src="https://www.alliedmfg.co.th/wp-content/uploads/2026/07/AMS-LOGO-V1.png" alt="AMS Logo" class="h-10 object-contain mb-1">
-        <h1 class="text-lg font-semibold text-blue-900 tracking-wide">Inventory Cycle Count14</h1>
+        <h1 class="text-lg font-semibold text-blue-900 tracking-wide">Inventory Cycle Count15</h1>
     </div>
 
     <!-- Main Application Container -->
@@ -108,10 +108,9 @@
                 <select
     id="location-select"
     class="w-full border border-gray-300 rounded-lg p-3 text-lg bg-gray-50 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
-    disabled
 >
-                    <option value="" disabled selected>-- กรุณาเลือกโซนก่อน --</option>
-                </select>
+    <option value="">-- กรุณาเลือกโซนก่อน --</option>
+</select>
             </div>
 
             <div>
@@ -316,9 +315,17 @@ window.addEventListener("DOMContentLoaded", function () {
     "ZONE_C": ["C1-1", "C1-2", "C1-3"],
     "ZONE_D": ["D1-1", "D1-2", "D1-3", "D1-4"]
 };
-        document
-    .getElementById('zone-select')
-    .addEventListener('change', updateLocations);
+       document.addEventListener("DOMContentLoaded", function () {
+
+    const zoneSelect =
+        document.getElementById("zone-select");
+
+    zoneSelect.addEventListener(
+        "change",
+        updateLocations
+    );
+
+});
 
         let currentSession = {
             zone: "",
@@ -350,48 +357,51 @@ window.addEventListener("DOMContentLoaded", function () {
 
         function updateLocations() {
 
-    const zoneSelect = document.getElementById('zone-select');
-    const locationSelect = document.getElementById('location-select');
+    const zoneSelect = document.getElementById("zone-select");
+    const locationSelect = document.getElementById("location-select");
 
-    const selectedZone = zoneSelect.value;
+    const zone = zoneSelect.value;
 
-    console.log("================================");
-    console.log("ZONE SELECTED:", selectedZone);
-    console.log("================================");
+    console.log("ZONE:", zone);
 
-    // ล้าง Location เดิม
-    locationSelect.innerHTML = '';
+    // ล้างรายการเดิม
+    locationSelect.innerHTML = "";
 
     // ถ้ายังไม่ได้เลือก Zone
-    if (!selectedZone || !MOCK_ZONES[selectedZone]) {
+    if (!zone) {
 
         locationSelect.disabled = true;
 
-        const option = document.createElement('option');
-        option.value = '';
-        option.textContent = '-- กรุณาเลือกโซนก่อน --';
-        option.disabled = true;
-        option.selected = true;
-
-        locationSelect.appendChild(option);
+        locationSelect.innerHTML =
+            '<option value="">-- กรุณาเลือกโซนก่อน --</option>';
 
         return;
     }
 
-    // เพิ่มตัวเลือกแรก
-    const defaultOption = document.createElement('option');
+    // ตรวจสอบ Zone
+    if (!MOCK_ZONES[zone]) {
 
-    defaultOption.value = '';
-    defaultOption.textContent = '-- เลือกพื้นที่ปฏิบัติงาน --';
-    defaultOption.disabled = true;
-    defaultOption.selected = true;
+        locationSelect.disabled = true;
 
-    locationSelect.appendChild(defaultOption);
+        locationSelect.innerHTML =
+            '<option value="">-- ไม่พบพื้นที่ --</option>';
 
-    // เพิ่ม Location ตาม Zone
-    MOCK_ZONES[selectedZone].forEach(function(location) {
+        return;
+    }
 
-        const option = document.createElement('option');
+    // ตัวเลือกแรก
+    const firstOption = document.createElement("option");
+
+    firstOption.value = "";
+    firstOption.textContent = "-- เลือกพื้นที่ปฏิบัติงาน --";
+    firstOption.selected = true;
+
+    locationSelect.appendChild(firstOption);
+
+    // เพิ่ม Location
+    MOCK_ZONES[zone].forEach(function(location) {
+
+        const option = document.createElement("option");
 
         option.value = location;
         option.textContent = location;
@@ -400,12 +410,12 @@ window.addEventListener("DOMContentLoaded", function () {
 
     });
 
-    // เปิด Location
+    // สำคัญ
     locationSelect.disabled = false;
 
     console.log(
-        "LOCATION ENABLED:",
-        MOCK_ZONES[selectedZone]
+        "LOCATION:",
+        MOCK_ZONES[zone]
     );
 }
 
@@ -600,87 +610,10 @@ const config = {
     // เปิดกล้อง
     // ==========================================
 
-    try {
-
-        await html5QrCode.start(
-
-            cameraConfig,
-
-            config,
-
-            // ======================================
-            // SCAN SUCCESS
-            // ======================================
-
-            async function(decodedText, decodedResult) {
-
-                console.log("================================");
-                console.log("QR FOUND");
-                console.log(decodedText);
-                console.log("================================");
-
-                // ป้องกันยิงซ้ำ
-                if (window.isProcessingScan) {
-                    return;
-                }
-
-                window.isProcessingScan = true;
-
-                // ==================================
-                // หยุดกล้องทันที
-                // ==================================
-
-                try {
-
-                    if (html5QrCode) {
-                        await html5QrCode.stop();
-                    }
-
-                } catch (e) {
-
-                    console.log(
-                        "Stop scanner:",
-                        e
-                    );
-
-                }
-
-                // ==================================
-                // เคลียร์หน้ากล้อง
-                // ==================================
-
-                try {
-
-                    if (html5QrCode) {
-                        html5QrCode.clear();
-                    }
-
-                } catch (e) {
-
-                    console.log(
-                        "Clear scanner:",
-                        e
-                    );
-
-                }
-
-                // ==================================
-                // ส่ง QR เข้า Logic เดิม
-                // ==================================
-
-                processScannedData(decodedText);
-
-            },
-
-            // ======================================
-            // SCAN FAILURE
-            // ======================================
+        try {
 
             function(errorMessage) {
-
                 // ไม่ต้องทำอะไร
-                // callback นี้จะทำงานตลอดเวลาที่ยังหา QR ไม่เจอ
-
             }
 
         );
@@ -688,42 +621,23 @@ const config = {
         console.log("✅ CAMERA STARTED");
 
         // ==========================================
-        // หา VIDEO ELEMENT
+        // ส่วน VIDEO
         // ==========================================
 
-        const video =
-            reader.querySelector("video");
+        const video = reader.querySelector("video");
 
         if (video) {
-
-            video.setAttribute(
-                "playsinline",
-                "true"
-            );
-
-            video.setAttribute(
-                "autoplay",
-                "true"
-            );
-
+            video.setAttribute("playsinline", "true");
+            video.setAttribute("autoplay", "true");
             video.muted = true;
 
-            video.style.width =
-                "100%";
-
-            video.style.height =
-                "100%";
-
-            video.style.objectFit =
-                "cover";
-
-            console.log(
-                "✅ VIDEO ELEMENT READY"
-            );
+            video.style.width = "100%";
+            video.style.height = "100%";
+            video.style.objectFit = "cover";
         }
 
         // ==========================================
-        // ขอ Camera Track
+        // CAMERA TRACK
         // ==========================================
 
         try {
@@ -732,11 +646,7 @@ const config = {
                 html5QrCode.getRunningTrack();
 
             if (!track) {
-
-                console.log(
-                    "⚠️ Camera track not found"
-                );
-
+                console.log("⚠️ Camera track not found");
                 return;
             }
 
@@ -748,102 +658,94 @@ const config = {
                 capabilities
             );
 
-            // ==========================================
-// CAMERA AUTO OPTIMIZATION
-// ==========================================
+            // ======================================
+            // AUTO FOCUS
+            // ======================================
 
-try {
+            const advanced = [];
 
-    const advanced = [];
+            if (
+                capabilities.focusMode &&
+                capabilities.focusMode.includes("continuous")
+            ) {
 
-    // ======================================
-    // AUTO FOCUS
-    // ======================================
+                advanced.push({
+                    focusMode: "continuous"
+                });
 
-    if (
-        capabilities.focusMode &&
-        capabilities.focusMode.includes("continuous")
-    ) {
+                console.log(
+                    "✅ Continuous Auto Focus available"
+                );
+            }
 
-        advanced.push({
-            focusMode: "continuous"
-        });
+            // ======================================
+            // AUTO EXPOSURE
+            // ======================================
 
-        console.log(
-            "✅ Continuous Auto Focus available"
-        );
-    }
+            if (
+                capabilities.exposureMode &&
+                capabilities.exposureMode.includes("continuous")
+            ) {
+
+                advanced.push({
+                    exposureMode: "continuous"
+                });
+
+                console.log(
+                    "✅ Continuous Auto Exposure available"
+                );
+            }
+
+            // ======================================
+            // AUTO WHITE BALANCE
+            // ======================================
+
+            if (
+                capabilities.whiteBalanceMode &&
+                capabilities.whiteBalanceMode.includes("continuous")
+            ) {
+
+                advanced.push({
+                    whiteBalanceMode: "continuous"
+                });
+
+                console.log(
+                    "✅ Continuous Auto White Balance available"
+                );
+            }
+
+            // ======================================
+            // APPLY
+            // ======================================
+
+            if (advanced.length > 0) {
+
+                await track.applyConstraints({
+                    advanced: advanced
+                });
+
+                console.log(
+                    "✅ CAMERA AUTO OPTIMIZATION APPLIED",
+                    advanced
+                );
+
+            } else {
+
+                console.log(
+                    "⚠️ Camera does not expose advanced controls"
+                );
+            }
+
+        } catch (e) {
+
+            console.log(
+                "⚠️ Camera optimization skipped:",
+                e
+            );
+        }
 
 
-    // ======================================
-    // AUTO EXPOSURE
-    // ======================================
-
-    if (
-        capabilities.exposureMode &&
-        capabilities.exposureMode.includes("continuous")
-    ) {
-
-        advanced.push({
-            exposureMode: "continuous"
-        });
-
-        console.log(
-            "✅ Continuous Auto Exposure available"
-        );
-    }
-
-
-    // ======================================
-    // AUTO WHITE BALANCE
-    // ======================================
-
-    if (
-        capabilities.whiteBalanceMode &&
-        capabilities.whiteBalanceMode.includes("continuous")
-    ) {
-
-        advanced.push({
-            whiteBalanceMode: "continuous"
-        });
-
-        console.log(
-            "✅ Continuous Auto White Balance available"
-        );
-    }
-
-
-    // ======================================
-    // APPLY ALL AT ONCE
-    // ======================================
-
-    if (advanced.length > 0) {
-
-        await track.applyConstraints({
-            advanced: advanced
-        });
-
-        console.log(
-            "✅ CAMERA AUTO OPTIMIZATION APPLIED",
-            advanced
-        );
-
-    } else {
-
-        console.log(
-            "⚠️ Camera does not expose advanced controls"
-        );
-
-    }
-
-} catch (e) {
-
-    console.log(
-        "⚠️ Camera optimization skipped:",
-        e
-    );
-
-}
+    } catch (error) {
 
         // ==========================================
         // CAMERA ERROR
@@ -854,9 +756,7 @@ try {
             error
         );
 
-        errorBox.classList.remove(
-            "hidden"
-        );
+        errorBox.classList.remove("hidden");
 
         let message =
             "ไม่สามารถเปิดกล้องได้<br><br>" +
@@ -865,35 +765,28 @@ try {
         const err =
             String(error).toLowerCase();
 
-        // Permission
         if (
-            err.includes(
-                "notallowederror"
-            ) ||
-            err.includes(
-                "permission denied"
-            )
+            err.includes("notallowederror") ||
+            err.includes("permission denied")
         ) {
 
             message =
                 "ไม่สามารถเข้าถึงกล้องได้<br><br>" +
                 "กรุณาอนุญาตการใช้งานกล้อง " +
                 "แล้วเปิดหน้าเว็บใหม่อีกครั้ง";
-
         }
 
-        // ไม่พบกล้อง
         else if (
-            err.includes(
-                "notfounderror"
-            )
+            err.includes("notfounderror")
         ) {
 
             message =
                 "ไม่พบกล้องในอุปกรณ์นี้<br><br>" +
                 "กรุณาตรวจสอบกล้องของโทรศัพท์";
-
         }
+
+        errorMsg.innerHTML = message;
+    }
 
         // กล้องไม่รองรับ constraint
         else if (
