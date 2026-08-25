@@ -31,7 +31,7 @@
 
 #reader video {
     width: 100% !important;
-    height: 100% !important;
+    height: auto !important;
     object-fit: contain !important;
 }
         
@@ -69,7 +69,7 @@
 
     <div class="w-full max-w-md bg-white shadow-sm flex flex-col items-center py-4 px-4 sticky top-0 z-10">
         <img src="https://www.alliedmfg.co.th/wp-content/uploads/2026/07/AMS-LOGO-V1.png" alt="AMS Logo" class="h-10 object-contain mb-1">
-        <h1 class="text-lg font-semibold text-blue-900 tracking-wide">Inventory Cycle Count2</h1>
+        <h1 class="text-lg font-semibold text-blue-900 tracking-wide">Inventory Cycle Count3</h1>
     </div>
 
     <!-- Main Application Container -->
@@ -378,53 +378,70 @@
 
     errorBox.classList.add("hidden");
 
-    // ป้องกัน scanner ตัวเก่าค้าง
+    // ==========================================
+    // CLEAR OLD SCANNER
+    // ==========================================
+
     if (html5QrCode) {
+
         try {
             html5QrCode.clear();
         } catch (e) {
             console.log("CLEAR OLD SCANNER:", e);
         }
+
     }
 
     reader.innerHTML = "";
 
+
     // ==========================================
-    // CREATE SCANNER
+    // CREATE QR SCANNER
     // ==========================================
 
     html5QrCode = new Html5Qrcode("reader", {
+
+        // อ่าน QR เท่านั้น
         formatsToSupport: [
             Html5QrcodeSupportedFormats.QR_CODE
         ],
+
+        // ใช้ BarcodeDetector ถ้า browser รองรับ
         useBarCodeDetectorIfSupported: true
+
     });
 
 
     // ==========================================
-    // SCANNER CONFIG
+    // CAMERA CONFIG
     // ==========================================
 
     const config = {
 
-        // อย่าเร่งสูงเกินไป
         fps: 15,
 
-        // ให้ decoder มองพื้นที่กว้าง
-        // เหมาะกับ QR ที่ไม่ได้ใหญ่มาก
-        qrbox: function(viewfinderWidth, viewfinderHeight) {
+        qrbox: function (
+            viewfinderWidth,
+            viewfinderHeight
+        ) {
 
-    return {
-        width: Math.floor(viewfinderWidth * 0.95),
-        height: Math.floor(viewfinderHeight * 0.80)
-    };
+            // พื้นที่สแกนกว้าง
+            return {
 
-},
+                width:
+                    Math.floor(
+                        viewfinderWidth * 0.90
+                    ),
 
-        // ใช้สัดส่วนกล้องจริง
-        aspectRatio: 16 / 9,
+                height:
+                    Math.floor(
+                        viewfinderHeight * 0.70
+                    )
 
-        // สำคัญมาก
+            };
+
+        },
+
         videoConstraints: {
 
             facingMode: {
@@ -443,12 +460,14 @@
                 ideal: 30,
                 min: 15
             }
+
         }
+
     };
 
 
     // ==========================================
-    // START CAMERA
+    // START
     // ==========================================
 
     html5QrCode.start(
@@ -461,47 +480,50 @@
 
         config,
 
-        function(decodedText, decodedResult) {
+        function (decodedText, decodedResult) {
 
             console.log(
                 "QR FOUND:",
                 decodedText
             );
 
-            // หยุดทันที
-            if (html5QrCode) {
 
-                html5QrCode.stop()
-                    .then(() => {
-
-                        html5QrCode.clear();
-
-                        processScannedData(
-                            decodedText
-                        );
-
-                    })
-                    .catch(error => {
-
-                        console.log(
-                            "STOP ERROR:",
-                            error
-                        );
-
-                        processScannedData(
-                            decodedText
-                        );
-
-                    });
-
+            if (!html5QrCode) {
+                return;
             }
+
+
+            html5QrCode.stop()
+
+                .then(() => {
+
+                    html5QrCode.clear();
+
+                    processScannedData(
+                        decodedText
+                    );
+
+                })
+
+                .catch(error => {
+
+                    console.log(
+                        "STOP ERROR:",
+                        error
+                    );
+
+                    processScannedData(
+                        decodedText
+                    );
+
+                });
 
         },
 
-        function(errorMessage) {
+        function (errorMessage) {
 
-            // ไม่ต้องแสดง error
-            // เพราะ callback นี้ถูกเรียกตลอดเวลา
+            // ไม่ต้องแสดงอะไร
+            // callback นี้ถูกเรียกตลอดเวลาที่หา QR ไม่เจอ
 
         }
 
@@ -515,63 +537,53 @@
 
 
         // ==========================================
-        // GET VIDEO TRACK
+        // CAMERA CAPABILITIES
         // ==========================================
 
-        const video =
-            document.querySelector(
-                "#reader video"
+        let capabilities;
+
+        try {
+
+            capabilities =
+                html5QrCode
+                    .getRunningTrackCapabilities();
+
+            console.log(
+                "CAMERA CAPABILITIES:",
+                capabilities
             );
 
+        } catch (error) {
+
+            console.log(
+                "CAPABILITIES ERROR:",
+                error
+            );
+
+            return;
+
+        }
+
+
+        // ==========================================
+        // AUTO FOCUS
+        // ==========================================
 
         if (
-            video &&
-            video.srcObject
+            capabilities.focusMode &&
+            Array.isArray(
+                capabilities.focusMode
+            )
         ) {
 
-            const tracks =
-                video.srcObject.getVideoTracks();
-
-
             if (
-                tracks &&
-                tracks.length > 0
+                capabilities.focusMode.includes(
+                    "continuous"
+                )
             ) {
 
-                const track =
-                    tracks[0];
-
-
-                console.log(
-                    "CAMERA SETTINGS:",
-                    track.getSettings()
-                );
-
-
-                // ==========================================
-                // AUTO FOCUS
-                // ==========================================
-
-                const capabilities =
-                    track.getCapabilities
-                        ? track.getCapabilities()
-                        : {};
-
-
-                console.log(
-                    "CAMERA CAPABILITIES:",
-                    capabilities
-                );
-
-
-                if (
-                    capabilities.focusMode &&
-                    capabilities.focusMode.includes(
-                        "continuous"
-                    )
-                ) {
-
-                    track.applyConstraints({
+                html5QrCode
+                    .applyVideoConstraints({
 
                         advanced: [
 
@@ -587,7 +599,7 @@
                     .then(() => {
 
                         console.log(
-                            "AUTO FOCUS: CONTINUOUS"
+                            "AUTO FOCUS: ON"
                         );
 
                     })
@@ -595,86 +607,82 @@
                     .catch(error => {
 
                         console.log(
-                            "FOCUS ERROR:",
+                            "AUTO FOCUS ERROR:",
                             error
                         );
 
                     });
 
-                }
+            }
+
+        }
 
 
-                // ==========================================
-                // AUTO ZOOM
-                // ==========================================
+        // ==========================================
+        // AUTO ZOOM
+        // ==========================================
 
-                if (
-                    capabilities.zoom
-                ) {
+        if (
+            capabilities.zoom
+        ) {
 
-                    const minZoom =
-                        capabilities.zoom.min;
+            const minZoom =
+                capabilities.zoom.min;
 
-                    const maxZoom =
-                        capabilities.zoom.max;
+            const maxZoom =
+                capabilities.zoom.max;
 
 
-                    console.log(
-                        "ZOOM:",
-                        minZoom,
+            console.log(
+                "ZOOM RANGE:",
+                minZoom,
+                maxZoom
+            );
+
+
+            if (
+                maxZoom > minZoom
+            ) {
+
+                // อย่า zoom เยอะเกินไป
+                const targetZoom =
+                    Math.min(
+                        minZoom + 1,
                         maxZoom
                     );
 
 
-                    // ใช้ zoom เล็กน้อย
-                    // ไม่ทำปุ่มให้ผู้ใช้กด
+                html5QrCode
+                    .applyVideoConstraints({
 
-                    if (
-                        maxZoom >
-                        minZoom
-                    ) {
+                        advanced: [
 
-                        const zoom =
-                            Math.min(
-                                minZoom + 1,
-                                maxZoom
-                            );
+                            {
+                                zoom:
+                                    targetZoom
+                            }
 
+                        ]
 
-                        track.applyConstraints({
+                    })
 
-                            advanced: [
+                    .then(() => {
 
-                                {
-                                    zoom:
-                                        zoom
-                                }
+                        console.log(
+                            "AUTO ZOOM:",
+                            targetZoom
+                        );
 
-                            ]
+                    })
 
-                        })
+                    .catch(error => {
 
-                        .then(() => {
+                        console.log(
+                            "AUTO ZOOM ERROR:",
+                            error
+                        );
 
-                            console.log(
-                                "AUTO ZOOM:",
-                                zoom
-                            );
-
-                        })
-
-                        .catch(error => {
-
-                            console.log(
-                                "ZOOM NOT SUPPORTED:",
-                                error
-                            );
-
-                        });
-
-                    }
-
-                }
+                    });
 
             }
 
@@ -708,7 +716,7 @@
     });
 
 }
-
+        
         function switchCamera() {
             if (availableCameras.length > 1 && html5QrCode) {
                 currentCameraIndex = (currentCameraIndex + 1) % availableCameras.length;
