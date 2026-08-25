@@ -72,7 +72,7 @@
 
     <div class="w-full max-w-md bg-white shadow-sm flex flex-col items-center py-4 px-4 sticky top-0 z-10">
         <img src="https://www.alliedmfg.co.th/wp-content/uploads/2026/07/AMS-LOGO-V1.png" alt="AMS Logo" class="h-10 object-contain mb-1">
-        <h1 class="text-lg font-semibold text-blue-900 tracking-wide">Inventory Cycle Count1</h1>
+        <h1 class="text-lg font-semibold text-blue-900 tracking-wide">Inventory Cycle Count2</h1>
     </div>
 
     <!-- Main Application Container -->
@@ -456,27 +456,6 @@ async function initScanner() {
     reader.appendChild(video);
 
     // ==========================================
-// WAIT VIDEO READY → AUTO FOCUS
-// ==========================================
-
-video.addEventListener(
-    "loadedmetadata",
-    async () => {
-
-        console.log(
-            "VIDEO READY:",
-            video.videoWidth,
-            "x",
-            video.videoHeight
-        );
-
-        await applyCameraFocus(video);
-
-    },
-    { once: true }
-);
-
-    // ==========================================
     // CREATE ZXING
     // ==========================================
 
@@ -603,40 +582,14 @@ if (backCamera) {
         isScanning = true;
 
         scannerControls =
-    await codeReader.decodeFromVideoDevice(
-        selectedCamera
-            ? selectedCamera.deviceId
-            : undefined,
+            await codeReader.decodeFromVideoDevice(
+                selectedCamera
+                    ? selectedCamera.deviceId
+                    : undefined,
 
-        video,
+                video,
 
-        function(result, error) {
-
-            if (result && !hasScanned) {
-
-                hasScanned = true;
-
-                const decodedText =
-                    result.getText();
-
-                console.log(
-                    "ZXING SCAN:",
-                    decodedText
-                );
-
-                stopZXingScanner()
-                    .then(() => {
-
-                        processScannedData(
-                            decodedText
-                        );
-
-                    });
-
-            }
-
-        }
-    );
+                function(result, error) {
 
                     // ==================================
                     // SUCCESS
@@ -686,6 +639,11 @@ if (backCamera) {
         // CAMERA AUTO FOCUS
         // ==========================================
 
+        setTimeout(
+            () => applyCameraFocus(video),
+            800
+        );
+
     } catch (error) {
 
         console.error(
@@ -704,142 +662,109 @@ if (backCamera) {
     }
 
 }
-        // ==========================================
-// CAMERA AUTO FOCUS - ENHANCED
+// ==========================================
+// AUTO FOCUS
 // ==========================================
 
 async function applyCameraFocus(video) {
 
     try {
 
-        if (!video || !video.srcObject) {
-            console.log("VIDEO STREAM NOT READY");
+        if (
+            !video ||
+            !video.srcObject
+        ) {
+            console.log(
+                "VIDEO STREAM NOT READY"
+            );
+
             return;
         }
 
-        const stream = video.srcObject;
-        const tracks = stream.getVideoTracks();
+        const stream =
+            video.srcObject;
+
+        const tracks =
+            stream.getVideoTracks();
 
         if (!tracks.length) {
-            console.log("NO VIDEO TRACK");
             return;
         }
 
-        const track = tracks[0];
+        const track =
+            tracks[0];
 
         const capabilities =
             track.getCapabilities
                 ? track.getCapabilities()
                 : {};
 
-        console.log("CAMERA CAPABILITIES:", capabilities);
+        console.log(
+            "CAMERA CAPABILITIES:",
+            capabilities
+        );
 
         // ==========================================
-        // 1. CONTINUOUS AUTO FOCUS
+        // CONTINUOUS AUTO FOCUS
         // ==========================================
 
         if (
             capabilities.focusMode &&
-            capabilities.focusMode.includes("continuous")
+            capabilities.focusMode.includes(
+                "continuous"
+            )
         ) {
 
             await track.applyConstraints({
+
                 advanced: [
                     {
-                        focusMode: "continuous"
+                        focusMode:
+                            "continuous"
                     }
                 ]
+
             });
 
-            console.log("FOCUS MODE: CONTINUOUS");
+            console.log(
+                "AUTO FOCUS: CONTINUOUS"
+            );
 
         }
 
         // ==========================================
-        // 2. AUTO FOCUS
+        // AUTO FOCUS
         // ==========================================
 
         else if (
             capabilities.focusMode &&
-            capabilities.focusMode.includes("auto")
+            capabilities.focusMode.includes(
+                "auto"
+            )
         ) {
 
             await track.applyConstraints({
+
                 advanced: [
                     {
-                        focusMode: "auto"
+                        focusMode:
+                            "auto"
                     }
                 ]
+
             });
 
-            console.log("FOCUS MODE: AUTO");
-
-        }
-
-        // ==========================================
-        // 3. TRY HIGHER RESOLUTION
-        // ==========================================
-
-        try {
-
-            const videoCapabilities =
-                track.getCapabilities
-                    ? track.getCapabilities()
-                    : {};
-
-            const constraints = {};
-
-            if (
-                videoCapabilities.width &&
-                videoCapabilities.width.max
-            ) {
-
-                constraints.width = {
-                    ideal:
-                        Math.min(
-                            videoCapabilities.width.max,
-                            1920
-                        )
-                };
-
-            }
-
-            if (
-                videoCapabilities.height &&
-                videoCapabilities.height.max
-            ) {
-
-                constraints.height = {
-                    ideal:
-                        Math.min(
-                            videoCapabilities.height.max,
-                            1080
-                        )
-                };
-
-            }
-
-            if (Object.keys(constraints).length) {
-
-                await track.applyConstraints(
-                    constraints
-                );
-
-                console.log(
-                    "HIGH RESOLUTION CAMERA ENABLED",
-                    constraints
-                );
-
-            }
-
-        } catch (resolutionError) {
-
             console.log(
-                "HIGH RESOLUTION NOT SUPPORTED:",
-                resolutionError
+                "AUTO FOCUS: AUTO"
             );
 
         }
+
+        // ==========================================
+        // ZOOM
+        // ==========================================
+        // ไม่บังคับ Zoom
+        // เพราะคุณต้องการ Auto Focus อย่างเดียว
 
     } catch (error) {
 
@@ -851,7 +776,6 @@ async function applyCameraFocus(video) {
     }
 
 }
-        
         // ==========================================
 // STOP ZXING
 // ==========================================
