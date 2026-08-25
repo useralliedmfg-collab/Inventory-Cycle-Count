@@ -32,8 +32,8 @@
 #reader video {
     width: 100% !important;
     height: 100% !important;
-    object-fit: contain !important;
-}    
+    object-fit: cover !important;
+}
         /* Custom SweetAlert styles for mobile */
         .swal2-popup {
             font-family: 'Prompt', sans-serif !important;
@@ -68,7 +68,7 @@
 
     <div class="w-full max-w-md bg-white shadow-sm flex flex-col items-center py-4 px-4 sticky top-0 z-10">
         <img src="https://www.alliedmfg.co.th/wp-content/uploads/2026/07/AMS-LOGO-V1.png" alt="AMS Logo" class="h-10 object-contain mb-1">
-        <h1 class="text-lg font-semibold text-blue-900 tracking-wide">Inventory Cycle Count1</h1>
+        <h1 class="text-lg font-semibold text-blue-900 tracking-wide">Inventory Cycle Count11</h1>
     </div>
 
     <!-- Main Application Container -->
@@ -518,51 +518,55 @@ async function initScanner() {
 };
 
     // ==========================================
-    // SCANNER CONFIG
-    // ==========================================
+// SCANNER CONFIG
+// ==========================================
 
-    const config = {
+const config = {
 
-    // ให้กล้องพยายามอ่านถี่ขึ้น
-    fps: 30,
+    // พยายามอ่าน QR บ่อยขึ้น
+    fps: 15,
 
-    // ใช้พื้นที่อ่านเกือบเต็มภาพ
+    // ใช้พื้นที่ scan กว้าง
+    // เหมาะกับ QR ขนาดเล็ก
     qrbox: function(viewfinderWidth, viewfinderHeight) {
 
+        const minEdge =
+            Math.min(
+                viewfinderWidth,
+                viewfinderHeight
+            );
+
+        const boxSize =
+            Math.floor(minEdge * 0.80);
+
         return {
-            width: Math.floor(viewfinderWidth * 0.90),
-            height: Math.floor(viewfinderHeight * 0.90)
+            width: boxSize,
+            height: boxSize
         };
-
     },
 
+    // ให้กล้องใช้สัดส่วนตามอุปกรณ์
     aspectRatio: undefined,
 
-    // ใช้ decoder ของ html5-qrcode
-    useBarCodeDetectorIfSupported: false,
+    // ใช้ Barcode Detector ถ้า Browser รองรับ
+    useBarCodeDetectorIfSupported: true,
 
-    // รองรับ QR ที่กลับด้าน
+    // รองรับ QR / Barcode หลายประเภท
+    formatsToSupport: [
+        Html5QrcodeSupportedFormats.QR_CODE,
+        Html5QrcodeSupportedFormats.CODE_128,
+        Html5QrcodeSupportedFormats.CODE_39,
+        Html5QrcodeSupportedFormats.CODE_93,
+        Html5QrcodeSupportedFormats.EAN_13,
+        Html5QrcodeSupportedFormats.EAN_8,
+        Html5QrcodeSupportedFormats.UPC_A,
+        Html5QrcodeSupportedFormats.UPC_E
+    ],
+
+    // ไม่กลับด้านภาพ
     disableFlip: false
 };
-    },
-
-    aspectRatio: undefined,
-
-    // ให้ html5-qrcode ใช้ ZXing decoder
-    useBarCodeDetectorIfSupported: false,
-
-    disableFlip: false
-
-};
-    },
-
-    aspectRatio: undefined,
-
-    useBarCodeDetectorIfSupported: false,
-
-    disableFlip: false
-};
-
+    
     // ==========================================
     // เปิดกล้อง
     // ==========================================
