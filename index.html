@@ -68,7 +68,7 @@
 
     <div class="w-full max-w-md bg-white shadow-sm flex flex-col items-center py-4 px-4 sticky top-0 z-10">
         <img src="https://www.alliedmfg.co.th/wp-content/uploads/2026/07/AMS-LOGO-V1.png" alt="AMS Logo" class="h-10 object-contain mb-1">
-        <h1 class="text-lg font-semibold text-blue-900 tracking-wide">Inventory Cycle Count12</h1>
+        <h1 class="text-lg font-semibold text-blue-900 tracking-wide">Inventory Cycle Count13</h1>
     </div>
 
     <!-- Main Application Container -->
@@ -348,36 +348,83 @@ window.addEventListener("DOMContentLoaded", function () {
 
         function updateLocations() {
 
-    const zone =
-        document.getElementById('zone-select').value;
+    const zoneSelect =
+        document.getElementById('zone-select');
 
     const locSelect =
         document.getElementById('location-select');
 
-    locSelect.innerHTML =
-        '<option value="" disabled selected>-- เลือกพื้นที่ --</option>';
+    const zone =
+        zoneSelect.value;
 
-    if (MOCK_ZONES[zone]) {
+    console.log("Selected Zone:", zone);
 
-        MOCK_ZONES[zone].forEach(loc => {
+    // ==========================================
+    // RESET LOCATION
+    // ==========================================
 
-            const opt =
-                document.createElement('option');
+    locSelect.innerHTML = '';
 
-            opt.value = loc;
-            opt.textContent = loc;
+    const defaultOption =
+        document.createElement('option');
 
-            locSelect.appendChild(opt);
+    defaultOption.value = '';
+    defaultOption.textContent =
+        '-- เลือกพื้นที่ --';
 
-        });
+    defaultOption.disabled = true;
+    defaultOption.selected = true;
 
-        locSelect.disabled = false;
+    locSelect.appendChild(defaultOption);
 
-    } else {
+
+    // ==========================================
+    // CHECK ZONE
+    // ==========================================
+
+    if (
+        !zone ||
+        !MOCK_ZONES[zone]
+    ) {
 
         locSelect.disabled = true;
 
+        console.log(
+            "No locations for zone:",
+            zone
+        );
+
+        return;
     }
+
+
+    // ==========================================
+    // ADD LOCATIONS
+    // ==========================================
+
+    MOCK_ZONES[zone].forEach(function(location) {
+
+        const option =
+            document.createElement('option');
+
+        option.value = location;
+        option.textContent = location;
+
+        locSelect.appendChild(option);
+
+    });
+
+
+    // ==========================================
+    // ENABLE LOCATION
+    // ==========================================
+
+    locSelect.disabled = false;
+
+    console.log(
+        "Location enabled:",
+        MOCK_ZONES[zone]
+    );
 }
 
         // --- STREAMING_CHUNK:Scanner Logic via Html5Qrcode ---
