@@ -23,7 +23,7 @@
         #reader {
     width: 100%;
     max-width: 420px;
-    height: 420px;
+    min-height: 420px;
     border-radius: 16px;
     overflow: hidden;
     background: #000;
@@ -31,7 +31,7 @@
 
 #reader video {
     width: 100% !important;
-    height: 100% !important;
+    height: auto !important;
     object-fit: cover !important;
 }
         
@@ -69,7 +69,7 @@
 
     <div class="w-full max-w-md bg-white shadow-sm flex flex-col items-center py-4 px-4 sticky top-0 z-10">
         <img src="https://www.alliedmfg.co.th/wp-content/uploads/2026/07/AMS-LOGO-V1.png" alt="AMS Logo" class="h-10 object-contain mb-1">
-        <h1 class="text-lg font-semibold text-blue-900 tracking-wide">Inventory Cycle Count555</h1>
+        <h1 class="text-lg font-semibold text-blue-900 tracking-wide">Inventory Cycle Count</h1>
     </div>
 
     <!-- Main Application Container -->
@@ -309,87 +309,38 @@
 
         function updateLocations() {
 
-    const zoneSelect =
-        document.getElementById('zone-select');
+    const zone =
+        document.getElementById('zone-select').value;
 
-    const locationSelect =
+    const locSelect =
         document.getElementById('location-select');
 
-    if (!zoneSelect || !locationSelect) {
-        console.error('ไม่พบ Zone หรือ Location element');
-        return;
-    }
+    locSelect.innerHTML =
+        '<option value="" disabled selected>-- เลือกพื้นที่ --</option>';
 
-    const zone = zoneSelect.value;
+    if (MOCK_ZONES[zone]) {
 
-    console.log('Selected Zone:', zone);
+        MOCK_ZONES[zone].forEach(loc => {
 
-    // ล้าง Location เดิม
-    locationSelect.innerHTML = '';
+            const opt =
+                document.createElement('option');
 
-    // ค่าเริ่มต้น
-    const defaultOption =
-        document.createElement('option');
+            opt.value = loc;
+            opt.textContent = loc;
 
-    defaultOption.value = '';
-    defaultOption.textContent =
-        '-- เลือกพื้นที่ --';
-    defaultOption.disabled = true;
-    defaultOption.selected = true;
+            locSelect.appendChild(opt);
 
-    locationSelect.appendChild(
-        defaultOption
-    );
+        });
 
-
-    // ==========================================
-    // LOAD LOCATION
-    // ==========================================
-
-    if (
-        MOCK_ZONES &&
-        MOCK_ZONES[zone]
-    ) {
-
-        MOCK_ZONES[zone].forEach(
-            function(location) {
-
-                const option =
-                    document.createElement(
-                        'option'
-                    );
-
-                option.value =
-                    location;
-
-                option.textContent =
-                    location;
-
-                locationSelect.appendChild(
-                    option
-                );
-
-            }
-        );
-
-        // เปิด Location
-        locationSelect.disabled = false;
-
-        console.log(
-            'Locations:',
-            MOCK_ZONES[zone]
-        );
+        locSelect.disabled = false;
 
     } else {
 
-        locationSelect.disabled = true;
+        locSelect.disabled = true;
 
-        console.log(
-            'ไม่พบ Location ของ Zone:',
-            zone
-        );
     }
 }
+
         // --- STREAMING_CHUNK:Scanner Logic via Html5Qrcode ---
         function goToScanner() {
 
@@ -422,330 +373,120 @@
 
         function initScanner() {
 
-    const reader =
-        document.getElementById("reader");
-
-    const errorBox =
-        document.getElementById("camera-error");
+    const reader = document.getElementById("reader");
+    const errorBox = document.getElementById("camera-error");
 
     errorBox.classList.add("hidden");
 
-    // ==========================================
-    // CLEAR OLD SCANNER
-    // ==========================================
-
-    if (html5QrCode) {
-
-        try {
-
-            html5QrCode.stop()
-                .catch(() => {});
-
-            html5QrCode.clear();
-
-        } catch (e) {}
-
-    }
-
+    // ล้างพื้นที่กล้องก่อน
     reader.innerHTML = "";
 
-
-    // ==========================================
-    // CREATE SCANNER
-    // ==========================================
-
-    html5QrCode =
-        new Html5Qrcode("reader");
-
-
-    // ==========================================
-    // CONFIG
-    // ==========================================
+    // สร้าง scanner ใหม่
+    html5QrCode = new Html5Qrcode("reader");
 
     const config = {
+    fps: 20,
 
-        fps: 20,
+    qrbox: function(viewfinderWidth, viewfinderHeight) {
 
-        qrbox: function(
+        const size = Math.min(
             viewfinderWidth,
             viewfinderHeight
-        ) {
+        ) * 0.75;
 
-            const size =
-                Math.min(
-                    viewfinderWidth,
-                    viewfinderHeight
-                ) * 0.75;
+        return {
+            width: Math.floor(size),
+            height: Math.floor(size)
+        };
+    },
 
-            return {
+    aspectRatio: 1.0,
 
-                width:
-                    Math.floor(size),
-
-                height:
-                    Math.floor(size)
-
-            };
-
+    videoConstraints: {
+        facingMode: {
+            ideal: "environment"
         },
-
-        aspectRatio: 1.0,
-
-        disableFlip: false
-    };
-
-
-    // ==========================================
-    // START CAMERA
-    // ==========================================
+        width: {
+            ideal: 1920
+        },
+        height: {
+            ideal: 1080
+        }
+    }
+};
 
     html5QrCode.start(
-
-        {
-            facingMode: "environment"
-        },
-
-        config,
-
-        // ======================================
-        // SUCCESS
-        // ======================================
+    {
+        facingMode: "environment"
+    },
+    config,
 
         function(decodedText) {
 
-            console.log(
-                "SCAN:",
-                decodedText
-            );
-
+            console.log("SCAN:", decodedText);
 
             html5QrCode.stop()
-
                 .then(() => {
-
                     html5QrCode.clear();
-
-                    processScannedData(
-                        decodedText
-                    );
-
+                    processScannedData(decodedText);
                 })
-
                 .catch(() => {
-
-                    processScannedData(
-                        decodedText
-                    );
-
+                    processScannedData(decodedText);
                 });
 
         },
 
-        // ======================================
-        // SCAN FAILURE
-        // ======================================
-
         function(errorMessage) {
-
             // ไม่ต้องทำอะไร
         }
 
-    )
+    ).then(() => {
+
+    console.log("CAMERA OK");
 
     // ==========================================
-    // CAMERA SUCCESS
+    // AUTO FOCUS
     // ==========================================
+    const video = document.querySelector("#reader video");
 
-    .then(() => {
+    if (video && video.srcObject) {
 
-        console.log(
-            "CAMERA OK"
-        );
+        const track = video.srcObject.getVideoTracks()[0];
 
+        if (track) {
 
-        // รอ video พร้อม
-        setTimeout(() => {
+            track.applyConstraints({
+                advanced: [
+                    {
+                        focusMode: "continuous"
+                    }
+                ]
+            })
+            .then(() => {
+                console.log("AUTO FOCUS: ON");
+            })
+            .catch((error) => {
+                console.log(
+                    "AUTO FOCUS ไม่รองรับในอุปกรณ์นี้",
+                    error
+                );
+            });
 
-            enableAutoFocus();
+        }
+    }
 
-        }, 1000);
+}).catch((error) => {
 
-    })
+        console.error("CAMERA ERROR:", error);
 
-    // ==========================================
-    // CAMERA ERROR
-    // ==========================================
+        errorBox.classList.remove("hidden");
 
-    .catch(error => {
-
-        console.error(
-            "CAMERA ERROR:",
-            error
-        );
-
-
-        errorBox.classList.remove(
-            "hidden"
-        );
-
-
-        document.getElementById(
-            "camera-error-msg"
-        ).innerHTML =
-
+        document.getElementById("camera-error-msg").innerHTML =
             "เปิดกล้องไม่ได้<br><br>" +
-
             "กรุณากดอนุญาตการใช้งานกล้อง<br>" +
-
             "แล้วลองใหม่อีกครั้ง";
 
     });
-}
-        function enableAutoFocus() {
-
-    const video =
-        document.querySelector(
-            "#reader video"
-        );
-
-    if (!video) {
-
-        console.log(
-            "ไม่พบ video"
-        );
-
-        return;
-    }
-
-
-    const stream =
-        video.srcObject;
-
-    if (!stream) {
-
-        console.log(
-            "ไม่พบ camera stream"
-        );
-
-        return;
-    }
-
-
-    const track =
-        stream.getVideoTracks()[0];
-
-    if (!track) {
-
-        console.log(
-            "ไม่พบ camera track"
-        );
-
-        return;
-    }
-
-
-    console.log(
-        "CAMERA:",
-        track.getSettings()
-    );
-
-
-    // ==========================================
-    // CHECK FOCUS SUPPORT
-    // ==========================================
-
-    if (
-        !track.getCapabilities
-    ) {
-
-        console.log(
-            "Browser ไม่รองรับ Camera Capabilities"
-        );
-
-        return;
-    }
-
-
-    const capabilities =
-        track.getCapabilities();
-
-
-    console.log(
-        "FOCUS:",
-        capabilities.focusMode
-    );
-
-
-    // ==========================================
-    // CONTINUOUS AUTO FOCUS
-    // ==========================================
-
-    if (
-        capabilities.focusMode &&
-        capabilities.focusMode.includes(
-            "continuous"
-        )
-    ) {
-
-        track.applyConstraints({
-
-            advanced: [
-
-                {
-                    focusMode:
-                        "continuous"
-                }
-
-            ]
-
-        })
-
-        .then(() => {
-
-            console.log(
-                "✅ AUTO FOCUS ON"
-            );
-
-        })
-
-        .catch(error => {
-
-            console.log(
-                "AUTO FOCUS ERROR:",
-                error
-            );
-
-        });
-
-    } else {
-
-        console.log(
-            "⚠️ อุปกรณ์นี้ไม่รองรับการสั่ง Focus จาก Browser"
-        );
-
-    }
-}
-    // ==========================================
-    // HIGH RESOLUTION
-    // ==========================================
-
-    const settings =
-        track.getSettings();
-
-
-    if (
-        settings.width &&
-        settings.height
-    ) {
-
-        console.log(
-            "RESOLUTION:",
-            settings.width +
-            "x" +
-            settings.height
-        );
-
-    }
 }
 
         function switchCamera() {
