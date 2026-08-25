@@ -68,7 +68,7 @@
 
     <div class="w-full max-w-md bg-white shadow-sm flex flex-col items-center py-4 px-4 sticky top-0 z-10">
         <img src="https://www.alliedmfg.co.th/wp-content/uploads/2026/07/AMS-LOGO-V1.png" alt="AMS Logo" class="h-10 object-contain mb-1">
-        <h1 class="text-lg font-semibold text-blue-900 tracking-wide">Inventory Cycle Count13</h1>
+        <h1 class="text-lg font-semibold text-blue-900 tracking-wide">Inventory Cycle Count14</h1>
     </div>
 
     <!-- Main Application Container -->
@@ -93,7 +93,6 @@
                 <label class="block text-sm font-medium text-gray-600 mb-1">โซนตรวจนับ (Zone)</label>
                 <select
     id="zone-select"
-    onchange="updateLocations()"
     class="w-full border border-gray-300 rounded-lg p-3 text-lg bg-gray-50 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
 >
                     <option value="" disabled selected>-- เลือกโซนตรวจนับ --</option>
@@ -317,6 +316,9 @@ window.addEventListener("DOMContentLoaded", function () {
     "ZONE_C": ["C1-1", "C1-2", "C1-3"],
     "ZONE_D": ["D1-1", "D1-2", "D1-3", "D1-4"]
 };
+        document
+    .getElementById('zone-select')
+    .addEventListener('change', updateLocations);
 
         let currentSession = {
             zone: "",
@@ -348,82 +350,62 @@ window.addEventListener("DOMContentLoaded", function () {
 
         function updateLocations() {
 
-    const zoneSelect =
-        document.getElementById('zone-select');
+    const zoneSelect = document.getElementById('zone-select');
+    const locationSelect = document.getElementById('location-select');
 
-    const locSelect =
-        document.getElementById('location-select');
+    const selectedZone = zoneSelect.value;
 
-    const zone =
-        zoneSelect.value;
+    console.log("================================");
+    console.log("ZONE SELECTED:", selectedZone);
+    console.log("================================");
 
-    console.log("Selected Zone:", zone);
+    // ล้าง Location เดิม
+    locationSelect.innerHTML = '';
 
-    // ==========================================
-    // RESET LOCATION
-    // ==========================================
+    // ถ้ายังไม่ได้เลือก Zone
+    if (!selectedZone || !MOCK_ZONES[selectedZone]) {
 
-    locSelect.innerHTML = '';
+        locationSelect.disabled = true;
 
-    const defaultOption =
-        document.createElement('option');
+        const option = document.createElement('option');
+        option.value = '';
+        option.textContent = '-- กรุณาเลือกโซนก่อน --';
+        option.disabled = true;
+        option.selected = true;
 
-    defaultOption.value = '';
-    defaultOption.textContent =
-        '-- เลือกพื้นที่ --';
-
-    defaultOption.disabled = true;
-    defaultOption.selected = true;
-
-    locSelect.appendChild(defaultOption);
-
-
-    // ==========================================
-    // CHECK ZONE
-    // ==========================================
-
-    if (
-        !zone ||
-        !MOCK_ZONES[zone]
-    ) {
-
-        locSelect.disabled = true;
-
-        console.log(
-            "No locations for zone:",
-            zone
-        );
+        locationSelect.appendChild(option);
 
         return;
     }
 
+    // เพิ่มตัวเลือกแรก
+    const defaultOption = document.createElement('option');
 
-    // ==========================================
-    // ADD LOCATIONS
-    // ==========================================
+    defaultOption.value = '';
+    defaultOption.textContent = '-- เลือกพื้นที่ปฏิบัติงาน --';
+    defaultOption.disabled = true;
+    defaultOption.selected = true;
 
-    MOCK_ZONES[zone].forEach(function(location) {
+    locationSelect.appendChild(defaultOption);
 
-        const option =
-            document.createElement('option');
+    // เพิ่ม Location ตาม Zone
+    MOCK_ZONES[selectedZone].forEach(function(location) {
+
+        const option = document.createElement('option');
 
         option.value = location;
         option.textContent = location;
 
-        locSelect.appendChild(option);
+        locationSelect.appendChild(option);
 
     });
 
-
-    // ==========================================
-    // ENABLE LOCATION
-    // ==========================================
-
-    locSelect.disabled = false;
+    // เปิด Location
+    locationSelect.disabled = false;
 
     console.log(
-        "Location enabled:",
-        MOCK_ZONES[zone]
+        "LOCATION ENABLED:",
+        MOCK_ZONES[selectedZone]
     );
 }
 
