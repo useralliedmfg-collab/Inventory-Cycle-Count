@@ -146,7 +146,6 @@
                 <label class="block text-sm font-medium text-gray-600 mb-1">โซนตรวจนับ (Zone)</label>
                 <select
     id="zone-select"
-    onchange="updateLocations()"
     class="w-full border border-gray-300 rounded-lg p-3 text-lg bg-gray-50 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
 >
                     <option value="" disabled selected>-- เลือกโซนตรวจนับ --</option>
@@ -162,7 +161,6 @@
                 <select
     id="location-select"
     class="w-full border border-gray-300 rounded-lg p-3 text-lg bg-gray-50 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
-    disabled
 >
                     <option value="" disabled selected>-- กรุณาเลือกโซนก่อน --</option>
                 </select>
@@ -266,6 +264,8 @@
 
     </button>
 
+</div>
+            <!-- สำคัญ: ปิด VIEW SCANNER -->
 </div>
 
         <!-- VIEW 3: INPUT COUNT -->
@@ -376,25 +376,90 @@
 };
 
         function updateLocations() {
-            const zoneSelect = document.getElementById('zone-select');
-            const locationSelect = document.getElementById('location-select');
-            const selectedZone = zoneSelect.value;
 
-            // Reset and clear options
-            locationSelect.innerHTML = '<option value="" disabled selected>-- เลือกพื้นที่ปฏิบัติงาน --</option>';
+    const zoneSelect =
+        document.getElementById('zone-select');
 
-            if (selectedZone && MOCK_ZONES[selectedZone]) {
-                MOCK_ZONES[selectedZone].forEach(loc => {
-                    const option = document.createElement('option');
-                    option.value = loc;
-                    option.textContent = loc;
-                    locationSelect.appendChild(option);
-                });
-                locationSelect.disabled = false;
-            } else {
-                locationSelect.disabled = true;
-            }
+    const locationSelect =
+        document.getElementById('location-select');
+
+    const selectedZone =
+        zoneSelect.value;
+
+    console.log("SELECTED ZONE:", selectedZone);
+
+    // ล้าง Location เดิม
+    locationSelect.innerHTML =
+        '<option value="">-- เลือกพื้นที่ปฏิบัติงาน --</option>';
+
+    // ถ้ายังไม่ได้เลือก Zone
+    if (!selectedZone) {
+
+        locationSelect.disabled = true;
+
+        return;
+    }
+
+    // หา Location จาก Zone
+    const locations =
+        MOCK_ZONES[selectedZone];
+
+    console.log("LOCATIONS:", locations);
+
+    if (!locations || locations.length === 0) {
+
+        locationSelect.disabled = true;
+
+        return;
+    }
+
+    // เพิ่ม Location
+    locations.forEach(function(loc) {
+
+        const option =
+            document.createElement('option');
+
+        option.value = loc;
+        option.textContent = loc;
+
+        locationSelect.appendChild(option);
+
+    });
+
+    // เปิด Location
+    locationSelect.disabled = false;
+
+}
+
+    // ==========================================
+    // ADD LOCATIONS
+    // ==========================================
+
+    MOCK_ZONES[selectedZone].forEach(
+        function (loc) {
+
+            const option =
+                document.createElement('option');
+
+            option.value = loc;
+
+            option.textContent = loc;
+
+            locationSelect.appendChild(
+                option
+            );
+
         }
+    );
+
+
+    // ==========================================
+    // ENABLE LOCATION
+    // ==========================================
+
+    locationSelect.disabled = false;
+
+}
 
         async function cancelInput() {
 
@@ -2259,6 +2324,31 @@ document
                 confirmButtonColor: '#d33'
             });
         }
+        document.addEventListener('DOMContentLoaded', function () {
+
+    const zoneSelect =
+        document.getElementById('zone-select');
+
+    const locationSelect =
+        document.getElementById('location-select');
+
+    if (!zoneSelect || !locationSelect) {
+        console.error('ไม่พบ Zone หรือ Location Select');
+        return;
+    }
+
+    zoneSelect.addEventListener('change', function () {
+
+        console.log(
+            'ZONE CHANGED:',
+            this.value
+        );
+
+        updateLocations();
+
+    });
+
+});
     </script>
 </body>
 </html>
