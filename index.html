@@ -546,7 +546,7 @@
             currentScanData.partNumber = parts[0] || '';
             currentScanData.qrQty = parts[1] || '';
             currentScanData.unit = parts[2] || '';
-            currentScanData.serialNumber = parts[3] || '';
+            currentScanData.serialNumber = parts[parts.length - 1] || '';
             currentScanData.unit2 = '';
 
             document.getElementById('display-lot').textContent = lotNumber;
