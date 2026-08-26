@@ -33,6 +33,7 @@
             height: 100% !important;
             object-fit: cover !important;
             display: block;
+            filter: contrast(1.15) brightness(1.05);
         }
         .scanner-frame {
             position: absolute;
@@ -210,8 +211,8 @@
     </main>
 
     <script>
-        // GOOGLE APPS SCRIPT WEB APP URL (สามารถแก้ไขผ่านหน้าเว็บหรือใส่ตรงนี้ได้เลย)
-        let WEB_APP_URL = localStorage.getItem('ams_script_url') || 'YOUR_GOOGLE_APPS_SCRIPT_WEB_APP_URL_HERE';
+        // GOOGLE APPS SCRIPT WEB APP URL (ใส่ URL ตรงนี้โดยไม่ต้องรอกดเชื่อมต่อ)
+        let WEB_APP_URL = localStorage.getItem('ams_script_url') || 'https://script.google.com/macros/s/YOUR_DEPLOYMENT_ID/exec';
 
         const MOCK_ZONES = {
             "ZONE_A": ["A1-1", "A1-2", "A1-3"],
@@ -223,11 +224,8 @@
         let currentSession = { zone: "", location: "", responsiblePerson: "" };
         let currentScanData = { partNumber: "", qrQty: "", unit: "", lotNumber: "", serialNumber: "", unit2: "" };
 
-        // ตรวจสอบตอนเปิดเว็บว่าใส่ URL หรือยัง
         window.addEventListener('DOMContentLoaded', () => {
-            if (!WEB_APP_URL || WEB_APP_URL.includes('YOUR_GOOGLE_APPS_SCRIPT_WEB_APP_URL_HERE')) {
-                openSettingsModal(true);
-            }
+            // ไม่บังคับเปิด Modal แล้ว เพื่อให้ใช้งานได้ทันทีถ้าใส่ URL ไว้ในโค้ดแล้ว
         });
 
         async function openSettingsModal(isRequired = false) {
@@ -322,7 +320,10 @@
             await stopZXingScanner();
 
             if (!zxingCodeReader) {
-                zxingCodeReader = new ZXing.BrowserMultiFormatReader();
+                // บังคับโหมด TRY_HARDER สำหรับสแกนบาร์โค้ดจาง/ความคมชัดต่ำ
+                const hints = new Map();
+                hints.set(ZXing.DecodeHintType.TRY_HARDER, true);
+                zxingCodeReader = new ZXing.BrowserMultiFormatReader(hints);
             }
 
             try {
@@ -359,12 +360,32 @@
             scanLocked = false;
             const video = document.getElementById("zxing-video");
 
-            await zxingCodeReader.decodeFromVideoDevice(selectedDeviceId, video, async (result, error) => {
-                if (!result || scanLocked) return;
-                scanLocked = true;
-                await stopZXingScanner();
-                processScannedData(result.text);
-            });
+            // กำหนดคอนสเตรนท์ขอความละเอียดสูง เพื่อจับภาพบาร์โค้ดจางได้ดีขึ้น
+            const constraints = {
+                video: {
+                    deviceId: selectedDeviceId ? { exact: selectedDeviceId } : undefined,
+                    width: { ideal: 1920, min: 1280 },
+                    height: { ideal: 1080, min: 720 },
+                    facingMode: "environment"
+                }
+            };
+
+            try {
+                await zxingCodeReader.decodeFromConstraints(constraints, video, async (result, error) => {
+                    if (!result || scanLocked) return;
+                    scanLocked = true;
+                    await stopZXingScanner();
+                    processScannedData(result.text);
+                });
+            } catch (err) {
+                // Fallback หากอุปกรณ์ไม่รองรับ HD constraints
+                await zxingCodeReader.decodeFromVideoDevice(selectedDeviceId, video, async (result, error) => {
+                    if (!result || scanLocked) return;
+                    scanLocked = true;
+                    await stopZXingScanner();
+                    processScannedData(result.text);
+                });
+            }
 
             setTimeout(async () => {
                 try {
@@ -487,7 +508,15 @@
         async function processScannedData(text) {
             const parts = text.split(',').map(x => x.trim());
             if (parts.length < 4) {
-                Swal.fire({ icon: 'error', title: 'รูปแบบไม่ถูกต้อง', text: 'ข้อมูล QR / Barcode ไม่ถูกต้อง', confirmButtonText: 'สแกนใหม่' }).then(() => { initScanner(); });
+                Swal.fire({ 
+                    icon: 'error', 
+                    title: 'รูปแบบไม่ถูกต้อง', 
+                    text: 'ข้อมูล QR / Barcode ไม่ถูกต้อง', 
+                    confirmButtonText: 'สแกนใหม่' 
+                }).then(() => { 
+                    scanLocked = false;
+                    initScanner(); 
+                });
                 return;
             }
 
@@ -501,7 +530,15 @@
             }
 
             if (!lotNumber) {
-                Swal.fire({ icon: 'warning', title: 'ไม่พบ WO / WO2 / RC', text: 'ไม่พบหมายเลข WO, WO2 หรือ RC ใน QR Code นี้', confirmButtonText: 'สแกนใหม่' }).then(() => { initScanner(); });
+                Swal.fire({ 
+                    icon: 'warning', 
+                    title: 'ไม่พบ WO / WO2 / RC', 
+                    text: 'ไม่พบหมายเลข WO, WO2 หรือ RC ใน QR Code นี้', 
+                    confirmButtonText: 'สแกนใหม่' 
+                }).then(() => { 
+                    scanLocked = false;
+                    initScanner(); 
+                });
                 return;
             }
 
