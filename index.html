@@ -73,7 +73,7 @@
                 ⚙️ ตั้งค่าลิงก์
             </button>
         </div>
-        <h1 class="text-lg font-semibold text-blue-900 tracking-wide">Inventory Cycle Count1</h1>
+        <h1 class="text-lg font-semibold text-blue-900 tracking-wide">Inventory Cycle Count2</h1>
     </div>
 
     <main class="w-full max-w-md flex-1 bg-white shadow-md flex flex-col relative overflow-hidden">
@@ -213,6 +213,48 @@
     <script>
         // GOOGLE APPS SCRIPT WEB APP URL (ใส่ URL ตรงนี้โดยไม่ต้องรอกดเชื่อมต่อ)
         let WEB_APP_URL = localStorage.getItem('ams_script_url') || 'https://script.google.com/macros/s/YOUR_DEPLOYMENT_ID/exec';
+
+// ==========================================
+// PART MASTER CACHE
+// ==========================================
+let partMasterCache = {};
+let partMasterLoaded = false;
+
+// ==========================================
+// LOAD PART MASTER ONCE
+// ==========================================
+async function loadPartMaster() {
+    if (partMasterLoaded) return;
+
+    try {
+        const response = await fetch(WEB_APP_URL, {
+            method: 'POST',
+            body: new URLSearchParams({
+                data: JSON.stringify({
+                    action: 'loadPartMaster'
+                })
+            })
+        });
+
+        const result = await response.json();
+
+        if (result.status === 'success') {
+            partMasterCache = result.data || {};
+            partMasterLoaded = true;
+
+            console.log(
+                'Part Master loaded:',
+                Object.keys(partMasterCache).length,
+                'parts'
+            );
+        } else {
+            console.error('LOAD PART MASTER ERROR:', result.message);
+        }
+
+    } catch (error) {
+        console.error('LOAD PART MASTER CONNECTION ERROR:', error);
+    }
+}
 
         const MOCK_ZONES = {
             "ZONE_A": ["A1-1", "A1-2", "A1-3"],
