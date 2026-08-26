@@ -121,7 +121,7 @@
 
     <div class="w-full max-w-md bg-white shadow-sm flex flex-col items-center py-4 px-4 sticky top-0 z-10">
         <img src="https://www.alliedmfg.co.th/wp-content/uploads/2026/07/AMS-LOGO-V1.png" alt="AMS Logo" class="h-10 object-contain mb-1">
-        <h1 class="text-lg font-semibold text-blue-900 tracking-wide">Inventory Cycle Count2</h1>
+        <h1 class="text-lg font-semibold text-blue-900 tracking-wide">Inventory Cycle Count3</h1>
     </div>
 
     <!-- Main Application Container -->
@@ -148,7 +148,7 @@
     id="zone-select"
     class="w-full border border-gray-300 rounded-lg p-3 text-lg bg-gray-50 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
 >
-                    <option value="" disabled selected>-- เลือกโซนตรวจนับ --</option>
+    <option value="" selected>-- เลือกโซนตรวจนับ --</option>
     <option value="ZONE_A">Zone A</option>
     <option value="ZONE_B">Zone B</option>
     <option value="ZONE_C">Zone C</option>
@@ -160,10 +160,11 @@
                 <label class="block text-sm font-medium text-gray-600 mb-1">พื้นที่ปฏิบัติงาน (Location)</label>
                 <select
     id="location-select"
+    disabled
     class="w-full border border-gray-300 rounded-lg p-3 text-lg bg-gray-50 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
 >
-                    <option value="" disabled selected>-- กรุณาเลือกโซนก่อน --</option>
-                </select>
+    <option value="">-- กรุณาเลือกโซนก่อน --</option>
+</select>
             </div>
 
             <div>
@@ -369,64 +370,82 @@
     <script>
         // --- State Management ---
         const MOCK_ZONES = {
-    "ZONE_A": ["A1-1", "A1-2", "A1-3"],
-    "ZONE_B": ["B1-1", "B1-2", "B1-3"],
-    "ZONE_C": ["C1-1", "C1-2", "C1-3"],
-    "ZONE_D": ["D1-1", "D1-2", "D1-3", "D1-4"]
+    ZONE_A: ["A1-1", "A1-2", "A1-3"],
+    ZONE_B: ["B1-1", "B1-2", "B1-3"],
+    ZONE_C: ["C1-1", "C1-2", "C1-3"],
+    ZONE_D: ["D1-1", "D1-2", "D1-3", "D1-4"]
 };
+        document
+    .getElementById('zone-select')
+    .addEventListener('change', updateLocations);
 
         function updateLocations() {
 
-    const zoneSelect =
-        document.getElementById('zone-select');
+    const zoneSelect = document.getElementById('zone-select');
+    const locationSelect = document.getElementById('location-select');
 
-    const locationSelect =
-        document.getElementById('location-select');
+    const zone = zoneSelect.value;
 
-    const selectedZone =
-        zoneSelect.value;
+    console.log("ZONE:", zone);
 
-    console.log("SELECTED ZONE:", selectedZone);
+    // ล้าง Location
+    locationSelect.innerHTML = '';
 
-    // ล้าง Location เดิม
-    locationSelect.innerHTML =
-        '<option value="">-- เลือกพื้นที่ปฏิบัติงาน --</option>';
-
-    // ถ้ายังไม่ได้เลือก Zone
-    if (!selectedZone) {
+    // ยังไม่เลือก Zone
+    if (!zone) {
 
         locationSelect.disabled = true;
+
+        const option = document.createElement('option');
+        option.value = '';
+        option.textContent = '-- กรุณาเลือกโซนก่อน --';
+
+        locationSelect.appendChild(option);
 
         return;
     }
 
-    // หา Location จาก Zone
-    const locations =
-        MOCK_ZONES[selectedZone];
+    // ดึง Location
+    const locations = MOCK_ZONES[zone];
 
-    console.log("LOCATIONS:", locations);
+    console.log("LOCATION:", locations);
 
     if (!locations || locations.length === 0) {
 
         locationSelect.disabled = true;
 
+        const option = document.createElement('option');
+        option.value = '';
+        option.textContent = '-- ไม่พบ Location --';
+
+        locationSelect.appendChild(option);
+
         return;
     }
 
+    // Default
+    const defaultOption = document.createElement('option');
+
+    defaultOption.value = '';
+    defaultOption.textContent = '-- เลือกพื้นที่ปฏิบัติงาน --';
+    defaultOption.disabled = true;
+    defaultOption.selected = true;
+
+    locationSelect.appendChild(defaultOption);
+
     // เพิ่ม Location
-    locations.forEach(function(loc) {
+    locations.forEach(function(location) {
 
-        const option =
-            document.createElement('option');
+        const option = document.createElement('option');
 
-        option.value = loc;
-        option.textContent = loc;
+        option.value = location;
+        option.textContent = location;
 
         locationSelect.appendChild(option);
 
     });
 
-    // เปิด Location
+    // เปิด Dropdown
     locationSelect.disabled = false;
 
 }
