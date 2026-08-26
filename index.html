@@ -121,7 +121,7 @@
 
     <div class="w-full max-w-md bg-white shadow-sm flex flex-col items-center py-4 px-4 sticky top-0 z-10">
         <img src="https://www.alliedmfg.co.th/wp-content/uploads/2026/07/AMS-LOGO-V1.png" alt="AMS Logo" class="h-10 object-contain mb-1">
-        <h1 class="text-lg font-semibold text-blue-900 tracking-wide">Inventory Cycle Count1</h1>
+        <h1 class="text-lg font-semibold text-blue-900 tracking-wide">Inventory Cycle Count2</h1>
     </div>
 
     <!-- Main Application Container -->
@@ -436,7 +436,8 @@
     unit: "",
     lotNumber: "",
     serialNumber: "",
-    unit2: ""
+    unit2: "",
+    qrType: ""
 };
         // --- View Navigation ---
         function showView(viewId) {
@@ -1323,7 +1324,7 @@ async function stopScannerAndGoBack() {
 }
 
         // --- STREAMING_CHUNK:Handling Scan Data and Parsing ---
-        function processScannedData(text) {
+        async function processScannedData(text) {
 
     console.log("QR DATA:", text);
 
@@ -1423,14 +1424,15 @@ async function stopScannerAndGoBack() {
 
     currentScanData = {
 
-        partNumber: "",
-        qrQty: "",
-        unit: "",
-        lotNumber: lotNumber,
-        serialNumber: "",
-        unit2: ""
+    partNumber: "",
+    qrQty: "",
+    unit: "",
+    lotNumber: lotNumber,
+    serialNumber: "",
+    unit2: "",
+    qrType: qrType
 
-    };
+};
 
 
     // ==========================================
@@ -1606,82 +1608,87 @@ async function stopScannerAndGoBack() {
 
             if (qrType === "RC") {
 
-                currentScanData.unit = "";
+    currentScanData.unit = "";
 
-                document
-                    .getElementById('unit2-container')
-                    .classList
-                    .remove('hidden');
+    document
+        .getElementById('unit2-container')
+        .classList
+        .remove('hidden');
 
+    document
+        .getElementById('rc-unit-display')
+        .classList
+        .remove('hidden');
 
-                document
-                    .getElementById('rc-unit-display')
-                    .classList
-                    .remove('hidden');
-
-
-                document
-                    .getElementById('display-unit')
-                    .textContent =
-                    "กำลังค้นหา...";
+    document
+        .getElementById('display-unit')
+        .textContent =
+        "กำลังค้นหา...";
 
 
-                // ==========================================
-                // GET UNIT FROM PART MASTER
-                // ==========================================
+    // ==========================================
+    // FIND UNIT FROM PART MASTER
+    // ==========================================
 
-                getPartUnitFromMaster(
-                    currentScanData.partNumber
-                )
+    try {
 
-                .then(unit => {
+        const unit =
+            await getPartUnitFromMaster(
+                currentScanData.partNumber
+            );
 
-                    currentScanData.unit =
-                        unit;
+        currentScanData.unit =
+            unit;
 
+        document
+            .getElementById('display-unit')
+            .textContent =
+            unit;
 
-                    document
-                        .getElementById('display-unit')
-                        .textContent =
-                        unit;
+    }
 
-                })
+    catch (error) {
 
-                .catch(error => {
+        console.error(
+            "UNIT ERROR:",
+            error
+        );
 
-                    console.error(
-                        "UNIT ERROR:",
-                        error
-                    );
+        currentScanData.unit = "";
 
-
-                    currentScanData.unit = "";
-
-
-                    document
-                        .getElementById('display-unit')
-                        .textContent =
-                        "-";
+        document
+            .getElementById('display-unit')
+            .textContent =
+            "-";
 
 
-                    Swal.fire({
+        Swal.close();
 
-                        icon: 'warning',
 
-                        title: 'ไม่พบ Unit',
+        await Swal.fire({
 
-                        text:
-                            error.message,
+            icon: 'warning',
 
-                        confirmButtonText:
-                            'ตกลง'
+            title: 'ไม่พบ Unit',
 
-                    });
+            text:
+                error.message ||
+                'ไม่สามารถค้นหา Unit ได้',
 
-                });
+            confirmButtonText:
+                'ตกลง'
 
-            }
+        });
 
+
+        // กลับไป Scanner
+        initScanner();
+
+        return;
+
+    }
+
+}
 
             // ==========================================
             // WO / WO2
@@ -1777,8 +1784,13 @@ async function stopScannerAndGoBack() {
 
 function findExistingLotFromGAS(lotNumber) {
 
-    const SCRIPT_URL =
-        'https://script.google.com/macros/s/AKfycbzXgFiJWsDft8DL7MZia3hlM3pBC0_rVYHhKL-dA2-fX1sCpwNki7NoD2lRbnfxUDriSg/exec';
+    if (!lotNumber) {
+
+        return Promise.reject(
+            new Error('ไม่พบ Lot Number')
+        );
+
+    }
 
 
     return fetch(
@@ -1797,11 +1809,10 @@ function findExistingLotFromGAS(lotNumber) {
                     data:
                         JSON.stringify({
 
-                            action:
-                                'findLot',
+                            action: 'findLot',
 
                             lotNumber:
-                                lotNumber
+                                lotNumber.trim()
 
                         })
 
@@ -1809,13 +1820,25 @@ function findExistingLotFromGAS(lotNumber) {
         }
     )
 
-    .then(async response => {
+    .then(response => {
 
-        const text =
-            await response.text();
+        if (!response.ok) {
+
+            throw new Error(
+                'Google Apps Script HTTP Error: ' +
+                response.status
+            );
+
+        }
+
+        return response.text();
+
+    })
+
+    .then(text => {
 
         console.log(
-            "FIND LOT RESPONSE:",
+            'FIND LOT RESPONSE:',
             text
         );
 
@@ -1829,7 +1852,12 @@ function findExistingLotFromGAS(lotNumber) {
 
         }
 
-        catch (e) {
+        catch (error) {
+
+            console.error(
+                'INVALID JSON:',
+                text
+            );
 
             throw new Error(
                 'Google Apps Script ไม่ส่ง JSON กลับมา'
@@ -1850,8 +1878,14 @@ function findExistingLotFromGAS(lotNumber) {
 
 function getPartUnitFromMaster(partNumber) {
 
-    const SCRIPT_URL =
-        'https://script.google.com/macros/s/AKfycbzXgFiJWsDft8DL7MZia3hlM3pBC0_rVYHhKL-dA2-fX1sCpwNki7NoD2lRbnfxUDriSg/exec';
+    if (!partNumber) {
+
+        return Promise.reject(
+            new Error('ไม่พบ Part Number')
+        );
+
+    }
+
 
     return fetch(
         SCRIPT_URL,
@@ -1873,14 +1907,29 @@ function getPartUnitFromMaster(partNumber) {
                                 'getPartUnit',
 
                             partNumber:
-                                partNumber
+                                partNumber.trim()
 
                         })
 
                 })
         }
     )
-    .then(response => response.json())
+
+    .then(response => {
+
+        if (!response.ok) {
+
+            throw new Error(
+                'Google Apps Script HTTP Error: ' +
+                response.status
+            );
+
+        }
+
+        return response.json();
+
+    })
+
     .then(result => {
 
         if (
@@ -1894,6 +1943,7 @@ function getPartUnitFromMaster(partNumber) {
 
         }
 
+
         if (!result.unit) {
 
             throw new Error(
@@ -1903,6 +1953,7 @@ function getPartUnitFromMaster(partNumber) {
             );
 
         }
+
 
         return result.unit;
 
@@ -1952,8 +2003,7 @@ function submitCount() {
 // ==========================================
 
 if (
-    currentScanData.lotNumber &&
-    /^RC([-_]|$)/i.test(currentScanData.lotNumber) &&
+    currentScanData.qrType === "RC" &&
     !currentScanData.unit2
 ) {
 
