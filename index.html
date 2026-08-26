@@ -67,9 +67,12 @@
 
     <div class="w-full max-w-md bg-white shadow-sm flex flex-col items-center py-4 px-4 sticky top-0 z-10">
         <div class="w-full flex justify-between items-center mb-1">
-            <img src="https://www.alliedmfg.co.th/wp-content/uploads/2026/07/AMS-LOGO-V1.png" alt="AMS Logo" class="h-8 object-contain"> 
+            <img src="https://www.alliedmfg.co.th/wp-content/uploads/2026/07/AMS-LOGO-V1.png" alt="AMS Logo" class="h-8 object-contain">
+            <button onclick="openSettingsModal()" class="text-gray-500 hover:text-blue-600 p-2 rounded-full text-sm flex items-center gap-1 bg-gray-50 border border-gray-200">
+                ⚙️ ตั้งค่าลิงก์
+            </button>
         </div>
-        <h1 class="text-lg font-semibold text-blue-900 tracking-wide">Inventory Cycle Count55555555</h1>
+        <h1 class="text-lg font-semibold text-blue-900 tracking-wide">Inventory Cycle Count</h1>
     </div>
 
     <main class="w-full max-w-md flex-1 bg-white shadow-md flex flex-col relative overflow-hidden">
@@ -208,7 +211,7 @@
 
     <script>
         // GOOGLE APPS SCRIPT WEB APP URL (สามารถแก้ไขผ่านหน้าเว็บหรือใส่ตรงนี้ได้เลย)
-        const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbzXgFiJWsDft8DL7MZia3hlM3pBC0_rVYHhKL-dA2-fX1sCpwNki7NoD2lRbnfxUDriSg/exec';
+        let WEB_APP_URL = localStorage.getItem('ams_script_url') || 'YOUR_GOOGLE_APPS_SCRIPT_WEB_APP_URL_HERE';
 
         const MOCK_ZONES = {
             "ZONE_A": ["A1-1", "A1-2", "A1-3"],
@@ -219,6 +222,13 @@
 
         let currentSession = { zone: "", location: "", responsiblePerson: "" };
         let currentScanData = { partNumber: "", qrQty: "", unit: "", lotNumber: "", serialNumber: "", unit2: "" };
+
+        // ตรวจสอบตอนเปิดเว็บว่าใส่ URL หรือยัง
+        window.addEventListener('DOMContentLoaded', () => {
+            if (!WEB_APP_URL || WEB_APP_URL.includes('YOUR_GOOGLE_APPS_SCRIPT_WEB_APP_URL_HERE')) {
+                openSettingsModal(true);
+            }
+        });
 
         async function openSettingsModal(isRequired = false) {
             const { value: url } = await Swal.fire({
@@ -272,6 +282,11 @@
         }
 
         function goToScanner() {
+            if (!WEB_APP_URL || WEB_APP_URL.includes('YOUR_')) {
+                openSettingsModal(true);
+                return;
+            }
+
             const zone = document.getElementById('zone-select').value;
             const loc = document.getElementById('location-select').value;
             const resp = document.getElementById('responsible-name').value.trim();
@@ -508,34 +523,24 @@
                 unit2Container.classList.remove('hidden');
                 document.getElementById('display-unit').textContent = 'กำลังโหลด...';
                 
-                // Fetch unit from Part Master via Apps Script
-google.script.run
-    .withSuccessHandler(function(resJson) {
-
-        if (resJson && resJson.status === 'success') {
-
-            currentScanData.unit = resJson.unit || '-';
-
-            document.getElementById('display-unit').textContent =
-                currentScanData.unit;
-
-        } else {
-
-            document.getElementById('display-unit').textContent =
-                'ไม่พบ Unit';
-
-        }
-
-    })
-    .withFailureHandler(function(error) {
-
-        console.error('GET UNIT ERROR:', error);
-
-        document.getElementById('display-unit').textContent =
-            'เชื่อมต่อผิดพลาด';
-
-    })
-    .getPartUnit(currentScanData.partNumber);
+                // Fetch unit from Part Master via Apps Script API
+                try {
+                    const response = await fetch(WEB_APP_URL, {
+                        method: 'POST',
+                        body: new URLSearchParams({
+                            data: JSON.stringify({ action: 'getPartUnit', partNumber: currentScanData.partNumber })
+                        })
+                    });
+                    const resJson = await response.json();
+                    if (resJson.status === 'success') {
+                        currentScanData.unit = resJson.unit || '-';
+                        document.getElementById('display-unit').textContent = currentScanData.unit;
+                    } else {
+                        document.getElementById('display-unit').textContent = 'ไม่พบ Unit';
+                    }
+                } catch (e) {
+                    document.getElementById('display-unit').textContent = 'เชื่อมต่อผิดพลาด';
+                }
             } else {
                 rcUnitDisplay.classList.add('hidden');
                 unit2Container.classList.add('hidden');
@@ -591,58 +596,37 @@ google.script.run
             const loadingOverlay = document.getElementById('loading-overlay');
             loadingOverlay.classList.remove('hidden');
 
-            google.script.run
-    .withSuccessHandler(function(result) {
+            try {
+                const response = await fetch(WEB_APP_URL, {
+                    method: 'POST',
+                    body: new URLSearchParams({
+                        data: JSON.stringify(payload)
+                    })
+                });
 
-        loadingOverlay.classList.add('hidden');
+                const result = await response.json();
+                loadingOverlay.classList.add('hidden');
 
-        if (result && result.status === 'success') {
-
-            Swal.fire({
-                icon: 'success',
-                title: 'บันทึกสำเร็จ',
-                text: result.message || 'บันทึกข้อมูลเรียบร้อยแล้ว',
-                timer: 1500,
-                showConfirmButton: false
-            }).then(() => {
-
-                document.getElementById('actual-qty').value = '';
-
-                if (unit2Select) {
-                    unit2Select.value = '';
+                if (result.status === 'success') {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'บันทึกสำเร็จ',
+                        text: result.message || 'บันทึกข้อมูลเรียบร้อยแล้ว',
+                        timer: 1500,
+                        showConfirmButton: false
+                    }).then(() => {
+                        document.getElementById('actual-qty').value = '';
+                        if (unit2Select) unit2Select.value = '';
+                        showView('view-scanner');
+                        initScanner();
+                    });
+                } else {
+                    Swal.fire({ icon: 'error', title: 'เกิดข้อผิดพลาด', text: result.message || 'ไม่สามารถบันทึกข้อมูลได้' });
                 }
-
-                showView('view-scanner');
-
-                initScanner();
-
-            });
-
-        } else {
-
-            Swal.fire({
-                icon: 'error',
-                title: 'เกิดข้อผิดพลาด',
-                text: result?.message || 'ไม่สามารถบันทึกข้อมูลได้'
-            });
-
-        }
-
-    })
-    .withFailureHandler(function(error) {
-
-        loadingOverlay.classList.add('hidden');
-
-        console.error('SAVE ERROR:', error);
-
-        Swal.fire({
-            icon: 'error',
-            title: 'เชื่อมต่อล้มเหลว',
-            text: error?.message || error.toString()
-        });
-
-    })
-    .saveToSheet(payload);
+            } catch (error) {
+                loadingOverlay.classList.add('hidden');
+                Swal.fire({ icon: 'error', title: 'เชื่อมต่อล้มเหลว', text: error.toString() });
+            }
         }
     </script>
 </body>
