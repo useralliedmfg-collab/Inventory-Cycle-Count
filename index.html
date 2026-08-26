@@ -73,7 +73,7 @@
                 ⚙️ ตั้งค่าลิงก์
             </button>
         </div>
-        <h1 class="text-lg font-semibold text-blue-900 tracking-wide">Inventory Cycle Count111</h1>
+        <h1 class="text-lg font-semibold text-blue-900 tracking-wide">Inventory Cycle Count222</h1>
     </div>
 
     <main class="w-full max-w-md flex-1 bg-white shadow-md flex flex-col relative overflow-hidden">
@@ -561,19 +561,43 @@
             const unit2Container = document.getElementById('unit2-container');
 
             if (qrType === 'RC') {
-                rcUnitDisplay.classList.remove('hidden');
-                unit2Container.classList.remove('hidden');
-                document.getElementById('display-unit').textContent = 'กำลังโหลด...';
-                
-                // Fetch unit from Part Master via Apps Script API
-                try {
-                    const response = await fetch(WEB_APP_URL, {
-                        method: 'POST',
-                        body: new URLSearchParams({
-                            data: JSON.stringify({ action: 'getPartUnit', partNumber: currentScanData.partNumber })
-                        })
-                    });
-                    const resJson = await response.json();
+    rcUnitDisplay.classList.remove('hidden');
+    unit2Container.classList.remove('hidden');
+    document.getElementById('display-unit').textContent = 'กำลังโหลด...';
+
+    // แสดงหน้า Input ทันที ไม่รอ API
+    showView('view-input');
+
+    setTimeout(() => {
+        document.getElementById('actual-qty').focus();
+    }, 300);
+
+    // โหลด Unit เบื้องหลัง
+    fetch(WEB_APP_URL, {
+        method: 'POST',
+        body: new URLSearchParams({
+            data: JSON.stringify({
+                action: 'getPartUnit',
+                partNumber: currentScanData.partNumber
+            })
+        })
+    })
+    .then(response => response.json())
+    .then(resJson => {
+        if (resJson.status === 'success') {
+            currentScanData.unit = resJson.unit || '-';
+            document.getElementById('display-unit').textContent = currentScanData.unit;
+        } else {
+            document.getElementById('display-unit').textContent = 'ไม่พบ Unit';
+        }
+    })
+    .catch(error => {
+        console.error('GET PART UNIT ERROR:', error);
+        document.getElementById('display-unit').textContent = 'เชื่อมต่อผิดพลาด';
+    });
+
+    return;
+}
                     if (resJson.status === 'success') {
                         currentScanData.unit = resJson.unit || '-';
                         document.getElementById('display-unit').textContent = currentScanData.unit;
