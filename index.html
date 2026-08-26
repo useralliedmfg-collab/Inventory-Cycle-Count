@@ -73,7 +73,7 @@
                 ⚙️ ตั้งค่าลิงก์
             </button>
         </div>
-        <h1 class="text-lg font-semibold text-blue-900 tracking-wide">Inventory Cycle Count////</h1>
+        <h1 class="text-lg font-semibold text-blue-900 tracking-wide">Inventory Cycle Count111</h1>
     </div>
 
     <main class="w-full max-w-md flex-1 bg-white shadow-md flex flex-col relative overflow-hidden">
@@ -544,10 +544,12 @@
 
             currentScanData.lotNumber = lotNumber;
             currentScanData.partNumber = parts[0] || '';
+            
             if (qrType === 'RC') {
-    currentScanData.qrQty = parts[4] || '';
-} else {
+            currentScanData.qrQty = parts[4] || '';
+            } else {
             currentScanData.qrQty = parts[1] || '';
+            }   
             currentScanData.unit = parts[2] || '';
             currentScanData.serialNumber = parts[parts.length - 1] || '';
             currentScanData.unit2 = '';
