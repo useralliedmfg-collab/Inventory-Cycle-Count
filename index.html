@@ -6,8 +6,8 @@
     <title>Inventory Cycle Count</title>
     <!-- Tailwind CSS for Mobile-First Styling -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Html5Qrcode for robust mobile camera scanning (QR & Barcode) -->
-    <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+    <!-- ZXing for robust mobile camera scanning (QR & Barcode) -->
+    <script type="text/javascript" src="https://unpkg.com/@zxing/library@0.19.1"></script>
     <!-- SweetAlert2 for beautiful non-blocking popups -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <!-- Google Fonts: Prompt -->
@@ -23,16 +23,68 @@
         #reader {
     width: 100%;
     max-width: 420px;
-    min-height: 420px;
+    height: 420px;
     border-radius: 16px;
     overflow: hidden;
     background: #000;
+    position: relative;
 }
 
 #reader video {
     width: 100% !important;
-    height: auto !important;
+    height: 100% !important;
     object-fit: cover !important;
+    display: block;
+}
+
+.scanner-frame {
+    position: absolute;
+    width: 72%;
+    height: 72%;
+    left: 14%;
+    top: 14%;
+    border: 3px solid rgba(255,255,255,0.9);
+    border-radius: 18px;
+    pointer-events: none;
+    z-index: 5;
+    box-shadow:
+        0 0 0 9999px rgba(0,0,0,0.15);
+}
+
+.scanner-corner {
+    position: absolute;
+    width: 35px;
+    height: 35px;
+    border-color: #22c55e;
+    border-style: solid;
+}
+
+.scanner-corner.tl {
+    top: -3px;
+    left: -3px;
+    border-width: 5px 0 0 5px;
+    border-radius: 12px 0 0 0;
+}
+
+.scanner-corner.tr {
+    top: -3px;
+    right: -3px;
+    border-width: 5px 5px 0 0;
+    border-radius: 0 12px 0 0;
+}
+
+.scanner-corner.bl {
+    bottom: -3px;
+    left: -3px;
+    border-width: 0 0 5px 5px;
+    border-radius: 0 0 0 12px;
+}
+
+.scanner-corner.br {
+    bottom: -3px;
+    right: -3px;
+    border-width: 0 5px 5px 0;
+    border-radius: 0 0 12px 0;
 }
         
         /* Custom SweetAlert styles for mobile */
@@ -69,7 +121,7 @@
 
     <div class="w-full max-w-md bg-white shadow-sm flex flex-col items-center py-4 px-4 sticky top-0 z-10">
         <img src="https://www.alliedmfg.co.th/wp-content/uploads/2026/07/AMS-LOGO-V1.png" alt="AMS Logo" class="h-10 object-contain mb-1">
-        <h1 class="text-lg font-semibold text-blue-900 tracking-wide">Inventory Cycle Count</h1>
+        <h1 class="text-lg font-semibold text-blue-900 tracking-wide">Inventory Cycle Count111</h1>
     </div>
 
     <!-- Main Application Container -->
@@ -148,7 +200,26 @@
 
             <!-- The element where the camera stream will be injected -->
             <div class="flex-1 flex flex-col justify-center items-center w-full relative">
-                <div id="reader"></div>
+                <div id="reader">
+
+    <video
+        id="zxing-video"
+        autoplay
+        muted
+        playsinline>
+    </video>
+
+    <!-- Scanner Frame -->
+    <div class="scanner-frame">
+
+        <div class="scanner-corner tl"></div>
+        <div class="scanner-corner tr"></div>
+        <div class="scanner-corner bl"></div>
+        <div class="scanner-corner br"></div>
+
+    </div>
+
+</div>
                 
                 <!-- Error Overlay (Hidden by default) -->
                 <div id="camera-error" class="hidden absolute inset-0 bg-black/80 flex flex-col items-center justify-center p-6 text-center z-20">
@@ -160,18 +231,42 @@
                 </div>
             </div>
 
-            <div class="mt-6 mb-4 flex justify-between gap-4">
-                <button onclick="stopScannerAndGoBack()" class="flex-1 bg-gray-700 text-white font-medium rounded-lg p-3 active:bg-gray-600 transition-colors">
-                    ย้อนกลับ
-                </button>
-                <button onclick="switchCamera()" id="btn-switch-cam" class="flex-1 bg-gray-700 text-white font-medium rounded-lg p-3 active:bg-gray-600 transition-colors flex justify-center items-center gap-2 hidden">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                    </svg>
-                    สลับกล้อง
-                </button>
-            </div>
-        </div>
+            <div class="mt-6 mb-4 grid grid-cols-3 gap-2">
+
+    <!-- Back -->
+    <button
+        onclick="stopScannerAndGoBack()"
+        class="bg-gray-700 text-white font-medium rounded-lg p-3 active:bg-gray-600 transition-colors">
+
+        ← ย้อนกลับ
+
+    </button>
+
+
+    <!-- Flash -->
+    <button
+        onclick="toggleTorch()"
+        id="btn-torch"
+        class="bg-gray-700 text-white font-medium rounded-lg p-3 active:bg-yellow-500 transition-colors flex justify-center items-center gap-1">
+
+        🔦
+        <span id="torch-text">ไฟ</span>
+
+    </button>
+
+
+    <!-- Switch Camera -->
+    <button
+        onclick="switchCamera()"
+        id="btn-switch-cam"
+        class="bg-gray-700 text-white font-medium rounded-lg p-3 active:bg-gray-600 transition-colors flex justify-center items-center gap-1 hidden">
+
+        🔄
+        <span>สลับ</span>
+
+    </button>
+
+</div>
 
         <!-- VIEW 3: INPUT COUNT -->
         <div id="view-input" class="hidden p-6 flex flex-col flex-1 h-full relative z-10">
@@ -280,6 +375,55 @@
     "ZONE_D": ["D1-1", "D1-2", "D1-3", "D1-4"]
 };
 
+        function updateLocations() {
+            const zoneSelect = document.getElementById('zone-select');
+            const locationSelect = document.getElementById('location-select');
+            const selectedZone = zoneSelect.value;
+
+            // Reset and clear options
+            locationSelect.innerHTML = '<option value="" disabled selected>-- เลือกพื้นที่ปฏิบัติงาน --</option>';
+
+            if (selectedZone && MOCK_ZONES[selectedZone]) {
+                MOCK_ZONES[selectedZone].forEach(loc => {
+                    const option = document.createElement('option');
+                    option.value = loc;
+                    option.textContent = loc;
+                    locationSelect.appendChild(option);
+                });
+                locationSelect.disabled = false;
+            } else {
+                locationSelect.disabled = true;
+            }
+        }
+
+        async function cancelInput() {
+
+    document.getElementById(
+        'actual-qty'
+    ).value = '';
+
+    const unit2Select =
+        document.getElementById(
+            'unit2-select'
+        );
+
+    if (unit2Select) {
+
+        unit2Select.value = '';
+
+    }
+
+    currentScanData.unit2 = '';
+
+    await stopZXingScanner();
+
+    showView(
+        'view-scanner'
+    );
+
+    initScanner();
+
+}
         let currentSession = {
             zone: "",
             location: "",
@@ -294,9 +438,10 @@
     serialNumber: "",
     unit2: ""
 };
-        let html5QrCode = null;
+        let zxingCodeReader = null;
         let availableCameras = [];
         let currentCameraIndex = 0;
+        let selectedDeviceId = null;
 
         // --- View Navigation ---
         function showView(viewId) {
@@ -307,41 +452,7 @@
             document.getElementById(viewId).classList.add('flex');
         }
 
-        function updateLocations() {
-
-    const zone =
-        document.getElementById('zone-select').value;
-
-    const locSelect =
-        document.getElementById('location-select');
-
-    locSelect.innerHTML =
-        '<option value="" disabled selected>-- เลือกพื้นที่ --</option>';
-
-    if (MOCK_ZONES[zone]) {
-
-        MOCK_ZONES[zone].forEach(loc => {
-
-            const opt =
-                document.createElement('option');
-
-            opt.value = loc;
-            opt.textContent = loc;
-
-            locSelect.appendChild(opt);
-
-        });
-
-        locSelect.disabled = false;
-
-    } else {
-
-        locSelect.disabled = true;
-
-    }
-}
-
-        // --- STREAMING_CHUNK:Scanner Logic via Html5Qrcode ---
+        // --- STREAMING_CHUNK:Scanner Logic via ZXing ---
         function goToScanner() {
 
     const zone =
@@ -368,169 +479,832 @@
             currentSession.responsiblePerson = resp;
 
             showView('view-scanner');
-            initScanner();
+
+setTimeout(() => {
+    initScanner();
+}, 150);
         }
 
-        function initScanner() {
+        // ==========================================
+// ZXING SCANNER
+// ==========================================
 
-    const reader = document.getElementById("reader");
-    const errorBox = document.getElementById("camera-error");
+let zxingCodeReader = null;
+
+let availableCameras = [];
+
+let currentCameraIndex = 0;
+
+let selectedDeviceId = null;
+
+let currentVideoTrack = null;
+
+let torchEnabled = false;
+
+let isScanning = false;
+
+let scanLocked = false;
+
+
+// ==========================================
+// INIT SCANNER
+// ==========================================
+
+async function initScanner() {
+
+    const errorBox =
+        document.getElementById("camera-error");
 
     errorBox.classList.add("hidden");
 
-    // ล้างพื้นที่กล้องก่อน
-    reader.innerHTML = "";
+    scanLocked = false;
 
-    // สร้าง scanner ใหม่
-    html5QrCode = new Html5Qrcode("reader");
+    torchEnabled = false;
 
-    const config = {
-    fps: 20,
+    updateTorchButton(false);
 
-    qrbox: function(viewfinderWidth, viewfinderHeight) {
 
-        const size = Math.min(
-            viewfinderWidth,
-            viewfinderHeight
-        ) * 0.75;
+    // ==========================================
+    // STOP OLD CAMERA
+    // ==========================================
 
-        return {
-            width: Math.floor(size),
-            height: Math.floor(size)
-        };
-    },
+    await stopZXingScanner();
 
-    aspectRatio: 1.0,
 
-    videoConstraints: {
-        facingMode: {
-            ideal: "environment"
-        },
-        width: {
-            ideal: 1920
-        },
-        height: {
-            ideal: 1080
-        }
+    // ==========================================
+    // CREATE ZXING
+    // ==========================================
+
+    if (!zxingCodeReader) {
+
+        zxingCodeReader =
+            new ZXing.BrowserMultiFormatReader();
+
     }
-};
 
-    html5QrCode.start(
-    {
-        facingMode: "environment"
-    },
-    config,
 
-        function(decodedText) {
+    try {
 
-            console.log("SCAN:", decodedText);
+        // ==========================================
+        // GET CAMERAS
+        // ==========================================
 
-            html5QrCode.stop()
-                .then(() => {
-                    html5QrCode.clear();
-                    processScannedData(decodedText);
-                })
-                .catch(() => {
-                    processScannedData(decodedText);
-                });
+        availableCameras =
+            await zxingCodeReader.listVideoInputDevices();
 
-        },
 
-        function(errorMessage) {
-            // ไม่ต้องทำอะไร
+        if (
+            !availableCameras ||
+            availableCameras.length === 0
+        ) {
+
+            throw new Error(
+                "ไม่พบกล้องในอุปกรณ์นี้"
+            );
+
         }
 
-    ).then(() => {
 
-    console.log("CAMERA OK");
+        console.log(
+            "CAMERAS:",
+            availableCameras
+        );
 
-    // ==========================================
-    // AUTO FOCUS
-    // ==========================================
-    const video = document.querySelector("#reader video");
 
-    if (video && video.srcObject) {
+        // ==========================================
+        // FIND BACK CAMERA
+        // ==========================================
 
-        const track = video.srcObject.getVideoTracks()[0];
+        let backCameraIndex =
+            availableCameras.findIndex(camera => {
 
-        if (track) {
+                const label =
+                    (camera.label || "")
+                        .toLowerCase();
 
-            track.applyConstraints({
-                advanced: [
-                    {
-                        focusMode: "continuous"
-                    }
-                ]
-            })
-            .then(() => {
-                console.log("AUTO FOCUS: ON");
-            })
-            .catch((error) => {
-                console.log(
-                    "AUTO FOCUS ไม่รองรับในอุปกรณ์นี้",
-                    error
+                return (
+                    label.includes("back") ||
+                    label.includes("rear") ||
+                    label.includes("environment") ||
+                    label.includes("หลัง")
                 );
+
             });
 
+
+        // ถ้าหา Back ไม่เจอ
+        // ใช้กล้องตัวสุดท้าย
+        if (backCameraIndex === -1) {
+
+            backCameraIndex =
+                availableCameras.length - 1;
+
         }
+
+
+        currentCameraIndex =
+            backCameraIndex;
+
+
+        selectedDeviceId =
+            availableCameras[
+                currentCameraIndex
+            ].deviceId;
+
+
+        // ==========================================
+        // SWITCH BUTTON
+        // ==========================================
+
+        const switchButton =
+            document.getElementById(
+                "btn-switch-cam"
+            );
+
+
+        if (
+            availableCameras.length > 1
+        ) {
+
+            switchButton.classList.remove(
+                "hidden"
+            );
+
+        } else {
+
+            switchButton.classList.add(
+                "hidden"
+            );
+
+        }
+
+
+        // ==========================================
+        // START
+        // ==========================================
+
+        await startZXingCamera();
+
     }
 
-}).catch((error) => {
+    catch (error) {
 
-        console.error("CAMERA ERROR:", error);
+        console.error(
+            "CAMERA ERROR:",
+            error
+        );
 
-        errorBox.classList.remove("hidden");
 
-        document.getElementById("camera-error-msg").innerHTML =
+        errorBox.classList.remove(
+            "hidden"
+        );
+
+
+        document.getElementById(
+            "camera-error-msg"
+        ).innerHTML =
+
             "เปิดกล้องไม่ได้<br><br>" +
+
             "กรุณากดอนุญาตการใช้งานกล้อง<br>" +
+
             "แล้วลองใหม่อีกครั้ง";
 
-    });
+    }
+
 }
 
-        function switchCamera() {
-            if (availableCameras.length > 1 && html5QrCode) {
-                currentCameraIndex = (currentCameraIndex + 1) % availableCameras.length;
-                const newCameraId = availableCameras[currentCameraIndex].id;
-                
-                html5QrCode.stop().then(() => {
-                    const config = { fps: 10, qrbox: { width: 340, height: 220 }, aspectRatio: 1.0 };
-                    html5QrCode.start(newCameraId, config, onScanSuccess, onScanFailure);
-                });
+
+// ==========================================
+// START CAMERA
+// ==========================================
+
+async function startZXingCamera() {
+
+    scanLocked = false;
+
+    isScanning = true;
+
+
+    const video =
+        document.getElementById(
+            "zxing-video"
+        );
+
+
+    // ==========================================
+    // START ZXING
+    // ==========================================
+
+    await zxingCodeReader.decodeFromVideoDevice(
+
+        selectedDeviceId,
+
+        video,
+
+        async (result, error) => {
+
+            // ==========================================
+            // NO RESULT
+            // ==========================================
+
+            if (!result) {
+
+                return;
+
             }
+
+
+            // ==========================================
+            // PREVENT DUPLICATE
+            // ==========================================
+
+            if (scanLocked) {
+
+                return;
+
+            }
+
+
+            scanLocked = true;
+
+
+            console.log(
+                "SCAN:",
+                result.text
+            );
+
+
+            // ==========================================
+            // STOP CAMERA
+            // ==========================================
+
+            await stopZXingScanner();
+
+
+            // ==========================================
+            // PROCESS
+            // ==========================================
+
+            processScannedData(
+                result.text
+            );
+
         }
 
-        function stopScannerAndGoBack() {
-            if (html5QrCode) {
-                html5QrCode.stop().then(() => {
-                    html5QrCode.clear();
-                    showView('view-setup');
-                }).catch(err => {
-                    showView('view-setup');
-                });
-            } else {
-                showView('view-setup');
+    );
+
+
+    // ==========================================
+    // GET VIDEO TRACK
+    // ==========================================
+
+    setTimeout(
+        async () => {
+
+            try {
+
+                const stream =
+                    video.srcObject;
+
+
+                if (!stream) {
+
+                    return;
+
+                }
+
+
+                const tracks =
+                    stream.getVideoTracks();
+
+
+                if (
+                    !tracks ||
+                    !tracks.length
+                ) {
+
+                    return;
+
+                }
+
+
+                currentVideoTrack =
+                    tracks[0];
+
+
+                console.log(
+                    "VIDEO TRACK:",
+                    currentVideoTrack.getSettings()
+                );
+
+
+                // ==========================================
+                // AUTO FOCUS
+                // ==========================================
+
+                await applyAutoFocus(
+                    currentVideoTrack
+                );
+
+
+                // ==========================================
+                // TORCH SUPPORT
+                // ==========================================
+
+                checkTorchSupport(
+                    currentVideoTrack
+                );
+
             }
+
+            catch (error) {
+
+                console.log(
+                    "CAMERA CONTROL ERROR:",
+                    error
+                );
+
+            }
+
+        },
+        700
+    );
+
+}
+
+
+// ==========================================
+// AUTO FOCUS
+// ==========================================
+
+async function applyAutoFocus(track) {
+
+    if (!track) {
+
+        return;
+
+    }
+
+
+    try {
+
+        const capabilities =
+            track.getCapabilities
+                ? track.getCapabilities()
+                : {};
+
+
+        console.log(
+            "CAMERA CAPABILITIES:",
+            capabilities
+        );
+
+
+        if (
+            capabilities.focusMode &&
+            capabilities.focusMode.includes(
+                "continuous"
+            )
+        ) {
+
+            await track.applyConstraints({
+
+                advanced: [
+
+                    {
+                        focusMode:
+                            "continuous"
+                    }
+
+                ]
+
+            });
+
+
+            console.log(
+                "AUTO FOCUS: ON"
+            );
+
         }
+
+        else {
+
+            console.log(
+                "AUTO FOCUS: NOT SUPPORTED"
+            );
+
+        }
+
+    }
+
+    catch (error) {
+
+        console.log(
+            "AUTO FOCUS ERROR:",
+            error
+        );
+
+    }
+
+}
+
+
+// ==========================================
+// CHECK TORCH
+// ==========================================
+
+function checkTorchSupport(track) {
+
+    const button =
+        document.getElementById(
+            "btn-torch"
+        );
+
+
+    if (!track) {
+
+        button.disabled = true;
+
+        button.classList.add(
+            "opacity-40"
+        );
+
+        return;
+
+    }
+
+
+    try {
+
+        const capabilities =
+            track.getCapabilities
+                ? track.getCapabilities()
+                : {};
+
+
+        if (capabilities.torch) {
+
+            button.disabled = false;
+
+            button.classList.remove(
+                "opacity-40"
+            );
+
+
+            console.log(
+                "TORCH: SUPPORTED"
+            );
+
+        }
+
+        else {
+
+            button.disabled = true;
+
+            button.classList.add(
+                "opacity-40"
+            );
+
+
+            console.log(
+                "TORCH: NOT SUPPORTED"
+            );
+
+        }
+
+    }
+
+    catch (error) {
+
+        button.disabled = true;
+
+        button.classList.add(
+            "opacity-40"
+        );
+
+    }
+
+}
+
+
+// ==========================================
+// TOGGLE TORCH
+// ==========================================
+
+async function toggleTorch() {
+
+    if (!currentVideoTrack) {
+
+        return;
+
+    }
+
+
+    try {
+
+        const capabilities =
+            currentVideoTrack.getCapabilities();
+
+
+        if (!capabilities.torch) {
+
+            Swal.fire({
+
+                icon: "info",
+
+                title: "ไม่รองรับ Flash",
+
+                text:
+                    "อุปกรณ์หรือเบราว์เซอร์นี้ไม่รองรับการเปิดไฟแฟลชผ่านกล้อง",
+
+                confirmButtonText:
+                    "ตกลง"
+
+            });
+
+            return;
+
+        }
+
+
+        torchEnabled =
+            !torchEnabled;
+
+
+        await currentVideoTrack.applyConstraints({
+
+            advanced: [
+
+                {
+                    torch:
+                        torchEnabled
+                }
+
+            ]
+
+        });
+
+
+        updateTorchButton(
+            torchEnabled
+        );
+
+
+        console.log(
+            "TORCH:",
+            torchEnabled
+        );
+
+    }
+
+    catch (error) {
+
+        console.error(
+            "TORCH ERROR:",
+            error
+        );
+
+
+        torchEnabled = false;
+
+        updateTorchButton(false);
+
+    }
+
+}
+
+
+// ==========================================
+// TORCH BUTTON UI
+// ==========================================
+
+function updateTorchButton(enabled) {
+
+    const button =
+        document.getElementById(
+            "btn-torch"
+        );
+
+    const text =
+        document.getElementById(
+            "torch-text"
+        );
+
+
+    if (!button || !text) {
+
+        return;
+
+    }
+
+
+    if (enabled) {
+
+        button.classList.remove(
+            "bg-gray-700"
+        );
+
+        button.classList.add(
+            "bg-yellow-500"
+        );
+
+        text.textContent =
+            "ปิดไฟ";
+
+    }
+
+    else {
+
+        button.classList.remove(
+            "bg-yellow-500"
+        );
+
+        button.classList.add(
+            "bg-gray-700"
+        );
+
+        text.textContent =
+            "ไฟ";
+
+    }
+
+}
+
+
+// ==========================================
+// SWITCH CAMERA
+// ==========================================
+
+async function switchCamera() {
+
+    if (
+        availableCameras.length < 2
+    ) {
+
+        return;
+
+    }
+
+
+    try {
+
+        // ==========================================
+        // STOP CURRENT
+        // ==========================================
+
+        await stopZXingScanner();
+
+
+        // ==========================================
+        // NEXT CAMERA
+        // ==========================================
+
+        currentCameraIndex =
+            (
+                currentCameraIndex + 1
+            ) %
+            availableCameras.length;
+
+
+        selectedDeviceId =
+            availableCameras[
+                currentCameraIndex
+            ].deviceId;
+
+
+        console.log(
+            "SWITCH CAMERA:",
+            availableCameras[
+                currentCameraIndex
+            ].label
+        );
+
+
+        // ==========================================
+        // RESET TORCH
+        // ==========================================
+
+        torchEnabled = false;
+
+        updateTorchButton(false);
+
+
+        // ==========================================
+        // START
+        // ==========================================
+
+        await startZXingCamera();
+
+    }
+
+    catch (error) {
+
+        console.error(
+            "SWITCH CAMERA ERROR:",
+            error
+        );
+
+    }
+
+}
+
+
+// ==========================================
+// STOP SCANNER
+// ==========================================
+
+async function stopZXingScanner() {
+
+    isScanning = false;
+
+    scanLocked = true;
+
+    torchEnabled = false;
+
+
+    try {
+
+        if (zxingCodeReader) {
+
+            zxingCodeReader.reset();
+
+        }
+
+    }
+
+    catch (error) {
+
+        console.log(
+            "ZXING RESET:",
+            error
+        );
+
+    }
+
+
+    // ==========================================
+    // STOP VIDEO TRACK
+    // ==========================================
+
+    const video =
+        document.getElementById(
+            "zxing-video"
+        );
+
+
+    if (
+        video &&
+        video.srcObject
+    ) {
+
+        try {
+
+            video.srcObject
+                .getTracks()
+                .forEach(track => {
+
+                    try {
+
+                        track.stop();
+
+                    }
+
+                    catch (e) {}
+
+                });
+
+        }
+
+        catch (error) {}
+
+        video.srcObject = null;
+
+    }
+
+
+    currentVideoTrack = null;
+
+    updateTorchButton(false);
+
+}
+
+
+// ==========================================
+// BACK
+// ==========================================
+
+async function stopScannerAndGoBack() {
+
+    await stopZXingScanner();
+
+    showView(
+        "view-setup"
+    );
+
+}
 
         // --- STREAMING_CHUNK:Handling Scan Data and Parsing ---
-        function onScanSuccess(decodedText, decodedResult) {
-            // Stop scanning immediately to prevent duplicate scans
-            html5QrCode.stop().then(() => {
-                html5QrCode.clear();
-                processScannedData(decodedText);
-            }).catch(err => {
-                console.error("Failed to stop scanner", err);
-                processScannedData(decodedText);
-            });
-        }
-
-        function onScanFailure(error) {
-            // This is called constantly when no code is in frame. 
-            // We ignore it silently for UX.
-        }
-
         function processScannedData(text) {
 
     console.log("QR DATA:", text);
