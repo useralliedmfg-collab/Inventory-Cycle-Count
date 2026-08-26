@@ -73,7 +73,7 @@
                 ⚙️ ตั้งค่าลิงก์
             </button>
         </div>
-        <h1 class="text-lg font-semibold text-blue-900 tracking-wide">Inventory Cycle Count2</h1>
+        <h1 class="text-lg font-semibold text-blue-900 tracking-wide">Inventory Cycle Count3</h1>
     </div>
 
     <main class="w-full max-w-md flex-1 bg-white shadow-md flex flex-col relative overflow-hidden">
@@ -220,6 +220,53 @@
 let partMasterCache = {};
 let partMasterLoaded = false;
 
+const PART_MASTER_CACHE_KEY = 'ams_part_master';
+const PART_MASTER_CACHE_TIME_KEY = 'ams_part_master_time';
+
+// Cache อายุ 1 ชั่วโมง
+const PART_MASTER_CACHE_DURATION = 60 * 60 * 1000;
+
+try {
+    const savedPartMaster =
+        localStorage.getItem(PART_MASTER_CACHE_KEY);
+
+    const savedTime =
+        localStorage.getItem(PART_MASTER_CACHE_TIME_KEY);
+
+    const cacheAge =
+        Date.now() - Number(savedTime || 0);
+
+    if (
+        savedPartMaster &&
+        savedTime &&
+        cacheAge < PART_MASTER_CACHE_DURATION
+    ) {
+        partMasterCache = JSON.parse(savedPartMaster);
+        partMasterLoaded = true;
+
+        console.log(
+            'Part Master loaded from localStorage:',
+            Object.keys(partMasterCache).length,
+            'parts'
+        );
+    } else {
+        // Cache หมดอายุ
+        localStorage.removeItem(PART_MASTER_CACHE_KEY);
+        localStorage.removeItem(PART_MASTER_CACHE_TIME_KEY);
+
+        console.log('Part Master cache expired');
+    }
+
+} catch (error) {
+    console.error(
+        'PART MASTER LOCAL CACHE ERROR:',
+        error
+    );
+
+    partMasterCache = {};
+    partMasterLoaded = false;
+}
+        
 // ==========================================
 // LOAD PART MASTER ONCE
 // ==========================================
@@ -242,20 +289,44 @@ async function loadPartMaster() {
             partMasterCache = result.data || {};
             partMasterLoaded = true;
 
+            // เก็บ Part Master ไว้ในเครื่อง
+            try {
+                localStorage.setItem(
+    PART_MASTER_CACHE_KEY,
+    JSON.stringify(partMasterCache)
+);
+
+localStorage.setItem(
+    PART_MASTER_CACHE_TIME_KEY,
+    Date.now().toString()
+);
+            } catch (error) {
+                console.warn(
+                    'ไม่สามารถบันทึก Part Master ลงเครื่องได้:',
+                    error
+                );
+            }
+
             console.log(
                 'Part Master loaded:',
                 Object.keys(partMasterCache).length,
                 'parts'
             );
+
         } else {
-            console.error('LOAD PART MASTER ERROR:', result.message);
+            console.error(
+                'LOAD PART MASTER ERROR:',
+                result.message
+            );
         }
 
     } catch (error) {
-        console.error('LOAD PART MASTER CONNECTION ERROR:', error);
+        console.error(
+            'LOAD PART MASTER CONNECTION ERROR:',
+            error
+        );
     }
 }
-
         const MOCK_ZONES = {
             "ZONE_A": ["A1-1", "A1-2", "A1-3"],
             "ZONE_B": ["B1-1", "B1-2", "B1-3"],
@@ -267,8 +338,11 @@ async function loadPartMaster() {
         let currentScanData = { partNumber: "", qrQty: "", unit: "", lotNumber: "", serialNumber: "", unit2: "" };
 
         window.addEventListener('DOMContentLoaded', () => {
-            // ไม่บังคับเปิด Modal แล้ว เพื่อให้ใช้งานได้ทันทีถ้าใส่ URL ไว้ในโค้ดแล้ว
-        });
+    // โหลด Part Master ล่วงหน้า
+    if (WEB_APP_URL && !WEB_APP_URL.includes('YOUR_')) {
+        loadPartMaster();
+    }
+});
 
         async function openSettingsModal(isRequired = false) {
             const { value: url } = await Swal.fire({
@@ -643,61 +717,35 @@ async function loadPartMaster() {
     // ==========================================
 
     if (qrType === 'RC') {
+    rcUnitDisplay.classList.remove('hidden');
+    unit2Container.classList.remove('hidden');
 
-        rcUnitDisplay.classList.remove('hidden');
-        unit2Container.classList.remove('hidden');
+    // ==========================================
+    // GET UNIT FROM LOCAL PART MASTER CACHE
+    // ==========================================
+    const searchPart = String(currentScanData.partNumber || '')
+        .trim()
+        .toLowerCase();
 
-        document.getElementById('display-unit').textContent =
-            'กำลังโหลด...';
+    const masterUnit = partMasterCache[searchPart] || '';
 
-        // แสดงหน้า Input ทันที
-        // ไม่ต้องรอ API
-        showView('view-input');
-
-        setTimeout(() => {
-            document.getElementById('actual-qty').focus();
-        }, 300);
-
-        // โหลด Unit เบื้องหลัง
-        fetch(WEB_APP_URL, {
-            method: 'POST',
-            body: new URLSearchParams({
-                data: JSON.stringify({
-                    action: 'getPartUnit',
-                    partNumber: currentScanData.partNumber
-                })
-            })
-        })
-        .then(response => response.json())
-        .then(resJson => {
-
-            if (resJson.status === 'success') {
-
-                currentScanData.unit =
-                    resJson.unit || '-';
-
-                document.getElementById('display-unit').textContent =
-                    currentScanData.unit;
-
-            } else {
-
-                document.getElementById('display-unit').textContent =
-                    'ไม่พบ Unit';
-            }
-        })
-        .catch(error => {
-
-            console.error(
-                'GET PART UNIT ERROR:',
-                error
-            );
-
-            document.getElementById('display-unit').textContent =
-                'เชื่อมต่อผิดพลาด';
-        });
-
-        return;
+    if (masterUnit) {
+        currentScanData.unit = masterUnit;
+        document.getElementById('display-unit').textContent = masterUnit;
+    } else {
+        currentScanData.unit = '';
+        document.getElementById('display-unit').textContent = 'ไม่พบ Unit';
     }
+
+    // แสดงหน้า Input ทันที
+    showView('view-input');
+
+    setTimeout(() => {
+        document.getElementById('actual-qty').focus();
+    }, 300);
+
+    return;
+}
 
     // ==========================================
     // WO / WO2
