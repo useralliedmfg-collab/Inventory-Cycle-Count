@@ -73,7 +73,7 @@
                 ⚙️ ตั้งค่าลิงก์
             </button>
         </div>
-        <h1 class="text-lg font-semibold text-blue-900 tracking-wide">Inventory Cycle Count5555</h1>
+        <h1 class="text-lg font-semibold text-blue-900 tracking-wide">Inventory Cycle Count111</h1>
     </div>
 
     <main class="w-full max-w-md flex-1 bg-white shadow-md flex flex-col relative overflow-hidden">
@@ -755,27 +755,94 @@ localStorage.setItem(
     .trim()
     .toLowerCase();
 
-const masterUnit = findPartUnit(
+let masterUnit = findPartUnit(
     currentScanData.partNumber
 );
+
+// ==========================================
+// ถ้า Cache หาไม่เจอ → ค้นจาก Google Sheet โดยตรง
+// เฉพาะ RC
+// ==========================================
+if (!masterUnit) {
+
+    try {
+
+        console.log(
+            'CACHE ไม่พบ Unit → ค้นหา Part Master โดยตรง'
+        );
+
+        const response = await fetch(WEB_APP_URL, {
+            method: 'POST',
+            body: new URLSearchParams({
+                data: JSON.stringify({
+                    action: 'getPartUnit',
+                    partNumber: currentScanData.partNumber
+                })
+            })
+        });
+
+        const result = await response.json();
+
+        console.log(
+            'DIRECT PART MASTER RESULT:',
+            result
+        );
+
+        if (
+            result.status === 'success' &&
+            result.unit
+        ) {
+            masterUnit = String(result.unit).trim();
+
+            // เก็บกลับเข้า Cache
+            partMasterCache[searchPart] = masterUnit;
+
+            try {
+                localStorage.setItem(
+                    PART_MASTER_CACHE_KEY,
+                    JSON.stringify(partMasterCache)
+                );
+            } catch (error) {
+                console.warn(
+                    'ไม่สามารถอัปเดต Part Master Cache ได้:',
+                    error
+                );
+            }
+        }
+
+    } catch (error) {
+
+        console.error(
+            'DIRECT PART MASTER ERROR:',
+            error
+        );
+
+    }
+}
 
 console.log('========== RC PART MASTER CHECK ==========');
 console.log('QR Part Number:', currentScanData.partNumber);
 console.log('Search Part:', searchPart);
 console.log('Found Unit:', masterUnit);
-console.log(
-    'Part Exists:',
-    Object.prototype.hasOwnProperty.call(partMasterCache, searchPart)
-);
 console.log('==========================================');
 
-    if (masterUnit) {
-        currentScanData.unit = masterUnit;
-        document.getElementById('display-unit').textContent = masterUnit;
-    } else {
-        currentScanData.unit = '';
-        document.getElementById('display-unit').textContent = 'ไม่พบ Unit';
-    }
+if (masterUnit) {
+
+    currentScanData.unit = masterUnit;
+
+    document.getElementById(
+        'display-unit'
+    ).textContent = masterUnit;
+
+} else {
+
+    currentScanData.unit = '';
+
+    document.getElementById(
+        'display-unit'
+    ).textContent = 'ไม่พบ Unit';
+
+}
 
     // แสดงหน้า Input ทันที
     showView('view-input');
