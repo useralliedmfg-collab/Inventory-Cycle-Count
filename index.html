@@ -73,7 +73,7 @@
                 ⚙️ ตั้งค่าลิงก์
             </button>
         </div>
-        <h1 class="text-lg font-semibold text-blue-900 tracking-wide">Inventory Cycle Count222</h1>
+        <h1 class="text-lg font-semibold text-blue-900 tracking-wide">Inventory Cycle Count1</h1>
     </div>
 
     <main class="w-full max-w-md flex-1 bg-white shadow-md flex flex-col relative overflow-hidden">
@@ -506,117 +506,170 @@
         }
 
         async function processScannedData(text) {
-            const parts = text.split(',').map(x => x.trim());
-            if (parts.length < 4) {
-                Swal.fire({ 
-                    icon: 'error', 
-                    title: 'รูปแบบไม่ถูกต้อง', 
-                    text: 'ข้อมูล QR / Barcode ไม่ถูกต้อง', 
-                    confirmButtonText: 'สแกนใหม่' 
-                }).then(() => { 
-                    scanLocked = false;
-                    initScanner(); 
-                });
-                return;
-            }
+    const parts = text.split(',').map(x => x.trim());
 
-            let lotNumber = "";
-            let qrType = "";
-            for (let i = 0; i < parts.length; i++) {
-                const value = parts[i];
-                if (/^WO2([-_]|$)/i.test(value)) { lotNumber = value; qrType = "WO2"; break; }
-                if (/^WO([-_]|$)/i.test(value)) { lotNumber = value; qrType = "WO"; break; }
-                if (/^RC([-_]|$)/i.test(value)) { lotNumber = value; qrType = "RC"; break; }
-            }
+    if (parts.length < 4) {
+        Swal.fire({
+            icon: 'error',
+            title: 'รูปแบบไม่ถูกต้อง',
+            text: 'ข้อมูล QR / Barcode ไม่ถูกต้อง',
+            confirmButtonText: 'สแกนใหม่'
+        }).then(() => {
+            scanLocked = false;
+            initScanner();
+        });
+        return;
+    }
 
-            if (!lotNumber) {
-                Swal.fire({ 
-                    icon: 'warning', 
-                    title: 'ไม่พบ WO / WO2 / RC', 
-                    text: 'ไม่พบหมายเลข WO, WO2 หรือ RC ใน QR Code นี้', 
-                    confirmButtonText: 'สแกนใหม่' 
-                }).then(() => { 
-                    scanLocked = false;
-                    initScanner(); 
-                });
-                return;
-            }
+    let lotNumber = "";
+    let qrType = "";
 
-            currentScanData.lotNumber = lotNumber;
-            currentScanData.partNumber = parts[0] || '';
-            
-            if (qrType === 'RC') {
-            currentScanData.qrQty = parts[4] || '';
+    for (let i = 0; i < parts.length; i++) {
+        const value = parts[i];
+
+        if (/^WO2([-_]|$)/i.test(value)) {
+            lotNumber = value;
+            qrType = "WO2";
+            break;
+        }
+
+        if (/^WO([-_]|$)/i.test(value)) {
+            lotNumber = value;
+            qrType = "WO";
+            break;
+        }
+
+        if (/^RC([-_]|$)/i.test(value)) {
+            lotNumber = value;
+            qrType = "RC";
+            break;
+        }
+    }
+
+    if (!lotNumber) {
+        Swal.fire({
+            icon: 'warning',
+            title: 'ไม่พบ WO / WO2 / RC',
+            text: 'ไม่พบหมายเลข WO, WO2 หรือ RC ใน QR Code นี้',
+            confirmButtonText: 'สแกนใหม่'
+        }).then(() => {
+            scanLocked = false;
+            initScanner();
+        });
+        return;
+    }
+
+    // ==========================================
+    // BASIC QR DATA
+    // ==========================================
+
+    currentScanData.lotNumber = lotNumber;
+    currentScanData.partNumber = parts[0] || '';
+
+    // ==========================================
+    // QR QTY
+    // WO / WO2 = ช่องที่ 2
+    // RC       = ช่องที่ 5
+    // ==========================================
+
+    if (qrType === 'RC') {
+        currentScanData.qrQty = parts[4] || '';
+    } else {
+        currentScanData.qrQty = parts[1] || '';
+    }
+
+    currentScanData.unit = parts[2] || '';
+    currentScanData.serialNumber = parts[parts.length - 1] || '';
+    currentScanData.unit2 = '';
+
+    // ==========================================
+    // DISPLAY BASIC DATA
+    // ==========================================
+
+    document.getElementById('display-lot').textContent = lotNumber;
+    document.getElementById('display-part').textContent =
+        currentScanData.partNumber;
+
+    const rcUnitDisplay =
+        document.getElementById('rc-unit-display');
+
+    const unit2Container =
+        document.getElementById('unit2-container');
+
+    // ==========================================
+    // RC
+    // ==========================================
+
+    if (qrType === 'RC') {
+
+        rcUnitDisplay.classList.remove('hidden');
+        unit2Container.classList.remove('hidden');
+
+        document.getElementById('display-unit').textContent =
+            'กำลังโหลด...';
+
+        // แสดงหน้า Input ทันที
+        // ไม่ต้องรอ API
+        showView('view-input');
+
+        setTimeout(() => {
+            document.getElementById('actual-qty').focus();
+        }, 300);
+
+        // โหลด Unit เบื้องหลัง
+        fetch(WEB_APP_URL, {
+            method: 'POST',
+            body: new URLSearchParams({
+                data: JSON.stringify({
+                    action: 'getPartUnit',
+                    partNumber: currentScanData.partNumber
+                })
+            })
+        })
+        .then(response => response.json())
+        .then(resJson => {
+
+            if (resJson.status === 'success') {
+
+                currentScanData.unit =
+                    resJson.unit || '-';
+
+                document.getElementById('display-unit').textContent =
+                    currentScanData.unit;
+
             } else {
-            currentScanData.qrQty = parts[1] || '';
-            }   
-            currentScanData.unit = parts[2] || '';
-            currentScanData.serialNumber = parts[parts.length - 1] || '';
-            currentScanData.unit2 = '';
 
-            document.getElementById('display-lot').textContent = lotNumber;
-            document.getElementById('display-part').textContent = currentScanData.partNumber;
+                document.getElementById('display-unit').textContent =
+                    'ไม่พบ Unit';
+            }
+        })
+        .catch(error => {
 
-            const rcUnitDisplay = document.getElementById('rc-unit-display');
-            const unit2Container = document.getElementById('unit2-container');
+            console.error(
+                'GET PART UNIT ERROR:',
+                error
+            );
 
-            if (qrType === 'RC') {
-    rcUnitDisplay.classList.remove('hidden');
-    unit2Container.classList.remove('hidden');
-    document.getElementById('display-unit').textContent = 'กำลังโหลด...';
+            document.getElementById('display-unit').textContent =
+                'เชื่อมต่อผิดพลาด';
+        });
 
-    // แสดงหน้า Input ทันที ไม่รอ API
+        return;
+    }
+
+    // ==========================================
+    // WO / WO2
+    // ==========================================
+
+    rcUnitDisplay.classList.add('hidden');
+    unit2Container.classList.add('hidden');
+
     showView('view-input');
 
     setTimeout(() => {
         document.getElementById('actual-qty').focus();
     }, 300);
-
-    // โหลด Unit เบื้องหลัง
-    fetch(WEB_APP_URL, {
-        method: 'POST',
-        body: new URLSearchParams({
-            data: JSON.stringify({
-                action: 'getPartUnit',
-                partNumber: currentScanData.partNumber
-            })
-        })
-    })
-    .then(response => response.json())
-    .then(resJson => {
-        if (resJson.status === 'success') {
-            currentScanData.unit = resJson.unit || '-';
-            document.getElementById('display-unit').textContent = currentScanData.unit;
-        } else {
-            document.getElementById('display-unit').textContent = 'ไม่พบ Unit';
-        }
-    })
-    .catch(error => {
-        console.error('GET PART UNIT ERROR:', error);
-        document.getElementById('display-unit').textContent = 'เชื่อมต่อผิดพลาด';
-    });
-
-    return;
 }
-                    if (resJson.status === 'success') {
-                        currentScanData.unit = resJson.unit || '-';
-                        document.getElementById('display-unit').textContent = currentScanData.unit;
-                    } else {
-                        document.getElementById('display-unit').textContent = 'ไม่พบ Unit';
-                    }
-                } catch (e) {
-                    document.getElementById('display-unit').textContent = 'เชื่อมต่อผิดพลาด';
-                }
-            } else {
-                rcUnitDisplay.classList.add('hidden');
-                unit2Container.classList.add('hidden');
-            }
-
-            showView('view-input');
-            setTimeout(() => {
-                document.getElementById('actual-qty').focus();
-            }, 300);
-        }
 
         async function cancelInput() {
             document.getElementById('actual-qty').value = '';
