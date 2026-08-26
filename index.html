@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Inventory Cycle Count</title>
+    <title>Inventory Cycle Count - AMS</title>
     <!-- Tailwind CSS for Mobile-First Styling -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- ZXing for robust mobile camera scanning (QR & Barcode) -->
@@ -16,127 +16,68 @@
     <style>
         body {
             font-family: 'Prompt', sans-serif;
-            background-color: #f3f4f6; /* bg-gray-100 */
-            touch-action: pan-y; /* Prevent horizontal scroll, allow vertical */
+            background-color: #f3f4f6;
+            touch-action: pan-y;
         }
-        /* Style for the scanner container to ensure it fits well on mobile */
         #reader {
-    width: 100%;
-    max-width: 420px;
-    height: 420px;
-    border-radius: 16px;
-    overflow: hidden;
-    background: #000;
-    position: relative;
-}
-
-#reader video {
-    width: 100% !important;
-    height: 100% !important;
-    object-fit: cover !important;
-    display: block;
-}
-
-.scanner-frame {
-    position: absolute;
-    width: 72%;
-    height: 72%;
-    left: 14%;
-    top: 14%;
-    border: 3px solid rgba(255,255,255,0.9);
-    border-radius: 18px;
-    pointer-events: none;
-    z-index: 5;
-    box-shadow:
-        0 0 0 9999px rgba(0,0,0,0.15);
-}
-
-.scanner-corner {
-    position: absolute;
-    width: 35px;
-    height: 35px;
-    border-color: #22c55e;
-    border-style: solid;
-}
-
-.scanner-corner.tl {
-    top: -3px;
-    left: -3px;
-    border-width: 5px 0 0 5px;
-    border-radius: 12px 0 0 0;
-}
-
-.scanner-corner.tr {
-    top: -3px;
-    right: -3px;
-    border-width: 5px 5px 0 0;
-    border-radius: 0 12px 0 0;
-}
-
-.scanner-corner.bl {
-    bottom: -3px;
-    left: -3px;
-    border-width: 0 0 5px 5px;
-    border-radius: 0 0 0 12px;
-}
-
-.scanner-corner.br {
-    bottom: -3px;
-    right: -3px;
-    border-width: 0 5px 5px 0;
-    border-radius: 0 0 12px 0;
-}
-        
-        /* Custom SweetAlert styles for mobile */
-        .swal2-popup {
-            font-family: 'Prompt', sans-serif !important;
-            border-radius: 1rem !important;
+            width: 100%;
+            max-width: 420px;
+            height: 420px;
+            border-radius: 16px;
+            overflow: hidden;
+            background: #000;
+            position: relative;
         }
-        /* ==========================================
-   ANDROID INPUT FIX
-   ========================================== */
-
-#view-input {
-    position: relative;
-    min-height: 0;
-}
-
-/* ป้องกันหน้าโดนดัน/เลื่อนแปลก ๆ ตอน Keyboard เปิด */
-#actual-qty {
-    position: relative;
-    z-index: 5;
-    -webkit-user-select: text;
-    user-select: text;
-}
-
-/* ให้ปุ่มอยู่เหนือ element อื่น */
-#btn-submit {
-    position: relative;
-    z-index: 10;
-    touch-action: manipulation;
-}
+        #reader video {
+            width: 100% !important;
+            height: 100% !important;
+            object-fit: cover !important;
+            display: block;
+        }
+        .scanner-frame {
+            position: absolute;
+            width: 72%;
+            height: 72%;
+            left: 14%;
+            top: 14%;
+            border: 3px solid rgba(255,255,255,0.9);
+            border-radius: 18px;
+            pointer-events: none;
+            z-index: 5;
+            box-shadow: 0 0 0 9999px rgba(0,0,0,0.15);
+        }
+        .scanner-corner {
+            position: absolute;
+            width: 35px;
+            height: 35px;
+            border-color: #22c55e;
+            border-style: solid;
+        }
+        .scanner-corner.tl { top: -3px; left: -3px; border-width: 5px 0 0 5px; border-radius: 12px 0 0 0; }
+        .scanner-corner.tr { top: -3px; right: -3px; border-width: 5px 5px 0 0; border-radius: 0 12px 0 0; }
+        .scanner-corner.bl { bottom: -3px; left: -3px; border-width: 0 0 5px 5px; border-radius: 0 0 0 12px; }
+        .scanner-corner.br { bottom: -3px; right: -3px; border-width: 0 5px 5px 0; border-radius: 0 0 12px 0; }
+        .swal2-popup { font-family: 'Prompt', sans-serif !important; border-radius: 1rem !important; }
+        #view-input { position: relative; min-height: 0; }
+        #actual-qty { position: relative; z-index: 5; -webkit-user-select: text; user-select: text; }
+        #btn-submit { position: relative; z-index: 10; touch-action: manipulation; }
     </style>
 </head>
 <body class="text-gray-800 antialiased min-h-screen flex flex-col items-center">
 
     <div class="w-full max-w-md bg-white shadow-sm flex flex-col items-center py-4 px-4 sticky top-0 z-10">
-        <img src="https://www.alliedmfg.co.th/wp-content/uploads/2026/07/AMS-LOGO-V1.png" alt="AMS Logo" class="h-10 object-contain mb-1">
-        <h1 class="text-lg font-semibold text-blue-900 tracking-wide">Inventory Cycle Count222</h1>
+        <div class="w-full flex justify-between items-center mb-1">
+            <img src="https://www.alliedmfg.co.th/wp-content/uploads/2026/07/AMS-LOGO-V1.png" alt="AMS Logo" class="h-8 object-contain">
+            <button onclick="openSettingsModal()" class="text-gray-500 hover:text-blue-600 p-2 rounded-full text-sm flex items-center gap-1 bg-gray-50 border border-gray-200">
+                ⚙️ ตั้งค่าลิงก์
+            </button>
+        </div>
+        <h1 class="text-lg font-semibold text-blue-900 tracking-wide">Inventory Cycle Count1</h1>
     </div>
 
-    <!-- Main Application Container -->
     <main class="w-full max-w-md flex-1 bg-white shadow-md flex flex-col relative overflow-hidden">
         <!-- AMS WATERMARK -->
-<div
-    class="absolute inset-0 pointer-events-none z-0"
-    style="
-        background-image: url('https://www.alliedmfg.co.th/wp-content/uploads/2026/07/AMS-LOGO-V1.png');
-        background-repeat: no-repeat;
-        background-position: center;
-        background-size: 320px;
-        opacity: 0.035;
-    ">
-</div>
+        <div class="absolute inset-0 pointer-events-none z-0" style="background-image: url('https://www.alliedmfg.co.th/wp-content/uploads/2026/07/AMS-LOGO-V1.png'); background-repeat: no-repeat; background-position: center; background-size: 320px; opacity: 0.035;"></div>
 
         <!-- VIEW 1: SETUP / LOGIN -->
         <div id="view-setup" class="p-6 flex flex-col space-y-5 flex-1 relative z-10">
@@ -144,43 +85,28 @@
             
             <div>
                 <label class="block text-sm font-medium text-gray-600 mb-1">โซนตรวจนับ (Zone)</label>
-                <select
-    id="zone-select"
-    onchange="updateLocations()"
-    class="w-full border border-gray-300 rounded-lg p-3 text-lg bg-gray-50 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
->
+                <select id="zone-select" onchange="updateLocations()" class="w-full border border-gray-300 rounded-lg p-3 text-lg bg-gray-50 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none">
                     <option value="" disabled selected>-- เลือกโซนตรวจนับ --</option>
-    <option value="ZONE_A">Zone A</option>
-    <option value="ZONE_B">Zone B</option>
-    <option value="ZONE_C">Zone C</option>
-    <option value="ZONE_D">Zone D</option>
-</select>
+                    <option value="ZONE_A">Zone A</option>
+                    <option value="ZONE_B">Zone B</option>
+                    <option value="ZONE_C">Zone C</option>
+                    <option value="ZONE_D">Zone D</option>
+                </select>
             </div>
 
             <div>
                 <label class="block text-sm font-medium text-gray-600 mb-1">พื้นที่ปฏิบัติงาน (Location)</label>
-                <select
-    id="location-select"
-    class="w-full border border-gray-300 rounded-lg p-3 text-lg bg-gray-50 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
-    disabled
->
+                <select id="location-select" class="w-full border border-gray-300 rounded-lg p-3 text-lg bg-gray-50 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none" disabled>
                     <option value="" disabled selected>-- กรุณาเลือกโซนก่อน --</option>
                 </select>
             </div>
 
             <div>
                 <label class="block text-sm font-medium text-gray-600 mb-1">ชื่อผู้รับผิดชอบ (Responsible Person)</label>
-                <input
-    type="text"
-    id="responsible-name"
-    placeholder="ระบุชื่อผู้ตรวจ"
-    enterkeyhint="done"
-    onkeydown="if(event.key === 'Enter') { event.preventDefault(); goToScanner(); }"
-    class="w-full border border-gray-300 rounded-lg p-3 text-lg bg-gray-50 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
->
+                <input type="text" id="responsible-name" placeholder="ระบุชื่อผู้ตรวจ" enterkeyhint="done" onkeydown="if(event.key === 'Enter') { event.preventDefault(); goToScanner(); }" class="w-full border border-gray-300 rounded-lg p-3 text-lg bg-gray-50 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none">
             </div>
 
-            <div class="flex-1"></div> <!-- Spacer -->
+            <div class="flex-1"></div>
 
             <button onclick="goToScanner()" class="w-full bg-blue-600 text-white font-semibold rounded-xl p-4 text-xl shadow-lg active:bg-blue-700 transition-colors flex justify-center items-center gap-2">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -198,30 +124,17 @@
                 <p class="text-gray-400 text-sm">นำบาร์โค้ดมาให้อยู่ในกรอบเพื่อสแกน</p>
             </div>
 
-            <!-- The element where the camera stream will be injected -->
             <div class="flex-1 flex flex-col justify-center items-center w-full relative">
                 <div id="reader">
-
-    <video
-        id="zxing-video"
-        autoplay
-        muted
-        playsinline>
-    </video>
-
-    <!-- Scanner Frame -->
-    <div class="scanner-frame">
-
-        <div class="scanner-corner tl"></div>
-        <div class="scanner-corner tr"></div>
-        <div class="scanner-corner bl"></div>
-        <div class="scanner-corner br"></div>
-
-    </div>
-
-</div>
+                    <video id="zxing-video" autoplay muted playsinline></video>
+                    <div class="scanner-frame">
+                        <div class="scanner-corner tl"></div>
+                        <div class="scanner-corner tr"></div>
+                        <div class="scanner-corner bl"></div>
+                        <div class="scanner-corner br"></div>
+                    </div>
+                </div>
                 
-                <!-- Error Overlay (Hidden by default) -->
                 <div id="camera-error" class="hidden absolute inset-0 bg-black/80 flex flex-col items-center justify-center p-6 text-center z-20">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 text-red-500 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
@@ -232,125 +145,55 @@
             </div>
 
             <div class="mt-6 mb-4 grid grid-cols-3 gap-2">
-
-    <!-- Back -->
-    <button
-        onclick="stopScannerAndGoBack()"
-        class="bg-gray-700 text-white font-medium rounded-lg p-3 active:bg-gray-600 transition-colors">
-
-        ← ย้อนกลับ
-
-    </button>
-
-
-    <!-- Flash -->
-    <button
-        onclick="toggleTorch()"
-        id="btn-torch"
-        class="bg-gray-700 text-white font-medium rounded-lg p-3 active:bg-yellow-500 transition-colors flex justify-center items-center gap-1">
-
-        🔦
-        <span id="torch-text">ไฟ</span>
-
-    </button>
-
-
-    <!-- Switch Camera -->
-    <button
-        onclick="switchCamera()"
-        id="btn-switch-cam"
-        class="bg-gray-700 text-white font-medium rounded-lg p-3 active:bg-gray-600 transition-colors flex justify-center items-center gap-1 hidden">
-
-        🔄
-        <span>สลับ</span>
-
-    </button>
-
-</div>
+                <button onclick="stopScannerAndGoBack()" class="bg-gray-700 text-white font-medium rounded-lg p-3 active:bg-gray-600 transition-colors">← ย้อนกลับ</button>
+                <button onclick="toggleTorch()" id="btn-torch" class="bg-gray-700 text-white font-medium rounded-lg p-3 active:bg-yellow-500 transition-colors flex justify-center items-center gap-1">
+                    🔦 <span id="torch-text">ไฟ</span>
+                </button>
+                <button onclick="switchCamera()" id="btn-switch-cam" class="bg-gray-700 text-white font-medium rounded-lg p-3 active:bg-gray-600 transition-colors flex justify-center items-center gap-1 hidden">
+                    🔄 <span>สลับ</span>
+                </button>
+            </div>
+        </div>
 
         <!-- VIEW 3: INPUT COUNT -->
         <div id="view-input" class="hidden p-6 flex flex-col flex-1 h-full relative z-10">
-            
             <div class="bg-blue-50 border border-blue-100 rounded-xl p-5 mb-6 text-center shadow-sm">
                 <p class="text-sm text-blue-600 font-medium mb-1">LOT NUMBER</p>
                 <h2 id="display-lot" class="text-3xl font-bold text-gray-900 break-all">WO-000000</h2>
                 <p class="text-xs text-gray-500 mt-2">Part: <span id="display-part"></span></p>
-                <!-- UNIT FROM PART MASTER - RC ONLY -->
-<div id="rc-unit-display" class="hidden mt-3">
-
-    <p class="text-sm text-blue-600 font-medium">
-        UNIT
-    </p>
-
-    <p
-        id="display-unit"
-        class="text-2xl font-bold text-gray-900"
-    >
-        -
-    </p>
-
-</div>
+                
+                <div id="rc-unit-display" class="hidden mt-3">
+                    <p class="text-sm text-blue-600 font-medium">UNIT</p>
+                    <p id="display-unit" class="text-2xl font-bold text-gray-900">-</p>
+                </div>
             </div>
-            <!-- ==========================================
-     UNIT2 - RC ONLY
-     ========================================== -->
 
-<div id="unit2-container" class="hidden mb-6">
-
-    <label class="block text-center text-lg font-semibold text-gray-700 mb-3">
-        Unit2
-    </label>
-
-    <select
-    id="unit2-select"
-    class="w-full border-2 border-blue-300 rounded-xl p-4 text-lg bg-white focus:ring-4 focus:ring-blue-200 focus:border-blue-500 outline-none"
->
-
-    <option value="" selected>
-        -- กรุณาเลือก Unit2 --
-    </option>
-
-    <option value="M">M</option>
-    <option value="MM">MM</option>
-    <option value="RL">RL</option>
-    <option value="SHT">SHT</option>
-    <option value="BLK">BLK</option>
-    <option value="PCS">PCS</option>
-    <option value="LTR">LTR</option>
-    <option value="KG">KG</option>
-    <option value="SET">SET</option>
-
-</select>
-
-</div>
+            <div id="unit2-container" class="hidden mb-6">
+                <label class="block text-center text-lg font-semibold text-gray-700 mb-3">Unit2</label>
+                <select id="unit2-select" class="w-full border-2 border-blue-300 rounded-xl p-4 text-lg bg-white focus:ring-4 focus:ring-blue-200 focus:border-blue-500 outline-none">
+                    <option value="" selected>-- กรุณาเลือก Unit2 --</option>
+                    <option value="M">M</option>
+                    <option value="MM">MM</option>
+                    <option value="RL">RL</option>
+                    <option value="SHT">SHT</option>
+                    <option value="BLK">BLK</option>
+                    <option value="PCS">PCS</option>
+                    <option value="LTR">LTR</option>
+                    <option value="KG">KG</option>
+                    <option value="SET">SET</option>
+                </select>
+            </div>
 
             <div class="mb-8">
                 <label class="block text-center text-lg font-semibold text-gray-700 mb-3">จำนวนที่ตรวจนับได้จริง</label>
-                <!-- inputmode="numeric" ensures numeric keyboard on iOS/Android -->
-                <input
-    type="number"
-    id="actual-qty"
-    inputmode="numeric"
-    pattern="[0-9]*"
-    enterkeyhint="done"
-    onkeydown="if(event.key === 'Enter') { event.preventDefault(); submitCount(); }"
-    class="w-full border-2 border-blue-300 rounded-xl p-4 text-center text-4xl font-bold text-gray-800 bg-white focus:ring-4 focus:ring-blue-200 focus:border-blue-500 outline-none transition-all shadow-inner"
-    placeholder="0"
->
+                <input type="number" id="actual-qty" inputmode="numeric" pattern="[0-9]*" enterkeyhint="done" onkeydown="if(event.key === 'Enter') { event.preventDefault(); submitCount(); }" class="w-full border-2 border-blue-300 rounded-xl p-4 text-center text-4xl font-bold text-gray-800 bg-white focus:ring-4 focus:ring-blue-200 focus:border-blue-500 outline-none transition-all shadow-inner" placeholder="0">
             </div>
             
             <div class="flex-1"></div>
 
             <div class="flex gap-4">
-                 <button onclick="cancelInput()" class="w-1/3 bg-gray-200 text-gray-700 font-semibold rounded-xl p-4 text-lg active:bg-gray-300 transition-colors">
-                    ยกเลิก
-                </button>
-                <button
-    type="button"
-    onclick="submitCount()"
-    id="btn-submit"
-    class="w-2/3 bg-green-600 text-white font-semibold rounded-xl p-4 text-xl shadow-lg active:bg-green-700 transition-colors flex justify-center items-center gap-2"
->
+                <button onclick="cancelInput()" class="w-1/3 bg-gray-200 text-gray-700 font-semibold rounded-xl p-4 text-lg active:bg-gray-300 transition-colors">ยกเลิก</button>
+                <button type="button" onclick="submitCount()" id="btn-submit" class="w-2/3 bg-green-600 text-white font-semibold rounded-xl p-4 text-xl shadow-lg active:bg-green-700 transition-colors flex justify-center items-center gap-2">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
                     </svg>
@@ -362,27 +205,61 @@
         <!-- LOADING OVERLAY -->
         <div id="loading-overlay" class="hidden absolute inset-0 bg-white/90 z-50 flex flex-col items-center justify-center">
             <div class="animate-spin rounded-full h-14 w-14 border-b-4 border-blue-600 mb-4"></div>
-            <p class="text-blue-800 font-medium text-lg animate-pulse">กำลังบันทึกข้อมูล...</p>
+            <p id="loading-text" class="text-blue-800 font-medium text-lg animate-pulse">กำลังบันทึกข้อมูล...</p>
         </div>
     </main>
 
     <script>
-        // --- State Management ---
+        // GOOGLE APPS SCRIPT WEB APP URL (สามารถแก้ไขผ่านหน้าเว็บหรือใส่ตรงนี้ได้เลย)
+        let WEB_APP_URL = localStorage.getItem('ams_script_url') || 'YOUR_GOOGLE_APPS_SCRIPT_WEB_APP_URL_HERE';
+
         const MOCK_ZONES = {
-    "ZONE_A": ["A1-1", "A1-2", "A1-3"],
-    "ZONE_B": ["B1-1", "B1-2", "B1-3"],
-    "ZONE_C": ["C1-1", "C1-2", "C1-3"],
-    "ZONE_D": ["D1-1", "D1-2", "D1-3", "D1-4"]
-};
+            "ZONE_A": ["A1-1", "A1-2", "A1-3"],
+            "ZONE_B": ["B1-1", "B1-2", "B1-3"],
+            "ZONE_C": ["C1-1", "C1-2", "C1-3"],
+            "ZONE_D": ["D1-1", "D1-2", "D1-3", "D1-4"]
+        };
+
+        let currentSession = { zone: "", location: "", responsiblePerson: "" };
+        let currentScanData = { partNumber: "", qrQty: "", unit: "", lotNumber: "", serialNumber: "", unit2: "" };
+
+        // ตรวจสอบตอนเปิดเว็บว่าใส่ URL หรือยัง
+        window.addEventListener('DOMContentLoaded', () => {
+            if (!WEB_APP_URL || WEB_APP_URL.includes('YOUR_GOOGLE_APPS_SCRIPT_WEB_APP_URL_HERE')) {
+                openSettingsModal(true);
+            }
+        });
+
+        async function openSettingsModal(isRequired = false) {
+            const { value: url } = await Swal.fire({
+                title: 'ตั้งค่า Google Apps Script URL',
+                input: 'url',
+                inputLabel: 'วาง URL ที่ได้จากการ Deploy Web App',
+                inputValue: WEB_APP_URL.includes('YOUR_') ? '' : WEB_APP_URL,
+                inputPlaceholder: 'https://script.google.com/macros/s/.../exec',
+                showCancelButton: !isRequired,
+                confirmButtonText: 'บันทึก',
+                cancelButtonText: 'ยกเลิก',
+                allowOutsideClick: !isRequired,
+                allowEscapeKey: !isRequired
+            });
+
+            if (url) {
+                WEB_APP_URL = url.trim();
+                localStorage.setItem('ams_script_url', WEB_APP_URL);
+                Swal.fire({ icon: 'success', title: 'บันทึก URL สำเร็จ', timer: 1200, showConfirmButton: false });
+            } else if (isRequired && (!WEB_APP_URL || WEB_APP_URL.includes('YOUR_'))) {
+                Swal.fire({ icon: 'warning', title: 'จำเป็นต้องระบุ URL', text: 'กรุณากรอกลิงก์ Web App เพื่อใช้งานระบบ', confirmButtonText: 'ลองอีกครั้ง' }).then(() => {
+                    openSettingsModal(true);
+                });
+            }
+        }
 
         function updateLocations() {
             const zoneSelect = document.getElementById('zone-select');
             const locationSelect = document.getElementById('location-select');
             const selectedZone = zoneSelect.value;
-
-            // Reset and clear options
             locationSelect.innerHTML = '<option value="" disabled selected>-- เลือกพื้นที่ปฏิบัติงาน --</option>';
-
             if (selectedZone && MOCK_ZONES[selectedZone]) {
                 MOCK_ZONES[selectedZone].forEach(loc => {
                     const option = document.createElement('option');
@@ -396,49 +273,6 @@
             }
         }
 
-        async function cancelInput() {
-
-    document.getElementById(
-        'actual-qty'
-    ).value = '';
-
-    const unit2Select =
-        document.getElementById(
-            'unit2-select'
-        );
-
-    if (unit2Select) {
-
-        unit2Select.value = '';
-
-    }
-
-    currentScanData.unit2 = '';
-
-    await stopZXingScanner();
-
-    showView(
-        'view-scanner'
-    );
-
-    initScanner();
-
-}
-        let currentSession = {
-            zone: "",
-            location: "",
-            responsiblePerson: ""
-        };
-
-        let currentScanData = {
-    partNumber: "",
-    qrQty: "",
-    unit: "",
-    lotNumber: "",
-    serialNumber: "",
-    unit2: ""
-};
-        // --- View Navigation ---
         function showView(viewId) {
             document.getElementById('view-setup').classList.add('hidden');
             document.getElementById('view-scanner').classList.add('hidden');
@@ -447,25 +281,18 @@
             document.getElementById(viewId).classList.add('flex');
         }
 
-        // --- STREAMING_CHUNK:Scanner Logic via ZXing ---
         function goToScanner() {
+            if (!WEB_APP_URL || WEB_APP_URL.includes('YOUR_')) {
+                openSettingsModal(true);
+                return;
+            }
 
-    const zone =
-        document.getElementById('zone-select').value;
-
-    const loc =
-        document.getElementById('location-select').value;
-
-    const resp =
-        document.getElementById('responsible-name').value.trim();
+            const zone = document.getElementById('zone-select').value;
+            const loc = document.getElementById('location-select').value;
+            const resp = document.getElementById('responsible-name').value.trim();
 
             if (!zone || !loc || !resp) {
-                Swal.fire({
-                    icon: 'warning',
-                    title: 'ข้อมูลไม่ครบถ้วน',
-                    text: 'กรุณากรอกข้อมูลผู้ตรวจนับให้ครบถ้วนก่อนเริ่มสแกน',
-                    confirmButtonColor: '#3085d6'
-                });
+                Swal.fire({ icon: 'warning', title: 'ข้อมูลไม่ครบถ้วน', text: 'กรุณากรอกข้อมูลผู้ตรวจนับให้ครบถ้วนก่อนเริ่มสแกน', confirmButtonColor: '#3085d6' });
                 return;
             }
 
@@ -474,1564 +301,332 @@
             currentSession.responsiblePerson = resp;
 
             showView('view-scanner');
-
-setTimeout(() => {
-    initScanner();
-}, 150);
+            setTimeout(() => { initScanner(); }, 150);
         }
 
-        // ==========================================
-// ZXING SCANNER
-// ==========================================
-
-let zxingCodeReader = null;
-
-let availableCameras = [];
-
-let currentCameraIndex = 0;
-
-let selectedDeviceId = null;
-
-let currentVideoTrack = null;
-
-let torchEnabled = false;
-
-let isScanning = false;
-
-let scanLocked = false;
-
-
-// ==========================================
-// INIT SCANNER
-// ==========================================
-
-async function initScanner() {
-
-    const errorBox =
-        document.getElementById("camera-error");
-
-    errorBox.classList.add("hidden");
-
-    scanLocked = false;
-
-    torchEnabled = false;
-
-    updateTorchButton(false);
-
-
-    // ==========================================
-    // STOP OLD CAMERA
-    // ==========================================
-
-    await stopZXingScanner();
-
-
-    // ==========================================
-    // CREATE ZXING
-    // ==========================================
-
-    if (!zxingCodeReader) {
-
-        zxingCodeReader =
-            new ZXing.BrowserMultiFormatReader();
-
-    }
-
-
-    try {
-
-        // ==========================================
-        // GET CAMERAS
-        // ==========================================
-
-        availableCameras =
-            await zxingCodeReader.listVideoInputDevices();
-
-
-        if (
-            !availableCameras ||
-            availableCameras.length === 0
-        ) {
-
-            throw new Error(
-                "ไม่พบกล้องในอุปกรณ์นี้"
-            );
-
-        }
-
-
-        console.log(
-            "CAMERAS:",
-            availableCameras
-        );
-
-
-        // ==========================================
-        // FIND BACK CAMERA
-        // ==========================================
-
-        let backCameraIndex =
-            availableCameras.findIndex(camera => {
-
-                const label =
-                    (camera.label || "")
-                        .toLowerCase();
-
-                return (
-                    label.includes("back") ||
-                    label.includes("rear") ||
-                    label.includes("environment") ||
-                    label.includes("หลัง")
-                );
-
-            });
-
-
-        // ถ้าหา Back ไม่เจอ
-        // ใช้กล้องตัวสุดท้าย
-        if (backCameraIndex === -1) {
-
-            backCameraIndex =
-                availableCameras.length - 1;
-
-        }
-
-
-        currentCameraIndex =
-            backCameraIndex;
-
-
-        selectedDeviceId =
-            availableCameras[
-                currentCameraIndex
-            ].deviceId;
-
-
-        // ==========================================
-        // SWITCH BUTTON
-        // ==========================================
-
-        const switchButton =
-            document.getElementById(
-                "btn-switch-cam"
-            );
-
-
-        if (
-            availableCameras.length > 1
-        ) {
-
-            switchButton.classList.remove(
-                "hidden"
-            );
-
-        } else {
-
-            switchButton.classList.add(
-                "hidden"
-            );
-
-        }
-
-
-        // ==========================================
-        // START
-        // ==========================================
-
-        await startZXingCamera();
-
-    }
-
-    catch (error) {
-
-        console.error(
-            "CAMERA ERROR:",
-            error
-        );
-
-
-        errorBox.classList.remove(
-            "hidden"
-        );
-
-
-        document.getElementById(
-            "camera-error-msg"
-        ).innerHTML =
-
-            "เปิดกล้องไม่ได้<br><br>" +
-
-            "กรุณากดอนุญาตการใช้งานกล้อง<br>" +
-
-            "แล้วลองใหม่อีกครั้ง";
-
-    }
-
-}
-
-
-// ==========================================
-// START CAMERA
-// ==========================================
-
-async function startZXingCamera() {
-
-    scanLocked = false;
-
-    isScanning = true;
-
-
-    const video =
-        document.getElementById(
-            "zxing-video"
-        );
-
-
-    // ==========================================
-    // START ZXING
-    // ==========================================
-
-    await zxingCodeReader.decodeFromVideoDevice(
-
-        selectedDeviceId,
-
-        video,
-
-        async (result, error) => {
-
-            // ==========================================
-            // NO RESULT
-            // ==========================================
-
-            if (!result) {
-
-                return;
-
-            }
-
-
-            // ==========================================
-            // PREVENT DUPLICATE
-            // ==========================================
-
-            if (scanLocked) {
-
-                return;
-
-            }
-
-
-            scanLocked = true;
-
-
-            console.log(
-                "SCAN:",
-                result.text
-            );
-
-
-            // ==========================================
-            // STOP CAMERA
-            // ==========================================
+        let zxingCodeReader = null;
+        let availableCameras = [];
+        let currentCameraIndex = 0;
+        let selectedDeviceId = null;
+        let currentVideoTrack = null;
+        let torchEnabled = false;
+        let scanLocked = false;
+
+        async function initScanner() {
+            const errorBox = document.getElementById("camera-error");
+            errorBox.classList.add("hidden");
+            scanLocked = false;
+            torchEnabled = false;
+            updateTorchButton(false);
 
             await stopZXingScanner();
 
-
-            // ==========================================
-            // PROCESS
-            // ==========================================
-
-            processScannedData(
-                result.text
-            );
-
-        }
-
-    );
-
-
-    // ==========================================
-    // GET VIDEO TRACK
-    // ==========================================
-
-    setTimeout(
-        async () => {
+            if (!zxingCodeReader) {
+                zxingCodeReader = new ZXing.BrowserMultiFormatReader();
+            }
 
             try {
-
-                const stream =
-                    video.srcObject;
-
-
-                if (!stream) {
-
-                    return;
-
+                availableCameras = await zxingCodeReader.listVideoInputDevices();
+                if (!availableCameras || availableCameras.length === 0) {
+                    throw new Error("ไม่พบกล้องในอุปกรณ์นี้");
                 }
 
-
-                const tracks =
-                    stream.getVideoTracks();
-
-
-                if (
-                    !tracks ||
-                    !tracks.length
-                ) {
-
-                    return;
-
-                }
-
-
-                currentVideoTrack =
-                    tracks[0];
-
-
-                console.log(
-                    "VIDEO TRACK:",
-                    currentVideoTrack.getSettings()
-                );
-
-
-                // ==========================================
-                // AUTO FOCUS
-                // ==========================================
-
-                await applyAutoFocus(
-                    currentVideoTrack
-                );
-
-
-                // ==========================================
-                // TORCH SUPPORT
-                // ==========================================
-
-                checkTorchSupport(
-                    currentVideoTrack
-                );
-
-            }
-
-            catch (error) {
-
-                console.log(
-                    "CAMERA CONTROL ERROR:",
-                    error
-                );
-
-            }
-
-        },
-        700
-    );
-
-}
-
-
-// ==========================================
-// AUTO FOCUS
-// ==========================================
-
-async function applyAutoFocus(track) {
-
-    if (!track) {
-
-        return;
-
-    }
-
-
-    try {
-
-        const capabilities =
-            track.getCapabilities
-                ? track.getCapabilities()
-                : {};
-
-
-        console.log(
-            "CAMERA CAPABILITIES:",
-            capabilities
-        );
-
-
-        if (
-            capabilities.focusMode &&
-            capabilities.focusMode.includes(
-                "continuous"
-            )
-        ) {
-
-            await track.applyConstraints({
-
-                advanced: [
-
-                    {
-                        focusMode:
-                            "continuous"
-                    }
-
-                ]
-
-            });
-
-
-            console.log(
-                "AUTO FOCUS: ON"
-            );
-
-        }
-
-        else {
-
-            console.log(
-                "AUTO FOCUS: NOT SUPPORTED"
-            );
-
-        }
-
-    }
-
-    catch (error) {
-
-        console.log(
-            "AUTO FOCUS ERROR:",
-            error
-        );
-
-    }
-
-}
-
-
-// ==========================================
-// CHECK TORCH
-// ==========================================
-
-function checkTorchSupport(track) {
-
-    const button =
-        document.getElementById(
-            "btn-torch"
-        );
-
-
-    if (!track) {
-
-        button.disabled = true;
-
-        button.classList.add(
-            "opacity-40"
-        );
-
-        return;
-
-    }
-
-
-    try {
-
-        const capabilities =
-            track.getCapabilities
-                ? track.getCapabilities()
-                : {};
-
-
-        if (capabilities.torch) {
-
-            button.disabled = false;
-
-            button.classList.remove(
-                "opacity-40"
-            );
-
-
-            console.log(
-                "TORCH: SUPPORTED"
-            );
-
-        }
-
-        else {
-
-            button.disabled = true;
-
-            button.classList.add(
-                "opacity-40"
-            );
-
-
-            console.log(
-                "TORCH: NOT SUPPORTED"
-            );
-
-        }
-
-    }
-
-    catch (error) {
-
-        button.disabled = true;
-
-        button.classList.add(
-            "opacity-40"
-        );
-
-    }
-
-}
-
-
-// ==========================================
-// TOGGLE TORCH
-// ==========================================
-
-async function toggleTorch() {
-
-    if (!currentVideoTrack) {
-
-        return;
-
-    }
-
-
-    try {
-
-        const capabilities =
-            currentVideoTrack.getCapabilities();
-
-
-        if (!capabilities.torch) {
-
-            Swal.fire({
-
-                icon: "info",
-
-                title: "ไม่รองรับ Flash",
-
-                text:
-                    "อุปกรณ์หรือเบราว์เซอร์นี้ไม่รองรับการเปิดไฟแฟลชผ่านกล้อง",
-
-                confirmButtonText:
-                    "ตกลง"
-
-            });
-
-            return;
-
-        }
-
-
-        torchEnabled =
-            !torchEnabled;
-
-
-        await currentVideoTrack.applyConstraints({
-
-            advanced: [
-
-                {
-                    torch:
-                        torchEnabled
-                }
-
-            ]
-
-        });
-
-
-        updateTorchButton(
-            torchEnabled
-        );
-
-
-        console.log(
-            "TORCH:",
-            torchEnabled
-        );
-
-    }
-
-    catch (error) {
-
-        console.error(
-            "TORCH ERROR:",
-            error
-        );
-
-
-        torchEnabled = false;
-
-        updateTorchButton(false);
-
-    }
-
-}
-
-
-// ==========================================
-// TORCH BUTTON UI
-// ==========================================
-
-function updateTorchButton(enabled) {
-
-    const button =
-        document.getElementById(
-            "btn-torch"
-        );
-
-    const text =
-        document.getElementById(
-            "torch-text"
-        );
-
-
-    if (!button || !text) {
-
-        return;
-
-    }
-
-
-    if (enabled) {
-
-        button.classList.remove(
-            "bg-gray-700"
-        );
-
-        button.classList.add(
-            "bg-yellow-500"
-        );
-
-        text.textContent =
-            "ปิดไฟ";
-
-    }
-
-    else {
-
-        button.classList.remove(
-            "bg-yellow-500"
-        );
-
-        button.classList.add(
-            "bg-gray-700"
-        );
-
-        text.textContent =
-            "ไฟ";
-
-    }
-
-}
-
-
-// ==========================================
-// SWITCH CAMERA
-// ==========================================
-
-async function switchCamera() {
-
-    if (
-        availableCameras.length < 2
-    ) {
-
-        return;
-
-    }
-
-
-    try {
-
-        // ==========================================
-        // STOP CURRENT
-        // ==========================================
-
-        await stopZXingScanner();
-
-
-        // ==========================================
-        // NEXT CAMERA
-        // ==========================================
-
-        currentCameraIndex =
-            (
-                currentCameraIndex + 1
-            ) %
-            availableCameras.length;
-
-
-        selectedDeviceId =
-            availableCameras[
-                currentCameraIndex
-            ].deviceId;
-
-
-        console.log(
-            "SWITCH CAMERA:",
-            availableCameras[
-                currentCameraIndex
-            ].label
-        );
-
-
-        // ==========================================
-        // RESET TORCH
-        // ==========================================
-
-        torchEnabled = false;
-
-        updateTorchButton(false);
-
-
-        // ==========================================
-        // START
-        // ==========================================
-
-        await startZXingCamera();
-
-    }
-
-    catch (error) {
-
-        console.error(
-            "SWITCH CAMERA ERROR:",
-            error
-        );
-
-    }
-
-}
-
-
-// ==========================================
-// STOP SCANNER
-// ==========================================
-
-async function stopZXingScanner() {
-
-    isScanning = false;
-
-    scanLocked = true;
-
-    torchEnabled = false;
-
-
-    try {
-
-        if (zxingCodeReader) {
-
-            zxingCodeReader.reset();
-
-        }
-
-    }
-
-    catch (error) {
-
-        console.log(
-            "ZXING RESET:",
-            error
-        );
-
-    }
-
-
-    // ==========================================
-    // STOP VIDEO TRACK
-    // ==========================================
-
-    const video =
-        document.getElementById(
-            "zxing-video"
-        );
-
-
-    if (
-        video &&
-        video.srcObject
-    ) {
-
-        try {
-
-            video.srcObject
-                .getTracks()
-                .forEach(track => {
-
-                    try {
-
-                        track.stop();
-
-                    }
-
-                    catch (e) {}
-
+                let backCameraIndex = availableCameras.findIndex(camera => {
+                    const label = (camera.label || "").toLowerCase();
+                    return label.includes("back") || label.includes("rear") || label.includes("environment") || label.includes("หลัง");
                 });
 
+                if (backCameraIndex === -1) backCameraIndex = availableCameras.length - 1;
+                currentCameraIndex = backCameraIndex;
+                selectedDeviceId = availableCameras[currentCameraIndex].deviceId;
+
+                const switchButton = document.getElementById("btn-switch-cam");
+                if (availableCameras.length > 1) {
+                    switchButton.classList.remove("hidden");
+                } else {
+                    switchButton.classList.add("hidden");
+                }
+
+                await startZXingCamera();
+            } catch (error) {
+                console.error("CAMERA ERROR:", error);
+                errorBox.classList.remove("hidden");
+                document.getElementById("camera-error-msg").innerHTML = "เปิดกล้องไม่ได้<br><br>กรุณากดอนุญาตการใช้งานกล้อง<br>แล้วลองใหม่อีกครั้ง";
+            }
         }
 
-        catch (error) {}
+        async function startZXingCamera() {
+            scanLocked = false;
+            const video = document.getElementById("zxing-video");
 
-        video.srcObject = null;
+            await zxingCodeReader.decodeFromVideoDevice(selectedDeviceId, video, async (result, error) => {
+                if (!result || scanLocked) return;
+                scanLocked = true;
+                await stopZXingScanner();
+                processScannedData(result.text);
+            });
 
-    }
-
-
-    currentVideoTrack = null;
-
-    updateTorchButton(false);
-
-}
-
-
-// ==========================================
-// BACK
-// ==========================================
-
-async function stopScannerAndGoBack() {
-
-    await stopZXingScanner();
-
-    showView(
-        "view-setup"
-    );
-
-}
-
-        // --- STREAMING_CHUNK:Handling Scan Data and Parsing ---
-        function processScannedData(text) {
-
-    console.log("QR DATA:", text);
-
-
-    // ==========================================
-    // SPLIT QR
-    // ==========================================
-
-    const parts = text
-        .split(',')
-        .map(x => x.trim());
-
-
-    if (parts.length < 4) {
-
-        Swal.fire({
-
-            icon: 'error',
-
-            title: 'รูปแบบไม่ถูกต้อง',
-
-            text:
-                'ข้อมูล QR / Barcode ไม่ถูกต้อง',
-
-            confirmButtonText:
-                'สแกนใหม่'
-
-        }).then(() => {
-
-            initScanner();
-
-        });
-
-        return;
-
-    }
-
-
-    // ==========================================
-    // FIND WO / WO2 / RC
-    // ==========================================
-
-    let lotNumber = "";
-
-    let qrType = "";
-
-
-    for (
-        let i = 0;
-        i < parts.length;
-        i++
-    ) {
-
-        const value =
-            parts[i];
-
-
-        // WO2
-        if (
-            /^WO2([-_]|$)/i
-                .test(value)
-        ) {
-
-            lotNumber =
-                value;
-
-            qrType =
-                "WO2";
-
-            break;
-
+            setTimeout(async () => {
+                try {
+                    const stream = video.srcObject;
+                    if (!stream) return;
+                    const tracks = stream.getVideoTracks();
+                    if (!tracks || !tracks.length) return;
+                    currentVideoTrack = tracks[0];
+                    await applyAutoFocus(currentVideoTrack);
+                    checkTorchSupport(currentVideoTrack);
+                } catch (error) {
+                    console.log("CAMERA CONTROL ERROR:", error);
+                }
+            }, 700);
         }
 
-
-        // WO
-        if (
-            /^WO([-_]|$)/i
-                .test(value)
-        ) {
-
-            lotNumber =
-                value;
-
-            qrType =
-                "WO";
-
-            break;
-
+        async function applyAutoFocus(track) {
+            if (!track) return;
+            try {
+                const capabilities = track.getCapabilities ? track.getCapabilities() : {};
+                if (capabilities.focusMode && capabilities.focusMode.includes("continuous")) {
+                    await track.applyConstraints({ advanced: [{ focusMode: "continuous" }] });
+                }
+            } catch (error) {
+                console.log("AUTO FOCUS ERROR:", error);
+            }
         }
 
-
-        // RC
-        if (
-            /^RC([-_]|$)/i
-                .test(value)
-        ) {
-
-            lotNumber =
-                value;
-
-            qrType =
-                "RC";
-
-            break;
-
+        function checkTorchSupport(track) {
+            const button = document.getElementById("btn-torch");
+            if (!track) {
+                button.disabled = true;
+                button.classList.add("opacity-40");
+                return;
+            }
+            try {
+                const capabilities = track.getCapabilities ? track.getCapabilities() : {};
+                if (capabilities.torch) {
+                    button.disabled = false;
+                    button.classList.remove("opacity-40");
+                } else {
+                    button.disabled = true;
+                    button.classList.add("opacity-40");
+                }
+            } catch (error) {
+                button.disabled = true;
+                button.classList.add("opacity-40");
+            }
         }
 
-    }
-
-
-    // ==========================================
-    // NOT FOUND
-    // ==========================================
-
-    if (!lotNumber) {
-
-        Swal.fire({
-
-            icon: 'warning',
-
-            title: 'ไม่พบ WO / WO2 / RC',
-
-            text:
-                'ไม่พบหมายเลข WO, WO2 หรือ RC ใน QR Code นี้',
-
-            confirmButtonText:
-                'สแกนใหม่'
-
-        }).then(() => {
-
-            initScanner();
-
-        });
-
-        return;
-
-    }
-
-            // ==========================================
-// RESET UNIT2 + RC UNIT
-// ==========================================
-
-currentScanData.unit2 = "";
-
-currentScanData.unit = "";
-
-
-// ซ่อน RC Unit ก่อนทุกครั้ง
-document
-    .getElementById('rc-unit-display')
-    .classList
-    .add('hidden');
-
-
-// ล้างข้อความ Unit
-document
-    .getElementById('display-unit')
-    .textContent = "-";
-            
-    const unit2Container =
-        document.getElementById(
-            'unit2-container'
-        );
-
-    const unit2Select =
-        document.getElementById(
-            'unit2-select'
-        );
-
-
-    unit2Select.value =
-        "";
-
-
-    // ==========================================
-    // COMMON
-    // ==========================================
-
-    currentScanData.partNumber =
-        parts[0] || "";
-
-
-    currentScanData.lotNumber =
-        lotNumber;
-// ==========================================
-// WO / WO2
-// ==========================================
-
-if (
-    qrType === "WO" ||
-    qrType === "WO2"
-) {
-
-    currentScanData.qrQty =
-        parts[1] || "";
-
-    currentScanData.unit =
-        parts[2] || "";
-
-    currentScanData.serialNumber =
-        parts.length >= 5
-            ? parts[4]
-            : "-";
-
-
-    // ==========================================
-    // ซ่อน Unit จาก Part Master
-    // ==========================================
-
-    document
-        .getElementById('rc-unit-display')
-        .classList
-        .add('hidden');
-
-    document
-        .getElementById('display-unit')
-        .textContent = "-";
-
-
-    // ==========================================
-    // ซ่อน Unit2
-    // ==========================================
-
-    unit2Container
-        .classList
-        .add('hidden');
-
-}
-            
-// ==========================================
-// RC
-// ==========================================
-
-if (
-    qrType === "RC"
-) {
-
-    /*
-        RC FORMAT
-
-        1 = Part Number
-        2 = RC Number
-        3 = RM01
-        4 = E4
-        5 = Qty
-        6 = POD
-        7 = Description
-        8 = Serial
-    */
-
-    // Qty = ช่องที่ 5
-    currentScanData.qrQty =
-        parts[4] || "";
-
-    // Serial = ตัวสุดท้าย
-    currentScanData.serialNumber =
-        parts[parts.length - 1] || "-";
-
-    // ==========================================
-    // UNIT
-    // ==========================================
-
-    currentScanData.unit = "";
-
-    // แสดง Unit2
-    unit2Container
-        .classList
-        .remove('hidden');
-
-    // แสดงช่อง Unit
-    document
-        .getElementById('rc-unit-display')
-        .classList
-        .remove('hidden');
-
-    document
-        .getElementById('display-unit')
-        .textContent = "กำลังค้นหา...";
-    // ==========================================
-// LOAD UNIT FROM PART MASTER
-// ==========================================
-
-getPartUnitFromMaster(
-    currentScanData.partNumber
-)
-.then(unit => {
-
-    currentScanData.unit =
-        unit;
-
-    document
-        .getElementById('display-unit')
-        .textContent =
-        unit;
-
-
-    // แสดง Unit เฉพาะ RC
-    document
-        .getElementById('rc-unit-display')
-        .classList
-        .remove('hidden');
-
-})
-.catch(error => {
-
-    currentScanData.unit =
-        "";
-
-    document
-        .getElementById('display-unit')
-        .textContent =
-        "-";
-
-    Swal.fire({
-
-        icon: 'error',
-
-        title: 'ไม่พบ Unit',
-
-        text:
-            error.message,
-
-        confirmButtonText:
-            'สแกนใหม่'
-
-    })
-    .then(() => {
-
-        cancelInput();
-
-    });
-
-});
-
-}
-
-
-    // ==========================================
-    // UPDATE UI
-    // ==========================================
-
-    document.getElementById(
-        'display-lot'
-    ).textContent =
-        currentScanData.lotNumber;
-
-
-    document.getElementById(
-        'display-part'
-    ).textContent =
-        currentScanData.partNumber;
-
-
-    document.getElementById(
-        'actual-qty'
-    ).value = "";
-
-
-    // ==========================================
-    // SHOW INPUT VIEW
-    // ==========================================
-
-    showView(
-        'view-input'
-    );
-
-}
-        // ==========================================
-// GET UNIT FROM PART MASTER
-// ==========================================
-
-function getPartUnitFromMaster(partNumber) {
-
-    const SCRIPT_URL =
-        'https://script.google.com/macros/s/AKfycbzXgFiJWsDft8DL7MZia3hlM3pBC0_rVYHhKL-dA2-fX1sCpwNki7NoD2lRbnfxUDriSg/exec';
-
-    return fetch(
-        SCRIPT_URL,
-        {
-            method: 'POST',
-
-            headers: {
-                'Content-Type':
-                    'application/x-www-form-urlencoded;charset=UTF-8'
-            },
-
-            body:
-                new URLSearchParams({
-
-                    data:
-                        JSON.stringify({
-
-                            action:
-                                'getPartUnit',
-
-                            partNumber:
-                                partNumber
-
-                        })
-
-                })
-        }
-    )
-    .then(response => response.json())
-    .then(result => {
-
-        if (
-            result.status !== 'success'
-        ) {
-
-            throw new Error(
-                result.message ||
-                'ไม่สามารถค้นหา Unit ได้'
-            );
-
+        async function toggleTorch() {
+            if (!currentVideoTrack) return;
+            try {
+                const capabilities = currentVideoTrack.getCapabilities();
+                if (!capabilities.torch) {
+                    Swal.fire({ icon: "info", title: "ไม่รองรับ Flash", text: "อุปกรณ์หรือเบราว์เซอร์นี้ไม่รองรับการเปิดไฟแฟลชผ่านกล้อง", confirmButtonText: "ตกลง" });
+                    return;
+                }
+                torchEnabled = !torchEnabled;
+                await currentVideoTrack.applyConstraints({ advanced: [{ torch: torchEnabled }] });
+                updateTorchButton(torchEnabled);
+            } catch (error) {
+                torchEnabled = false;
+                updateTorchButton(false);
+            }
         }
 
-        if (!result.unit) {
-
-            throw new Error(
-                'ไม่พบ Unit ของ Part Number: ' +
-                partNumber +
-                ' ใน Part_Master'
-            );
-
-        }
-
-        return result.unit;
-
-    });
-
-}
-
-function submitCount() {
-
-    const input =
-        document.getElementById('actual-qty');
-
-    const actualQty =
-        input.value.trim();
-
-    input.blur();
-
-
-    // ==========================================
-    // VALIDATE
-    // ==========================================
-
-    if (
-        actualQty === "" ||
-        isNaN(actualQty) ||
-        Number(actualQty) < 0
-    ) {
-
-        Swal.fire({
-
-            icon: 'warning',
-
-            title: 'กรุณาระบุจำนวน',
-
-            text:
-                'จำนวนที่ตรวจนับต้องเป็นตัวเลขที่มากกว่าหรือเท่ากับ 0',
-
-            confirmButtonColor:
-                '#3085d6'
-
-        });
-
-        return;
-    }
-// ==========================================
-// VALIDATE UNIT2 - RC ONLY
-// ==========================================
-
-if (
-    currentScanData.lotNumber &&
-    /^RC([-_]|$)/i.test(currentScanData.lotNumber) &&
-    !currentScanData.unit2
-) {
-
-    Swal.fire({
-
-        icon: 'warning',
-
-        title: 'กรุณาเลือก Unit2',
-
-        text: 'QR Code นี้เป็น RC กรุณาเลือกหน่วย Unit2 ก่อนบันทึก',
-
-        confirmButtonText: 'ตกลง',
-
-        confirmButtonColor: '#3085d6'
-
-    });
-
-    return;
-}
-
-    // ==========================================
-    // PAYLOAD
-    // ==========================================
-
-    const payload = {
-
-        ...currentSession,
-
-        ...currentScanData,
-
-        actualQty: actualQty
-
-    };
-
-
-    console.log(
-        'SEND DATA:',
-        payload
-    );
-
-
-    // ==========================================
-    // LOADING
-    // ==========================================
-
-    document
-        .getElementById('loading-overlay')
-        .classList
-        .remove('hidden');
-
-
-    // ==========================================
-    // GOOGLE APPS SCRIPT
-    // ==========================================
-
-    const SCRIPT_URL =
-        'https://script.google.com/macros/s/AKfycbzXgFiJWsDft8DL7MZia3hlM3pBC0_rVYHhKL-dA2-fX1sCpwNki7NoD2lRbnfxUDriSg/exec';
-
-
-    // ==========================================
-    // SEND
-    // ==========================================
-
-    fetch(
-        SCRIPT_URL,
-        {
-            method: 'POST',
-
-            headers: {
-                'Content-Type':
-                    'application/x-www-form-urlencoded;charset=UTF-8'
-            },
-
-            body:
-                new URLSearchParams({
-
-                    data:
-                        JSON.stringify(payload)
-
-                })
-        }
-    )
-
-    .then(async response => {
-
-        console.log(
-            'HTTP STATUS:',
-            response.status
-        );
-
-
-        const text =
-            await response.text();
-
-
-        console.log(
-            'SERVER RESPONSE:',
-            text
-        );
-
-
-        let result;
-
-
-        try {
-
-            result =
-                JSON.parse(text);
-
-        } catch (e) {
-
-            throw new Error(
-                'Google Apps Script ไม่ส่ง JSON กลับมา'
-            );
-
-        }
-
-
-        if (
-            result.status !== 'success'
-        ) {
-
-            throw new Error(
-                result.message ||
-                'บันทึกข้อมูลไม่สำเร็จ'
-            );
-
-        }
-
-
-        return result;
-
-    })
-
-
-    .then(result => {
-
-        document
-            .getElementById(
-                'loading-overlay'
-            )
-            .classList
-            .add('hidden');
-
-
-        Swal.fire({
-
-            icon: 'success',
-
-            title: 'บันทึกสำเร็จ',
-
-            html:
-                'บันทึกข้อมูลลง Sheet <b>' +
-                result.sheet +
-                '</b> เรียบร้อยแล้ว',
-
-            timer: 1800,
-
-            showConfirmButton: false
-
-        })
-
-        .then(() => {
-
-            showView(
-                'view-scanner'
-            );
-
-            initScanner();
-
-        });
-
-    })
-
-
-    .catch(error => {
-
-        console.error(
-            'SAVE ERROR:',
-            error
-        );
-
-
-        document
-            .getElementById(
-                'loading-overlay'
-            )
-            .classList
-            .add('hidden');
-
-
-        Swal.fire({
-
-            icon: 'error',
-
-            title: 'บันทึกข้อมูลไม่สำเร็จ',
-
-            text:
-                error.message ||
-                error.toString(),
-
-            confirmButtonText:
-                'ตกลง',
-
-            confirmButtonColor:
-                '#d33'
-
-        });
-
-    });
-
-}
-        // ==========================================
-// UNIT2 DROPDOWN
-// ==========================================
-
-document
-    .getElementById('unit2-select')
-    .addEventListener('change', function () {
-
-        currentScanData.unit2 =
-            this.value;
-
-    });
-
-
-        function handleSaveSuccess(response) {
-            document.getElementById('loading-overlay').classList.add('hidden');
-            
-            if (response.status === 'success') {
-                Swal.fire({
-                    icon: 'success',
-                    title: 'บันทึกสำเร็จ',
-                    text: 'บันทึกผลการตรวจนับเรียบร้อยแล้ว',
-                    timer: 1500,
-                    showConfirmButton: false
-                }).then(() => {
-                    // Go back to scanner for next item
-                    showView('view-scanner');
-                    initScanner();
-                });
+        function updateTorchButton(enabled) {
+            const button = document.getElementById("btn-torch");
+            const text = document.getElementById("torch-text");
+            if (!button || !text) return;
+            if (enabled) {
+                button.classList.remove("bg-gray-700");
+                button.classList.add("bg-yellow-500");
+                text.textContent = "ปิดไฟ";
             } else {
-                handleSaveError(response.message);
+                button.classList.remove("bg-yellow-500");
+                button.classList.add("bg-gray-700");
+                text.textContent = "ไฟ";
             }
         }
 
-        function handleSaveError(error) {
-            document.getElementById('loading-overlay').classList.add('hidden');
-            Swal.fire({
-                icon: 'error',
-                title: 'เกิดข้อผิดพลาด',
-                text: 'ไม่สามารถบันทึกข้อมูลได้: ' + error,
-                confirmButtonColor: '#d33'
-            });
+        async function switchCamera() {
+            if (availableCameras.length < 2) return;
+            try {
+                await stopZXingScanner();
+                currentCameraIndex = (currentCameraIndex + 1) % availableCameras.length;
+                selectedDeviceId = availableCameras[currentCameraIndex].deviceId;
+                torchEnabled = false;
+                updateTorchButton(false);
+                await startZXingCamera();
+            } catch (error) {
+                console.error("SWITCH CAMERA ERROR:", error);
+            }
+        }
+
+        async function stopZXingScanner() {
+            scanLocked = true;
+            torchEnabled = false;
+            try {
+                if (zxingCodeReader) zxingCodeReader.reset();
+            } catch (error) {}
+
+            const video = document.getElementById("zxing-video");
+            if (video && video.srcObject) {
+                try {
+                    video.srcObject.getTracks().forEach(track => { try { track.stop(); } catch (e) {} });
+                } catch (error) {}
+                video.srcObject = null;
+            }
+            currentVideoTrack = null;
+            updateTorchButton(false);
+        }
+
+        async function stopScannerAndGoBack() {
+            await stopZXingScanner();
+            showView("view-setup");
+        }
+
+        async function processScannedData(text) {
+            const parts = text.split(',').map(x => x.trim());
+            if (parts.length < 4) {
+                Swal.fire({ icon: 'error', title: 'รูปแบบไม่ถูกต้อง', text: 'ข้อมูล QR / Barcode ไม่ถูกต้อง', confirmButtonText: 'สแกนใหม่' }).then(() => { initScanner(); });
+                return;
+            }
+
+            let lotNumber = "";
+            let qrType = "";
+            for (let i = 0; i < parts.length; i++) {
+                const value = parts[i];
+                if (/^WO2([-_]|$)/i.test(value)) { lotNumber = value; qrType = "WO2"; break; }
+                if (/^WO([-_]|$)/i.test(value)) { lotNumber = value; qrType = "WO"; break; }
+                if (/^RC([-_]|$)/i.test(value)) { lotNumber = value; qrType = "RC"; break; }
+            }
+
+            if (!lotNumber) {
+                Swal.fire({ icon: 'warning', title: 'ไม่พบ WO / WO2 / RC', text: 'ไม่พบหมายเลข WO, WO2 หรือ RC ใน QR Code นี้', confirmButtonText: 'สแกนใหม่' }).then(() => { initScanner(); });
+                return;
+            }
+
+            currentScanData.lotNumber = lotNumber;
+            currentScanData.partNumber = parts[0] || '';
+            currentScanData.qrQty = parts[1] || '';
+            currentScanData.unit = parts[2] || '';
+            currentScanData.serialNumber = parts[3] || '';
+            currentScanData.unit2 = '';
+
+            document.getElementById('display-lot').textContent = lotNumber;
+            document.getElementById('display-part').textContent = currentScanData.partNumber;
+
+            const rcUnitDisplay = document.getElementById('rc-unit-display');
+            const unit2Container = document.getElementById('unit2-container');
+
+            if (qrType === 'RC') {
+                rcUnitDisplay.classList.remove('hidden');
+                unit2Container.classList.remove('hidden');
+                document.getElementById('display-unit').textContent = 'กำลังโหลด...';
+                
+                // Fetch unit from Part Master via Apps Script API
+                try {
+                    const response = await fetch(WEB_APP_URL, {
+                        method: 'POST',
+                        body: new URLSearchParams({
+                            data: JSON.stringify({ action: 'getPartUnit', partNumber: currentScanData.partNumber })
+                        })
+                    });
+                    const resJson = await response.json();
+                    if (resJson.status === 'success') {
+                        currentScanData.unit = resJson.unit || '-';
+                        document.getElementById('display-unit').textContent = currentScanData.unit;
+                    } else {
+                        document.getElementById('display-unit').textContent = 'ไม่พบ Unit';
+                    }
+                } catch (e) {
+                    document.getElementById('display-unit').textContent = 'เชื่อมต่อผิดพลาด';
+                }
+            } else {
+                rcUnitDisplay.classList.add('hidden');
+                unit2Container.classList.add('hidden');
+            }
+
+            showView('view-input');
+            setTimeout(() => {
+                document.getElementById('actual-qty').focus();
+            }, 300);
+        }
+
+        async function cancelInput() {
+            document.getElementById('actual-qty').value = '';
+            const unit2Select = document.getElementById('unit2-select');
+            if (unit2Select) unit2Select.value = '';
+            currentScanData.unit2 = '';
+            await stopZXingScanner();
+            showView('view-scanner');
+            initScanner();
+        }
+
+        async function submitCount() {
+            const actualQty = document.getElementById('actual-qty').value.trim();
+            const unit2Select = document.getElementById('unit2-select');
+            const unit2 = unit2Select ? unit2Select.value : '';
+
+            if (!actualQty) {
+                Swal.fire({ icon: 'warning', title: 'กรุณากรอกจำนวน', text: 'โปรดระบุจำนวนที่ตรวจนับได้จริง', confirmButtonColor: '#3085d6' });
+                return;
+            }
+
+            if (/^RC/i.test(currentScanData.lotNumber) && !unit2) {
+                Swal.fire({ icon: 'warning', title: 'กรุณาเลือก Unit2', text: 'สำหรับรายการ RC จำเป็นต้องระบุ Unit2 ก่อนบันทึกข้อมูล', confirmButtonColor: '#3085d6' });
+                return;
+            }
+
+            currentScanData.actualQty = actualQty;
+            currentScanData.unit2 = unit2;
+
+            const payload = {
+                zone: currentSession.zone,
+                location: currentSession.location,
+                responsiblePerson: currentSession.responsiblePerson,
+                partNumber: currentScanData.partNumber,
+                qrQty: currentScanData.qrQty,
+                unit: currentScanData.unit,
+                lotNumber: currentScanData.lotNumber,
+                serialNumber: currentScanData.serialNumber,
+                actualQty: currentScanData.actualQty,
+                unit2: currentScanData.unit2
+            };
+
+            const loadingOverlay = document.getElementById('loading-overlay');
+            loadingOverlay.classList.remove('hidden');
+
+            try {
+                const response = await fetch(WEB_APP_URL, {
+                    method: 'POST',
+                    body: new URLSearchParams({
+                        data: JSON.stringify(payload)
+                    })
+                });
+
+                const result = await response.json();
+                loadingOverlay.classList.add('hidden');
+
+                if (result.status === 'success') {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'บันทึกสำเร็จ',
+                        text: result.message || 'บันทึกข้อมูลเรียบร้อยแล้ว',
+                        timer: 1500,
+                        showConfirmButton: false
+                    }).then(() => {
+                        document.getElementById('actual-qty').value = '';
+                        if (unit2Select) unit2Select.value = '';
+                        showView('view-scanner');
+                        initScanner();
+                    });
+                } else {
+                    Swal.fire({ icon: 'error', title: 'เกิดข้อผิดพลาด', text: result.message || 'ไม่สามารถบันทึกข้อมูลได้' });
+                }
+            } catch (error) {
+                loadingOverlay.classList.add('hidden');
+                Swal.fire({ icon: 'error', title: 'เชื่อมต่อล้มเหลว', text: error.toString() });
+            }
         }
     </script>
 </body>
