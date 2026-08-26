@@ -73,7 +73,7 @@
                 ⚙️ ตั้งค่าลิงก์
             </button>
         </div>
-        <h1 class="text-lg font-semibold text-blue-900 tracking-wide">Inventory Cycle Count111</h1>
+        <h1 class="text-lg font-semibold text-blue-900 tracking-wide">Inventory Cycle Count///</h1>
     </div>
 
     <main class="w-full max-w-md flex-1 bg-white shadow-md flex flex-col relative overflow-hidden">
@@ -223,13 +223,38 @@ let partMasterLoaded = false;
 // FIND UNIT FROM LOCAL PART MASTER CACHE
 // ==========================================
 function findPartUnit(partNumber) {
+
     const searchPart = String(partNumber || '')
         .trim()
         .toLowerCase();
 
     if (!searchPart) return '';
 
-    return partMasterCache[searchPart] || '';
+    if (
+        Object.prototype.hasOwnProperty.call(
+            partMasterCache,
+            searchPart
+        )
+    ) {
+        return String(
+            partMasterCache[searchPart] || ''
+        ).trim();
+    }
+
+    const cacheKey = Object.keys(partMasterCache)
+        .find(key =>
+            String(key)
+                .trim()
+                .toLowerCase() === searchPart
+        );
+
+    if (cacheKey) {
+        return String(
+            partMasterCache[cacheKey] || ''
+        ).trim();
+    }
+
+    return '';
 }
 
 const PART_MASTER_CACHE_KEY = 'ams_part_master';
@@ -324,6 +349,10 @@ localStorage.setItem(
                 Object.keys(partMasterCache).length,
                 'parts'
             );
+            console.log(
+    'PART MASTER SAMPLE:',
+    Object.entries(partMasterCache).slice(0, 5)
+);
 
         } else {
             console.error(
@@ -751,74 +780,11 @@ localStorage.setItem(
     // ==========================================
     // GET UNIT FROM LOCAL PART MASTER CACHE
     // ==========================================
-    const searchPart = String(currentScanData.partNumber || '')
-    .trim()
-    .toLowerCase();
+    const searchPart = String(
+    currentScanData.partNumber || ''
+).trim();
 
-let masterUnit = findPartUnit(
-    currentScanData.partNumber
-);
-
-// ==========================================
-// ถ้า Cache หาไม่เจอ → ค้นจาก Google Sheet โดยตรง
-// เฉพาะ RC
-// ==========================================
-if (!masterUnit) {
-
-    try {
-
-        console.log(
-            'CACHE ไม่พบ Unit → ค้นหา Part Master โดยตรง'
-        );
-
-        const response = await fetch(WEB_APP_URL, {
-            method: 'POST',
-            body: new URLSearchParams({
-                data: JSON.stringify({
-                    action: 'getPartUnit',
-                    partNumber: currentScanData.partNumber
-                })
-            })
-        });
-
-        const result = await response.json();
-
-        console.log(
-            'DIRECT PART MASTER RESULT:',
-            result
-        );
-
-        if (
-            result.status === 'success' &&
-            result.unit
-        ) {
-            masterUnit = String(result.unit).trim();
-
-            // เก็บกลับเข้า Cache
-            partMasterCache[searchPart] = masterUnit;
-
-            try {
-                localStorage.setItem(
-                    PART_MASTER_CACHE_KEY,
-                    JSON.stringify(partMasterCache)
-                );
-            } catch (error) {
-                console.warn(
-                    'ไม่สามารถอัปเดต Part Master Cache ได้:',
-                    error
-                );
-            }
-        }
-
-    } catch (error) {
-
-        console.error(
-            'DIRECT PART MASTER ERROR:',
-            error
-        );
-
-    }
-}
+const masterUnit = findPartUnit(searchPart);
 
 console.log('========== RC PART MASTER CHECK ==========');
 console.log('QR Part Number:', currentScanData.partNumber);
@@ -827,21 +793,11 @@ console.log('Found Unit:', masterUnit);
 console.log('==========================================');
 
 if (masterUnit) {
-
     currentScanData.unit = masterUnit;
-
-    document.getElementById(
-        'display-unit'
-    ).textContent = masterUnit;
-
+    document.getElementById('display-unit').textContent = masterUnit;
 } else {
-
     currentScanData.unit = '';
-
-    document.getElementById(
-        'display-unit'
-    ).textContent = 'ไม่พบ Unit';
-
+    document.getElementById('display-unit').textContent = 'ไม่พบ Unit';
 }
 
     // แสดงหน้า Input ทันที
