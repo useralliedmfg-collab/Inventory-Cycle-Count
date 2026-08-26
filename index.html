@@ -121,7 +121,7 @@
 
     <div class="w-full max-w-md bg-white shadow-sm flex flex-col items-center py-4 px-4 sticky top-0 z-10">
         <img src="https://www.alliedmfg.co.th/wp-content/uploads/2026/07/AMS-LOGO-V1.png" alt="AMS Logo" class="h-10 object-contain mb-1">
-        <h1 class="text-lg font-semibold text-blue-900 tracking-wide">Inventory Cycle Count222</h1>
+        <h1 class="text-lg font-semibold text-blue-900 tracking-wide">Inventory Cycle Count1</h1>
     </div>
 
     <!-- Main Application Container -->
@@ -440,12 +440,35 @@
 };
         // --- View Navigation ---
         function showView(viewId) {
-            document.getElementById('view-setup').classList.add('hidden');
-            document.getElementById('view-scanner').classList.add('hidden');
-            document.getElementById('view-input').classList.add('hidden');
-            document.getElementById(viewId).classList.remove('hidden');
-            document.getElementById(viewId).classList.add('flex');
-        }
+
+    const views = [
+        'view-setup',
+        'view-scanner',
+        'view-input'
+    ];
+
+    views.forEach(id => {
+
+        const view =
+            document.getElementById(id);
+
+        if (!view) return;
+
+        view.classList.add('hidden');
+        view.classList.remove('flex');
+
+    });
+
+
+    const target =
+        document.getElementById(viewId);
+
+    if (!target) return;
+
+    target.classList.remove('hidden');
+    target.classList.add('flex');
+
+}
 
         // --- STREAMING_CHUNK:Scanner Logic via ZXing ---
         function goToScanner() {
@@ -1304,7 +1327,6 @@ async function stopScannerAndGoBack() {
 
     console.log("QR DATA:", text);
 
-
     // ==========================================
     // SPLIT QR
     // ==========================================
@@ -1313,30 +1335,7 @@ async function stopScannerAndGoBack() {
         .split(',')
         .map(x => x.trim());
 
-
-    if (parts.length < 4) {
-
-        Swal.fire({
-
-            icon: 'error',
-
-            title: 'รูปแบบไม่ถูกต้อง',
-
-            text:
-                'ข้อมูล QR / Barcode ไม่ถูกต้อง',
-
-            confirmButtonText:
-                'สแกนใหม่'
-
-        }).then(() => {
-
-            initScanner();
-
-        });
-
-        return;
-
-    }
+    console.log("QR PARTS:", parts);
 
 
     // ==========================================
@@ -1344,66 +1343,36 @@ async function stopScannerAndGoBack() {
     // ==========================================
 
     let lotNumber = "";
-
     let qrType = "";
 
 
-    for (
-        let i = 0;
-        i < parts.length;
-        i++
-    ) {
+    for (let i = 0; i < parts.length; i++) {
 
-        const value =
-            parts[i];
+        const value = parts[i];
 
+        // WO2 ต้องเช็กก่อน WO
+        if (/^WO2([-_]|$)/i.test(value)) {
 
-        // WO2
-        if (
-            /^WO2([-_]|$)/i
-                .test(value)
-        ) {
-
-            lotNumber =
-                value;
-
-            qrType =
-                "WO2";
-
+            lotNumber = value;
+            qrType = "WO2";
             break;
 
         }
-
 
         // WO
-        if (
-            /^WO([-_]|$)/i
-                .test(value)
-        ) {
+        if (/^WO([-_]|$)/i.test(value)) {
 
-            lotNumber =
-                value;
-
-            qrType =
-                "WO";
-
+            lotNumber = value;
+            qrType = "WO";
             break;
 
         }
 
-
         // RC
-        if (
-            /^RC([-_]|$)/i
-                .test(value)
-        ) {
+        if (/^RC([-_]|$)/i.test(value)) {
 
-            lotNumber =
-                value;
-
-            qrType =
-                "RC";
-
+            lotNumber = value;
+            qrType = "RC";
             break;
 
         }
@@ -1412,7 +1381,7 @@ async function stopScannerAndGoBack() {
 
 
     // ==========================================
-    // NOT FOUND
+    // NOT FOUND LOT
     // ==========================================
 
     if (!lotNumber) {
@@ -1439,79 +1408,42 @@ async function stopScannerAndGoBack() {
 
     }
 
-            // ==========================================
-// RESET UNIT2 + RC UNIT
-// ==========================================
 
-currentScanData.unit2 = "";
-
-currentScanData.unit = "";
-
-
-// ซ่อน RC Unit ก่อนทุกครั้ง
-document
-    .getElementById('rc-unit-display')
-    .classList
-    .add('hidden');
-
-
-// ล้างข้อความ Unit
-document
-    .getElementById('display-unit')
-    .textContent = "-";
-            
-    const unit2Container =
-        document.getElementById(
-            'unit2-container'
-        );
-
-    const unit2Select =
-        document.getElementById(
-            'unit2-select'
-        );
-
-
-    unit2Select.value =
-        "";
+    console.log(
+        "FOUND LOT:",
+        lotNumber,
+        "TYPE:",
+        qrType
+    );
 
 
     // ==========================================
-    // COMMON
+    // RESET DATA
     // ==========================================
 
-    currentScanData.partNumber =
-        parts[0] || "";
+    currentScanData = {
 
+        partNumber: "",
+        qrQty: "",
+        unit: "",
+        lotNumber: lotNumber,
+        serialNumber: "",
+        unit2: ""
 
-    currentScanData.lotNumber =
-        lotNumber;
-// ==========================================
-// WO / WO2
-// ==========================================
-
-if (
-    qrType === "WO" ||
-    qrType === "WO2"
-) {
-
-    currentScanData.qrQty =
-        parts[1] || "";
-
-    currentScanData.unit =
-        parts[2] || "";
-
-    currentScanData.serialNumber =
-        parts.length >= 5
-            ? parts[4]
-            : "-";
+    };
 
 
     // ==========================================
-    // ซ่อน Unit จาก Part Master
+    // RESET UI
     // ==========================================
 
     document
         .getElementById('rc-unit-display')
+        .classList
+        .add('hidden');
+
+    document
+        .getElementById('unit2-container')
         .classList
         .add('hidden');
 
@@ -1519,155 +1451,399 @@ if (
         .getElementById('display-unit')
         .textContent = "-";
 
+    document
+        .getElementById('unit2-select')
+        .value = "";
+
 
     // ==========================================
-    // ซ่อน Unit2
+    // SHOW LOADING
     // ==========================================
-
-    unit2Container
-        .classList
-        .add('hidden');
-
-}
-            
-// ==========================================
-// RC
-// ==========================================
-
-if (
-    qrType === "RC"
-) {
-
-    /*
-        RC FORMAT
-
-        1 = Part Number
-        2 = RC Number
-        3 = RM01
-        4 = E4
-        5 = Qty
-        6 = POD
-        7 = Description
-        8 = Serial
-    */
-
-    // Qty = ช่องที่ 5
-    currentScanData.qrQty =
-        parts[4] || "";
-
-    // Serial = ตัวสุดท้าย
-    currentScanData.serialNumber =
-        parts[parts.length - 1] || "-";
-
-    // ==========================================
-    // UNIT
-    // ==========================================
-
-    currentScanData.unit = "";
-
-    // แสดง Unit2
-    unit2Container
-        .classList
-        .remove('hidden');
-
-    // แสดงช่อง Unit
-    document
-        .getElementById('rc-unit-display')
-        .classList
-        .remove('hidden');
-
-    document
-        .getElementById('display-unit')
-        .textContent = "กำลังค้นหา...";
-    // ==========================================
-// LOAD UNIT FROM PART MASTER
-// ==========================================
-
-getPartUnitFromMaster(
-    currentScanData.partNumber
-)
-.then(unit => {
-
-    currentScanData.unit =
-        unit;
-
-    document
-        .getElementById('display-unit')
-        .textContent =
-        unit;
-
-
-    // แสดง Unit เฉพาะ RC
-    document
-        .getElementById('rc-unit-display')
-        .classList
-        .remove('hidden');
-
-})
-.catch(error => {
-
-    currentScanData.unit =
-        "";
-
-    document
-        .getElementById('display-unit')
-        .textContent =
-        "-";
 
     Swal.fire({
 
-        icon: 'error',
-
-        title: 'ไม่พบ Unit',
+        title: 'กำลังค้นหาข้อมูล',
 
         text:
-            error.message,
+            'กำลังค้นหา Part Number ของ ' +
+            lotNumber,
 
-        confirmButtonText:
-            'สแกนใหม่'
+        allowOutsideClick: false,
 
-    })
-    .then(() => {
+        didOpen: () => {
 
-        cancelInput();
+            Swal.showLoading();
+
+        }
 
     });
 
-});
+
+    // ==========================================
+    // FIND EXISTING LOT FROM GAS
+    // ==========================================
+
+    findExistingLotFromGAS(lotNumber)
+
+        .then(existing => {
+
+            console.log(
+                "FIND LOT RESULT:",
+                existing
+            );
+
+
+            // ==========================================
+            // LOT FOUND IN SHEET
+            // ==========================================
+
+            if (
+                existing &&
+                existing.status === 'success'
+            ) {
+
+                currentScanData.partNumber =
+                    existing.partNumber || "";
+
+                currentScanData.qrQty =
+                    existing.qrQty || "";
+
+                currentScanData.unit =
+                    existing.unit || "";
+
+                currentScanData.serialNumber =
+                    existing.serialNumber || "";
+
+                currentScanData.lotNumber =
+                    existing.lotNumber ||
+                    lotNumber;
+
+
+                console.log(
+                    "PART FROM SHEET:",
+                    currentScanData.partNumber
+                );
+
+
+            }
+
+            // ==========================================
+            // LOT NOT FOUND
+            // ==========================================
+
+            else {
+
+                console.log(
+                    "LOT NOT FOUND IN SHEET"
+                );
+
+
+                // ==========================================
+                // FALLBACK
+                // QR FORMAT
+                // Part Number = ช่องแรก
+                // ==========================================
+
+                currentScanData.partNumber =
+                    parts[0] || "";
+
+
+                if (
+                    qrType === "WO" ||
+                    qrType === "WO2"
+                ) {
+
+                    currentScanData.qrQty =
+                        parts[1] || "";
+
+                    currentScanData.unit =
+                        parts[2] || "";
+
+                    currentScanData.serialNumber =
+                        parts.length >= 5
+                            ? parts[4]
+                            : "-";
+
+                }
+
+
+                if (qrType === "RC") {
+
+                    /*
+                        RC FORMAT
+
+                        1 = Part Number
+                        2 = RC Number
+                        3 = RM01
+                        4 = E4
+                        5 = Qty
+                        6 = POD
+                        7 = Description
+                        8 = Serial
+                    */
+
+                    currentScanData.qrQty =
+                        parts[4] || "";
+
+                    currentScanData.serialNumber =
+                        parts[parts.length - 1] || "-";
+
+                }
+
+            }
+
+
+            // ==========================================
+            // CLOSE LOADING
+            // ==========================================
+
+            Swal.close();
+
+
+            // ==========================================
+            // RC
+            // ==========================================
+
+            if (qrType === "RC") {
+
+                currentScanData.unit = "";
+
+                document
+                    .getElementById('unit2-container')
+                    .classList
+                    .remove('hidden');
+
+
+                document
+                    .getElementById('rc-unit-display')
+                    .classList
+                    .remove('hidden');
+
+
+                document
+                    .getElementById('display-unit')
+                    .textContent =
+                    "กำลังค้นหา...";
+
+
+                // ==========================================
+                // GET UNIT FROM PART MASTER
+                // ==========================================
+
+                getPartUnitFromMaster(
+                    currentScanData.partNumber
+                )
+
+                .then(unit => {
+
+                    currentScanData.unit =
+                        unit;
+
+
+                    document
+                        .getElementById('display-unit')
+                        .textContent =
+                        unit;
+
+                })
+
+                .catch(error => {
+
+                    console.error(
+                        "UNIT ERROR:",
+                        error
+                    );
+
+
+                    currentScanData.unit = "";
+
+
+                    document
+                        .getElementById('display-unit')
+                        .textContent =
+                        "-";
+
+
+                    Swal.fire({
+
+                        icon: 'warning',
+
+                        title: 'ไม่พบ Unit',
+
+                        text:
+                            error.message,
+
+                        confirmButtonText:
+                            'ตกลง'
+
+                    });
+
+                });
+
+            }
+
+
+            // ==========================================
+            // WO / WO2
+            // ==========================================
+
+            if (
+                qrType === "WO" ||
+                qrType === "WO2"
+            ) {
+
+                document
+                    .getElementById('rc-unit-display')
+                    .classList
+                    .add('hidden');
+
+
+                document
+                    .getElementById('unit2-container')
+                    .classList
+                    .add('hidden');
+
+            }
+
+
+            // ==========================================
+            // UPDATE UI
+            // ==========================================
+
+            document
+                .getElementById('display-lot')
+                .textContent =
+                currentScanData.lotNumber;
+
+
+            document
+                .getElementById('display-part')
+                .textContent =
+                currentScanData.partNumber || "-";
+
+
+            document
+                .getElementById('actual-qty')
+                .value = "";
+
+
+            // ==========================================
+            // SHOW INPUT
+            // ==========================================
+
+            showView(
+                'view-input'
+            );
+
+        })
+
+        .catch(error => {
+
+            console.error(
+                "FIND LOT ERROR:",
+                error
+            );
+
+
+            Swal.close();
+
+
+            Swal.fire({
+
+                icon: 'error',
+
+                title: 'ค้นหาข้อมูลไม่สำเร็จ',
+
+                text:
+                    error.message ||
+                    'ไม่สามารถค้นหาข้อมูล Lot ได้',
+
+                confirmButtonText:
+                    'สแกนใหม่'
+
+            }).then(() => {
+
+                initScanner();
+
+            });
+
+        });
 
 }
 
-
     // ==========================================
-    // UPDATE UI
-    // ==========================================
+// FIND EXISTING LOT FROM GAS
+// ==========================================
 
-    document.getElementById(
-        'display-lot'
-    ).textContent =
-        currentScanData.lotNumber;
+function findExistingLotFromGAS(lotNumber) {
 
-
-    document.getElementById(
-        'display-part'
-    ).textContent =
-        currentScanData.partNumber;
+    const SCRIPT_URL =
+        'https://script.google.com/macros/s/AKfycbzXgFiJWsDft8DL7MZia3hlM3pBC0_rVYHhKL-dA2-fX1sCpwNki7NoD2lRbnfxUDriSg/exec';
 
 
-    document.getElementById(
-        'actual-qty'
-    ).value = "";
+    return fetch(
+        SCRIPT_URL,
+        {
+            method: 'POST',
+
+            headers: {
+                'Content-Type':
+                    'application/x-www-form-urlencoded;charset=UTF-8'
+            },
+
+            body:
+                new URLSearchParams({
+
+                    data:
+                        JSON.stringify({
+
+                            action:
+                                'findLot',
+
+                            lotNumber:
+                                lotNumber
+
+                        })
+
+                })
+        }
+    )
+
+    .then(async response => {
+
+        const text =
+            await response.text();
+
+        console.log(
+            "FIND LOT RESPONSE:",
+            text
+        );
 
 
-    // ==========================================
-    // SHOW INPUT VIEW
-    // ==========================================
+        let result;
 
-    showView(
-        'view-input'
-    );
+        try {
+
+            result =
+                JSON.parse(text);
+
+        }
+
+        catch (e) {
+
+            throw new Error(
+                'Google Apps Script ไม่ส่ง JSON กลับมา'
+            );
+
+        }
+
+
+        return result;
+
+    });
 
 }
+        
         // ==========================================
 // GET UNIT FROM PART MASTER
 // ==========================================
