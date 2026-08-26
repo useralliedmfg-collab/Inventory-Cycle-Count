@@ -121,7 +121,7 @@
 
     <div class="w-full max-w-md bg-white shadow-sm flex flex-col items-center py-4 px-4 sticky top-0 z-10">
         <img src="https://www.alliedmfg.co.th/wp-content/uploads/2026/07/AMS-LOGO-V1.png" alt="AMS Logo" class="h-10 object-contain mb-1">
-        <h1 class="text-lg font-semibold text-blue-900 tracking-wide">Inventory Cycle Count5</h1>
+        <h1 class="text-lg font-semibold text-blue-900 tracking-wide">Inventory Cycle Count222</h1>
     </div>
 
     <!-- Main Application Container -->
@@ -146,9 +146,10 @@
                 <label class="block text-sm font-medium text-gray-600 mb-1">โซนตรวจนับ (Zone)</label>
                 <select
     id="zone-select"
+    onchange="updateLocations()"
     class="w-full border border-gray-300 rounded-lg p-3 text-lg bg-gray-50 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
 >
-    <option value="" selected>-- เลือกโซนตรวจนับ --</option>
+                    <option value="" disabled selected>-- เลือกโซนตรวจนับ --</option>
     <option value="ZONE_A">Zone A</option>
     <option value="ZONE_B">Zone B</option>
     <option value="ZONE_C">Zone C</option>
@@ -160,11 +161,11 @@
                 <label class="block text-sm font-medium text-gray-600 mb-1">พื้นที่ปฏิบัติงาน (Location)</label>
                 <select
     id="location-select"
-    disabled
     class="w-full border border-gray-300 rounded-lg p-3 text-lg bg-gray-50 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+    disabled
 >
-    <option value="">-- กรุณาเลือกโซนก่อน --</option>
-</select>
+                    <option value="" disabled selected>-- กรุณาเลือกโซนก่อน --</option>
+                </select>
             </div>
 
             <div>
@@ -265,8 +266,6 @@
 
     </button>
 
-</div>
-            <!-- สำคัญ: ปิด VIEW SCANNER -->
 </div>
 
         <!-- VIEW 3: INPUT COUNT -->
@@ -370,85 +369,32 @@
     <script>
         // --- State Management ---
         const MOCK_ZONES = {
-    ZONE_A: ["A1-1", "A1-2", "A1-3"],
-    ZONE_B: ["B1-1", "B1-2", "B1-3"],
-    ZONE_C: ["C1-1", "C1-2", "C1-3"],
-    ZONE_D: ["D1-1", "D1-2", "D1-3", "D1-4"]
+    "ZONE_A": ["A1-1", "A1-2", "A1-3"],
+    "ZONE_B": ["B1-1", "B1-2", "B1-3"],
+    "ZONE_C": ["C1-1", "C1-2", "C1-3"],
+    "ZONE_D": ["D1-1", "D1-2", "D1-3", "D1-4"]
 };
-        document
-    .getElementById('zone-select')
-    .addEventListener('change', updateLocations);
 
         function updateLocations() {
+            const zoneSelect = document.getElementById('zone-select');
+            const locationSelect = document.getElementById('location-select');
+            const selectedZone = zoneSelect.value;
 
-    const zoneSelect = document.getElementById('zone-select');
-    const locationSelect = document.getElementById('location-select');
+            // Reset and clear options
+            locationSelect.innerHTML = '<option value="" disabled selected>-- เลือกพื้นที่ปฏิบัติงาน --</option>';
 
-    const zone = zoneSelect.value;
-
-    console.log("ZONE:", zone);
-
-    // ล้าง Location
-    locationSelect.innerHTML = '';
-
-    // ยังไม่เลือก Zone
-    if (!zone) {
-
-        locationSelect.disabled = true;
-
-        const option = document.createElement('option');
-        option.value = '';
-        option.textContent = '-- กรุณาเลือกโซนก่อน --';
-
-        locationSelect.appendChild(option);
-
-        return;
-    }
-
-    // ดึง Location
-    const locations = MOCK_ZONES[zone];
-
-    console.log("LOCATION:", locations);
-
-    if (!locations || locations.length === 0) {
-
-        locationSelect.disabled = true;
-
-        const option = document.createElement('option');
-        option.value = '';
-        option.textContent = '-- ไม่พบ Location --';
-
-        locationSelect.appendChild(option);
-
-        return;
-    }
-
-    // Default
-    const defaultOption = document.createElement('option');
-
-    defaultOption.value = '';
-    defaultOption.textContent = '-- เลือกพื้นที่ปฏิบัติงาน --';
-    defaultOption.disabled = true;
-    defaultOption.selected = true;
-
-    locationSelect.appendChild(defaultOption);
-
-    // เพิ่ม Location
-    locations.forEach(function(location) {
-
-        const option = document.createElement('option');
-
-        option.value = location;
-        option.textContent = location;
-
-        locationSelect.appendChild(option);
-
-    });
-
-    // เปิด Dropdown
-    locationSelect.disabled = false;
-
-}
+            if (selectedZone && MOCK_ZONES[selectedZone]) {
+                MOCK_ZONES[selectedZone].forEach(loc => {
+                    const option = document.createElement('option');
+                    option.value = loc;
+                    option.textContent = loc;
+                    locationSelect.appendChild(option);
+                });
+                locationSelect.disabled = false;
+            } else {
+                locationSelect.disabled = true;
+            }
+        }
 
         async function cancelInput() {
 
@@ -490,40 +436,16 @@
     unit: "",
     lotNumber: "",
     serialNumber: "",
-    unit2: "",
-    qrType: ""
+    unit2: ""
 };
         // --- View Navigation ---
         function showView(viewId) {
-
-    const views = [
-        'view-setup',
-        'view-scanner',
-        'view-input'
-    ];
-
-    views.forEach(id => {
-
-        const view =
-            document.getElementById(id);
-
-        if (!view) return;
-
-        view.classList.add('hidden');
-        view.classList.remove('flex');
-
-    });
-
-
-    const target =
-        document.getElementById(viewId);
-
-    if (!target) return;
-
-    target.classList.remove('hidden');
-    target.classList.add('flex');
-
-}
+            document.getElementById('view-setup').classList.add('hidden');
+            document.getElementById('view-scanner').classList.add('hidden');
+            document.getElementById('view-input').classList.add('hidden');
+            document.getElementById(viewId).classList.remove('hidden');
+            document.getElementById(viewId).classList.add('flex');
+        }
 
         // --- STREAMING_CHUNK:Scanner Logic via ZXing ---
         function goToScanner() {
@@ -1378,9 +1300,10 @@ async function stopScannerAndGoBack() {
 }
 
         // --- STREAMING_CHUNK:Handling Scan Data and Parsing ---
-        async function processScannedData(text) {
+        function processScannedData(text) {
 
     console.log("QR DATA:", text);
+
 
     // ==========================================
     // SPLIT QR
@@ -1390,7 +1313,30 @@ async function stopScannerAndGoBack() {
         .split(',')
         .map(x => x.trim());
 
-    console.log("QR PARTS:", parts);
+
+    if (parts.length < 4) {
+
+        Swal.fire({
+
+            icon: 'error',
+
+            title: 'รูปแบบไม่ถูกต้อง',
+
+            text:
+                'ข้อมูล QR / Barcode ไม่ถูกต้อง',
+
+            confirmButtonText:
+                'สแกนใหม่'
+
+        }).then(() => {
+
+            initScanner();
+
+        });
+
+        return;
+
+    }
 
 
     // ==========================================
@@ -1398,36 +1344,66 @@ async function stopScannerAndGoBack() {
     // ==========================================
 
     let lotNumber = "";
+
     let qrType = "";
 
 
-    for (let i = 0; i < parts.length; i++) {
+    for (
+        let i = 0;
+        i < parts.length;
+        i++
+    ) {
 
-        const value = parts[i];
+        const value =
+            parts[i];
 
-        // WO2 ต้องเช็กก่อน WO
-        if (/^WO2([-_]|$)/i.test(value)) {
 
-            lotNumber = value;
-            qrType = "WO2";
+        // WO2
+        if (
+            /^WO2([-_]|$)/i
+                .test(value)
+        ) {
+
+            lotNumber =
+                value;
+
+            qrType =
+                "WO2";
+
             break;
 
         }
+
 
         // WO
-        if (/^WO([-_]|$)/i.test(value)) {
+        if (
+            /^WO([-_]|$)/i
+                .test(value)
+        ) {
 
-            lotNumber = value;
-            qrType = "WO";
+            lotNumber =
+                value;
+
+            qrType =
+                "WO";
+
             break;
 
         }
 
-        // RC
-        if (/^RC([-_]|$)/i.test(value)) {
 
-            lotNumber = value;
-            qrType = "RC";
+        // RC
+        if (
+            /^RC([-_]|$)/i
+                .test(value)
+        ) {
+
+            lotNumber =
+                value;
+
+            qrType =
+                "RC";
+
             break;
 
         }
@@ -1436,7 +1412,7 @@ async function stopScannerAndGoBack() {
 
 
     // ==========================================
-    // NOT FOUND LOT
+    // NOT FOUND
     // ==========================================
 
     if (!lotNumber) {
@@ -1463,43 +1439,79 @@ async function stopScannerAndGoBack() {
 
     }
 
+            // ==========================================
+// RESET UNIT2 + RC UNIT
+// ==========================================
 
-    console.log(
-        "FOUND LOT:",
-        lotNumber,
-        "TYPE:",
-        qrType
-    );
+currentScanData.unit2 = "";
+
+currentScanData.unit = "";
+
+
+// ซ่อน RC Unit ก่อนทุกครั้ง
+document
+    .getElementById('rc-unit-display')
+    .classList
+    .add('hidden');
+
+
+// ล้างข้อความ Unit
+document
+    .getElementById('display-unit')
+    .textContent = "-";
+            
+    const unit2Container =
+        document.getElementById(
+            'unit2-container'
+        );
+
+    const unit2Select =
+        document.getElementById(
+            'unit2-select'
+        );
+
+
+    unit2Select.value =
+        "";
 
 
     // ==========================================
-    // RESET DATA
+    // COMMON
     // ==========================================
 
-    currentScanData = {
+    currentScanData.partNumber =
+        parts[0] || "";
 
-    partNumber: "",
-    qrQty: "",
-    unit: "",
-    lotNumber: lotNumber,
-    serialNumber: "",
-    unit2: "",
-    qrType: qrType
 
-};
+    currentScanData.lotNumber =
+        lotNumber;
+// ==========================================
+// WO / WO2
+// ==========================================
+
+if (
+    qrType === "WO" ||
+    qrType === "WO2"
+) {
+
+    currentScanData.qrQty =
+        parts[1] || "";
+
+    currentScanData.unit =
+        parts[2] || "";
+
+    currentScanData.serialNumber =
+        parts.length >= 5
+            ? parts[4]
+            : "-";
 
 
     // ==========================================
-    // RESET UI
+    // ซ่อน Unit จาก Part Master
     // ==========================================
 
     document
         .getElementById('rc-unit-display')
-        .classList
-        .add('hidden');
-
-    document
-        .getElementById('unit2-container')
         .classList
         .add('hidden');
 
@@ -1507,168 +1519,58 @@ async function stopScannerAndGoBack() {
         .getElementById('display-unit')
         .textContent = "-";
 
-    document
-        .getElementById('unit2-select')
-        .value = "";
-
 
     // ==========================================
-    // SHOW LOADING
+    // ซ่อน Unit2
     // ==========================================
 
-    Swal.fire({
+    unit2Container
+        .classList
+        .add('hidden');
 
-        title: 'กำลังค้นหาข้อมูล',
+}
+            
+// ==========================================
+// RC
+// ==========================================
 
-        text:
-            'กำลังค้นหา Part Number ของ ' +
-            lotNumber,
+if (
+    qrType === "RC"
+) {
 
-        allowOutsideClick: false,
+    /*
+        RC FORMAT
 
-        didOpen: () => {
+        1 = Part Number
+        2 = RC Number
+        3 = RM01
+        4 = E4
+        5 = Qty
+        6 = POD
+        7 = Description
+        8 = Serial
+    */
 
-            Swal.showLoading();
+    // Qty = ช่องที่ 5
+    currentScanData.qrQty =
+        parts[4] || "";
 
-        }
-
-    });
-
+    // Serial = ตัวสุดท้าย
+    currentScanData.serialNumber =
+        parts[parts.length - 1] || "-";
 
     // ==========================================
-    // FIND EXISTING LOT FROM GAS
+    // UNIT
     // ==========================================
-
-    findExistingLotFromGAS(lotNumber)
-
-        .then(async existing => { // เพิ่ม async ตรงนี้
-
-            console.log(
-                "FIND LOT RESULT:",
-                existing
-            );
-
-
-            // ==========================================
-            // LOT FOUND IN SHEET
-            // ==========================================
-
-            if (
-                existing &&
-                existing.status === 'success'
-            ) {
-
-                currentScanData.partNumber =
-                    existing.partNumber || "";
-
-                currentScanData.qrQty =
-                    existing.qrQty || "";
-
-                currentScanData.unit =
-                    existing.unit || "";
-
-                currentScanData.serialNumber =
-                    existing.serialNumber || "";
-
-                currentScanData.lotNumber =
-                    existing.lotNumber ||
-                    lotNumber;
-
-
-                console.log(
-                    "PART FROM SHEET:",
-                    currentScanData.partNumber
-                );
-
-
-            }
-
-            // ==========================================
-            // LOT NOT FOUND
-            // ==========================================
-
-            else {
-
-                console.log(
-                    "LOT NOT FOUND IN SHEET"
-                );
-
-
-                // ==========================================
-                // FALLBACK
-                // QR FORMAT
-                // Part Number = ช่องแรก
-                // ==========================================
-
-                currentScanData.partNumber =
-                    parts[0] || "";
-
-
-                if (
-                    qrType === "WO" ||
-                    qrType === "WO2"
-                ) {
-
-                    currentScanData.qrQty =
-                        parts[1] || "";
-
-                    currentScanData.unit =
-                        parts[2] || "";
-
-                    currentScanData.serialNumber =
-                        parts.length >= 5
-                            ? parts[4]
-                            : "-";
-
-                }
-
-
-                if (qrType === "RC") {
-
-                    /*
-                        RC FORMAT
-
-                        1 = Part Number
-                        2 = RC Number
-                        3 = RM01
-                        4 = E4
-                        5 = Qty
-                        6 = POD
-                        7 = Description
-                        8 = Serial
-                    */
-
-                    currentScanData.qrQty =
-                        parts[4] || "";
-
-                    currentScanData.serialNumber =
-                        parts[parts.length - 1] || "-";
-
-                }
-
-            }
-
-
-            // ==========================================
-            // CLOSE LOADING
-            // ==========================================
-
-            Swal.close();
-
-
-            // ==========================================
-            // RC
-            // ==========================================
-
-            if (qrType === "RC") {
 
     currentScanData.unit = "";
 
-    document
-        .getElementById('unit2-container')
+    // แสดง Unit2
+    unit2Container
         .classList
         .remove('hidden');
 
+    // แสดงช่อง Unit
     document
         .getElementById('rc-unit-display')
         .classList
@@ -1676,270 +1578,104 @@ async function stopScannerAndGoBack() {
 
     document
         .getElementById('display-unit')
-        .textContent =
-        "กำลังค้นหา...";
-
-
+        .textContent = "กำลังค้นหา...";
     // ==========================================
-    // FIND UNIT FROM PART MASTER
-    // ==========================================
-
-    try {
-
-        const unit =
-            await getPartUnitFromMaster(
-                currentScanData.partNumber
-            );
-
-        currentScanData.unit =
-            unit;
-
-        document
-            .getElementById('display-unit')
-            .textContent =
-            unit;
-
-    }
-
-    catch (error) {
-
-        console.error(
-            "UNIT ERROR:",
-            error
-        );
-
-        currentScanData.unit = "";
-
-        document
-            .getElementById('display-unit')
-            .textContent =
-            "-";
-
-
-        Swal.close();
-
-
-        await Swal.fire({
-
-            icon: 'warning',
-
-            title: 'ไม่พบ Unit',
-
-            text:
-                error.message ||
-                'ไม่สามารถค้นหา Unit ได้',
-
-            confirmButtonText:
-                'ตกลง'
-
-        });
-
-
-        // กลับไป Scanner
-        initScanner();
-
-        return;
-
-    }
-
-}
-
-            // ==========================================
-            // WO / WO2
-            // ==========================================
-
-            if (
-                qrType === "WO" ||
-                qrType === "WO2"
-            ) {
-
-                document
-                    .getElementById('rc-unit-display')
-                    .classList
-                    .add('hidden');
-
-
-                document
-                    .getElementById('unit2-container')
-                    .classList
-                    .add('hidden');
-
-            }
-
-
-            // ==========================================
-            // UPDATE UI
-            // ==========================================
-
-            document
-                .getElementById('display-lot')
-                .textContent =
-                currentScanData.lotNumber;
-
-
-            document
-                .getElementById('display-part')
-                .textContent =
-                currentScanData.partNumber || "-";
-
-
-            document
-                .getElementById('actual-qty')
-                .value = "";
-
-
-            // ==========================================
-            // SHOW INPUT
-            // ==========================================
-
-            showView(
-                'view-input'
-            );
-
-        })
-
-        .catch(error => {
-
-            console.error(
-                "FIND LOT ERROR:",
-                error
-            );
-
-
-            Swal.close();
-
-
-            Swal.fire({
-
-                icon: 'error',
-
-                title: 'ค้นหาข้อมูลไม่สำเร็จ',
-
-                text:
-                    error.message ||
-                    'ไม่สามารถค้นหาข้อมูล Lot ได้',
-
-                confirmButtonText:
-                    'สแกนใหม่'
-
-            }).then(() => {
-
-                initScanner();
-
-            });
-
-        });
-
-}
-
-    // ==========================================
-// FIND EXISTING LOT FROM GAS
+// LOAD UNIT FROM PART MASTER
 // ==========================================
 
-function findExistingLotFromGAS(lotNumber) {
+getPartUnitFromMaster(
+    currentScanData.partNumber
+)
+.then(unit => {
 
-    if (!lotNumber) {
+    currentScanData.unit =
+        unit;
 
-        return Promise.reject(
-            new Error('ไม่พบ Lot Number')
-        );
+    document
+        .getElementById('display-unit')
+        .textContent =
+        unit;
 
-    }
 
+    // แสดง Unit เฉพาะ RC
+    document
+        .getElementById('rc-unit-display')
+        .classList
+        .remove('hidden');
 
-    return fetch(
-        SCRIPT_URL,
-        {
-            method: 'POST',
+})
+.catch(error => {
 
-            headers: {
-                'Content-Type':
-                    'application/x-www-form-urlencoded;charset=UTF-8'
-            },
+    currentScanData.unit =
+        "";
 
-            body:
-                new URLSearchParams({
+    document
+        .getElementById('display-unit')
+        .textContent =
+        "-";
 
-                    data:
-                        JSON.stringify({
+    Swal.fire({
 
-                            action: 'findLot',
+        icon: 'error',
 
-                            lotNumber:
-                                lotNumber.trim()
+        title: 'ไม่พบ Unit',
 
-                        })
+        text:
+            error.message,
 
-                })
-        }
-    )
-
-    .then(response => {
-
-        if (!response.ok) {
-
-            throw new Error(
-                'Google Apps Script HTTP Error: ' +
-                response.status
-            );
-
-        }
-
-        return response.text();
+        confirmButtonText:
+            'สแกนใหม่'
 
     })
+    .then(() => {
 
-    .then(text => {
-
-        console.log(
-            'FIND LOT RESPONSE:',
-            text
-        );
-
-
-        let result;
-
-        try {
-
-            result =
-                JSON.parse(text);
-
-        }
-
-        catch (error) {
-
-            console.error(
-                'INVALID JSON:',
-                text
-            );
-
-            throw new Error(
-                'Google Apps Script ไม่ส่ง JSON กลับมา'
-            );
-
-        }
-
-
-        return result;
+        cancelInput();
 
     });
 
+});
+
 }
-        
+
+
+    // ==========================================
+    // UPDATE UI
+    // ==========================================
+
+    document.getElementById(
+        'display-lot'
+    ).textContent =
+        currentScanData.lotNumber;
+
+
+    document.getElementById(
+        'display-part'
+    ).textContent =
+        currentScanData.partNumber;
+
+
+    document.getElementById(
+        'actual-qty'
+    ).value = "";
+
+
+    // ==========================================
+    // SHOW INPUT VIEW
+    // ==========================================
+
+    showView(
+        'view-input'
+    );
+
+}
         // ==========================================
 // GET UNIT FROM PART MASTER
 // ==========================================
 
 function getPartUnitFromMaster(partNumber) {
 
-    if (!partNumber) {
-
-        return Promise.reject(
-            new Error('ไม่พบ Part Number')
-        );
-
-    }
-
+    const SCRIPT_URL =
+        'https://script.google.com/macros/s/AKfycbzXgFiJWsDft8DL7MZia3hlM3pBC0_rVYHhKL-dA2-fX1sCpwNki7NoD2lRbnfxUDriSg/exec';
 
     return fetch(
         SCRIPT_URL,
@@ -1961,29 +1697,14 @@ function getPartUnitFromMaster(partNumber) {
                                 'getPartUnit',
 
                             partNumber:
-                                partNumber.trim()
+                                partNumber
 
                         })
 
                 })
         }
     )
-
-    .then(response => {
-
-        if (!response.ok) {
-
-            throw new Error(
-                'Google Apps Script HTTP Error: ' +
-                response.status
-            );
-
-        }
-
-        return response.json();
-
-    })
-
+    .then(response => response.json())
     .then(result => {
 
         if (
@@ -1997,7 +1718,6 @@ function getPartUnitFromMaster(partNumber) {
 
         }
 
-
         if (!result.unit) {
 
             throw new Error(
@@ -2007,7 +1727,6 @@ function getPartUnitFromMaster(partNumber) {
             );
 
         }
-
 
         return result.unit;
 
@@ -2057,7 +1776,8 @@ function submitCount() {
 // ==========================================
 
 if (
-    currentScanData.qrType === "RC" &&
+    currentScanData.lotNumber &&
+    /^RC([-_]|$)/i.test(currentScanData.lotNumber) &&
     !currentScanData.unit2
 ) {
 
@@ -2313,31 +2033,6 @@ document
                 confirmButtonColor: '#d33'
             });
         }
-        document.addEventListener('DOMContentLoaded', function () {
-
-    const zoneSelect =
-        document.getElementById('zone-select');
-
-    const locationSelect =
-        document.getElementById('location-select');
-
-    if (!zoneSelect || !locationSelect) {
-        console.error('ไม่พบ Zone หรือ Location Select');
-        return;
-    }
-
-    zoneSelect.addEventListener('change', function () {
-
-        console.log(
-            'ZONE CHANGED:',
-            this.value
-        );
-
-        updateLocations();
-
-    });
-
-});
     </script>
 </body>
 </html>
