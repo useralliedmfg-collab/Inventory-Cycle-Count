@@ -789,6 +789,18 @@ const masterUnit = findPartUnit(searchPart);
 console.log('TEST PART:', searchPart);
 console.log('TEST CACHE VALUE:', partMasterCache[searchPart]);
 
+const matchedKey = Object.keys(partMasterCache).find(
+    key =>
+        String(key).trim().toLowerCase() ===
+        searchPart.toLowerCase()
+);
+
+console.log('TEST MATCHED KEY:', matchedKey);
+console.log(
+    'TEST MATCHED UNIT:',
+    matchedKey ? partMasterCache[matchedKey] : 'NOT FOUND'
+);
+
 console.log('========== RC PART MASTER CHECK ==========');
 console.log('QR Part Number:', currentScanData.partNumber);
 console.log('Search Part:', searchPart);
