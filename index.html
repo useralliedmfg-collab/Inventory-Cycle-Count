@@ -73,7 +73,7 @@
                 ⚙️ ตั้งค่าลิงก์
             </button>
         </div>
-        <h1 class="text-lg font-semibold text-blue-900 tracking-wide">Inventory Cycle Count///</h1>
+        <h1 class="text-lg font-semibold text-blue-900 tracking-wide">Inventory Cycle Count1</h1>
     </div>
 
     <main class="w-full max-w-md flex-1 bg-white shadow-md flex flex-col relative overflow-hidden">
@@ -785,6 +785,9 @@ localStorage.setItem(
 ).trim();
 
 const masterUnit = findPartUnit(searchPart);
+        
+console.log('TEST PART:', searchPart);
+console.log('TEST CACHE VALUE:', partMasterCache[searchPart]);
 
 console.log('========== RC PART MASTER CHECK ==========');
 console.log('QR Part Number:', currentScanData.partNumber);
