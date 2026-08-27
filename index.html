@@ -73,7 +73,7 @@
                 ⚙️ ตั้งค่าลิงก์
             </button>
         </div>
-        <h1 class="text-lg font-semibold text-blue-900 tracking-wide">Inventory Cycle Count1</h1>
+        <h1 class="text-lg font-semibold text-blue-900 tracking-wide">Inventory Cycle Count222</h1>
     </div>
 
     <main class="w-full max-w-md flex-1 bg-white shadow-md flex flex-col relative overflow-hidden">
@@ -480,6 +480,11 @@ localStorage.setItem(
 // OPTIMIZED FOR FAST + RELIABLE QR / BARCODE
 // ==========================================
 
+// ==========================================
+// ZXING SCANNER - HIGH PERFORMANCE
+// ไม่กระทบส่วนอื่น
+// ==========================================
+
 let zxingCodeReader = null;
 let availableCameras = [];
 let currentCameraIndex = 0;
@@ -487,6 +492,7 @@ let selectedDeviceId = null;
 let currentVideoTrack = null;
 let torchEnabled = false;
 let scanLocked = false;
+
 
 // ==========================================
 // INIT SCANNER
@@ -503,7 +509,7 @@ async function initScanner() {
 
     updateTorchButton(false);
 
-    // หยุดกล้องเดิมก่อน
+    // ปิดกล้องเก่าก่อน
     await stopZXingScanner();
 
     // ==========================================
@@ -513,24 +519,33 @@ async function initScanner() {
 
         const hints = new Map();
 
-        // เพิ่มความสามารถในการอ่าน
+        // บังคับให้ ZXing พยายามอ่านให้เต็มที่
         hints.set(
             ZXing.DecodeHintType.TRY_HARDER,
             true
         );
 
-        // จำกัด Format ที่จำเป็น
-        // ช่วยลดภาระในการตรวจจับ
+        // รองรับ QR + Barcode หลัก ๆ
         hints.set(
             ZXing.DecodeHintType.POSSIBLE_FORMATS,
             [
                 ZXing.BarcodeFormat.QR_CODE,
+
                 ZXing.BarcodeFormat.CODE_128,
                 ZXing.BarcodeFormat.CODE_39,
                 ZXing.BarcodeFormat.CODE_93,
-                ZXing.BarcodeFormat.ITF,
+
                 ZXing.BarcodeFormat.EAN_13,
-                ZXing.BarcodeFormat.EAN_8
+                ZXing.BarcodeFormat.EAN_8,
+
+                ZXing.BarcodeFormat.UPC_A,
+                ZXing.BarcodeFormat.UPC_E,
+
+                ZXing.BarcodeFormat.ITF,
+
+                ZXing.BarcodeFormat.DATA_MATRIX,
+                ZXing.BarcodeFormat.PDF_417,
+                ZXing.BarcodeFormat.AZTEC
             ]
         );
 
@@ -540,14 +555,14 @@ async function initScanner() {
             );
     }
 
+
     // ==========================================
-    // FIND CAMERAS
+    // FIND CAMERA
     // ==========================================
     try {
 
         availableCameras =
-            await zxingCodeReader
-                .listVideoInputDevices();
+            await zxingCodeReader.listVideoInputDevices();
 
         if (
             !availableCameras ||
@@ -558,8 +573,9 @@ async function initScanner() {
             );
         }
 
+
         // ==========================================
-        // FIND BACK CAMERA
+        // หา BACK CAMERA
         // ==========================================
         let backCameraIndex =
             availableCameras.findIndex(
@@ -576,17 +592,16 @@ async function initScanner() {
                         label.includes("environment") ||
                         label.includes("หลัง")
                     );
-
                 }
             );
 
-        // ถ้าหากหา Back Camera จากชื่อไม่ได้
+
         if (backCameraIndex === -1) {
 
             backCameraIndex =
                 availableCameras.length - 1;
-
         }
+
 
         currentCameraIndex =
             backCameraIndex;
@@ -596,8 +611,9 @@ async function initScanner() {
                 currentCameraIndex
             ].deviceId;
 
+
         // ==========================================
-        // CAMERA SWITCH BUTTON
+        // SWITCH CAMERA BUTTON
         // ==========================================
         const switchButton =
             document.getElementById(
@@ -615,8 +631,8 @@ async function initScanner() {
             switchButton.classList.add(
                 "hidden"
             );
-
         }
+
 
         // ==========================================
         // START CAMERA
@@ -656,8 +672,9 @@ async function startZXingCamera() {
             "zxing-video"
         );
 
+
     // ==========================================
-    // HIGH QUALITY CAMERA CONSTRAINTS
+    // HIGH QUALITY CAMERA
     // ==========================================
     const constraints = {
 
@@ -689,18 +706,12 @@ async function startZXingCamera() {
                 ideal: 30,
                 min: 15
             },
-
-            // ขอ Continuous Focus
-            focusMode: "continuous"
         }
-
     };
+
 
     try {
 
-        // ==========================================
-        // START WITH CONSTRAINTS
-        // ==========================================
         await zxingCodeReader
             .decodeFromConstraints(
                 constraints,
@@ -710,6 +721,7 @@ async function startZXingCamera() {
                     error
                 ) => {
 
+                    // ยังอ่านไม่ได้
                     if (
                         !result ||
                         scanLocked
@@ -717,20 +729,30 @@ async function startZXingCamera() {
                         return;
                     }
 
-                    // ป้องกันยิงซ้ำ
+
+                    // ==================================
+                    // LOCK ทันทีเมื่ออ่านได้
+                    // ==================================
                     scanLocked = true;
 
+
+                    const text =
+                        result.text;
+
+
                     console.log(
-                        "ZXING RESULT:",
-                        result.text
+                        "ZXING SUCCESS:",
+                        text
                     );
 
-                    // หยุดกล้องก่อน
+
+                    // ปิดกล้องก่อน
                     await stopZXingScanner();
 
-                    // ส่งเข้า Logic เดิม
+
+                    // ส่งเข้า process เดิม
                     processScannedData(
-                        result.text
+                        text
                     );
                 }
             );
@@ -742,8 +764,10 @@ async function startZXingCamera() {
             err
         );
 
+
         // ==========================================
-        // FALLBACK CAMERA
+        // FALLBACK
+        // สำหรับมือถือบางรุ่น
         // ==========================================
         try {
 
@@ -763,17 +787,25 @@ async function startZXingCamera() {
                             return;
                         }
 
+
                         scanLocked = true;
 
+
+                        const text =
+                            result.text;
+
+
                         console.log(
-                            "ZXING FALLBACK RESULT:",
-                            result.text
+                            "ZXING FALLBACK SUCCESS:",
+                            text
                         );
+
 
                         await stopZXingScanner();
 
+
                         processScannedData(
-                            result.text
+                            text
                         );
                     }
                 );
@@ -781,22 +813,27 @@ async function startZXingCamera() {
         } catch (fallbackError) {
 
             console.error(
-                "CAMERA FALLBACK ERROR:",
+                "ZXING FALLBACK ERROR:",
                 fallbackError
             );
 
-            document
-                .getElementById(
-                    "camera-error"
-                )
-                .classList.remove(
-                    "hidden"
-                );
+            document.getElementById(
+                "camera-error"
+            ).classList.remove(
+                "hidden"
+            );
+
+            document.getElementById(
+                "camera-error-msg"
+            ).innerHTML =
+                "ไม่สามารถเริ่มกล้องได้<br><br>" +
+                "กรุณาลองใหม่อีกครั้ง";
         }
     }
 
+
     // ==========================================
-    // GET VIDEO TRACK
+    // CAMERA OPTIMIZATION
     // ==========================================
     setTimeout(
         async () => {
@@ -806,10 +843,14 @@ async function startZXingCamera() {
                 const stream =
                     video.srcObject;
 
-                if (!stream) return;
+                if (!stream) {
+                    return;
+                }
+
 
                 const tracks =
                     stream.getVideoTracks();
+
 
                 if (
                     !tracks ||
@@ -818,46 +859,53 @@ async function startZXingCamera() {
                     return;
                 }
 
+
                 currentVideoTrack =
                     tracks[0];
 
-                // ==========================================
+
+                // ==================================
                 // AUTO FOCUS
-                // ==========================================
+                // ==================================
                 await applyAutoFocus(
                     currentVideoTrack
                 );
 
-                // ==========================================
-                // CHECK TORCH
-                // ==========================================
+
+                // ==================================
+                // AUTO ZOOM
+                // ==================================
+                await applyAutoZoom(
+                    currentVideoTrack
+                );
+
+
+                // ==================================
+                // EXPOSURE
+                // ==================================
+                await applyAutoExposure(
+                    currentVideoTrack
+                );
+
+
+                // ==================================
+                // TORCH
+                // ==================================
                 checkTorchSupport(
                     currentVideoTrack
                 );
 
-                // ==========================================
-                // LOG CAMERA SETTINGS
-                // ==========================================
-                try {
-
-                    console.log(
-                        "CAMERA SETTINGS:",
-                        currentVideoTrack
-                            .getSettings()
-                    );
-
-                } catch (e) {}
 
             } catch (error) {
 
                 console.log(
-                    "CAMERA CONTROL ERROR:",
+                    "CAMERA OPTIMIZATION ERROR:",
                     error
                 );
             }
 
         },
-        700
+        800
     );
 }
 
@@ -867,7 +915,10 @@ async function startZXingCamera() {
 // ==========================================
 async function applyAutoFocus(track) {
 
-    if (!track) return;
+    if (!track) {
+        return;
+    }
+
 
     try {
 
@@ -876,11 +927,8 @@ async function applyAutoFocus(track) {
                 ? track.getCapabilities()
                 : {};
 
-        const advanced = [];
 
-        // ==========================================
-        // CONTINUOUS AUTO FOCUS
-        // ==========================================
+        // Continuous Focus
         if (
             capabilities.focusMode &&
             capabilities.focusMode.includes(
@@ -888,59 +936,217 @@ async function applyAutoFocus(track) {
             )
         ) {
 
-            advanced.push({
-                focusMode:
-                    "continuous"
+            await track.applyConstraints({
+
+                advanced: [
+                    {
+                        focusMode:
+                            "continuous"
+                    }
+                ]
+
             });
 
+            console.log(
+                "Continuous autofocus enabled"
+            );
         }
 
+
         // ==========================================
-        // MAXIMUM PRACTICAL RESOLUTION
+        // Near Focus
+        // ช่วยอ่าน QR ใกล้ ๆ
         // ==========================================
         if (
-            capabilities.width &&
-            capabilities.height
+            capabilities.focusDistance
         ) {
 
-            const maxWidth =
-                capabilities.width.max ||
-                1920;
+            const minFocus =
+                capabilities
+                    .focusDistance
+                    .min;
 
-            const maxHeight =
-                capabilities.height.max ||
-                1080;
+            if (
+                typeof minFocus ===
+                "number"
+            ) {
 
-            advanced.push({
+                await track.applyConstraints({
 
-                width:
-                    Math.min(
-                        maxWidth,
-                        1920
-                    ),
+                    advanced: [
+                        {
+                            focusDistance:
+                                minFocus
+                        }
+                    ]
 
-                height:
-                    Math.min(
-                        maxHeight,
-                        1080
+                });
+
+                // กลับไป continuous
+                if (
+                    capabilities.focusMode &&
+                    capabilities.focusMode.includes(
+                        "continuous"
                     )
+                ) {
 
-            });
-        }
+                    await track.applyConstraints({
 
-        if (advanced.length > 0) {
+                        advanced: [
+                            {
+                                focusMode:
+                                    "continuous"
+                            }
+                        ]
 
-            await track.applyConstraints({
-                advanced:
-                    advanced
-            });
-
+                    });
+                }
+            }
         }
 
     } catch (error) {
 
         console.log(
-            "AUTO FOCUS ERROR:",
+            "AUTO FOCUS NOT SUPPORTED:",
+            error
+        );
+    }
+}
+
+
+// ==========================================
+// AUTO ZOOM
+// ==========================================
+async function applyAutoZoom(track) {
+
+    if (!track) {
+        return;
+    }
+
+
+    try {
+
+        const capabilities =
+            track.getCapabilities
+                ? track.getCapabilities()
+                : {};
+
+
+        if (
+            !capabilities.zoom
+        ) {
+            console.log(
+                "Zoom not supported"
+            );
+            return;
+        }
+
+
+        const minZoom =
+            Number(
+                capabilities.zoom.min
+            );
+
+        const maxZoom =
+            Number(
+                capabilities.zoom.max
+            );
+
+
+        if (
+            !isFinite(minZoom) ||
+            !isFinite(maxZoom)
+        ) {
+            return;
+        }
+
+
+        // ==========================================
+        // Zoom ประมาณ 1.5x
+        // ไม่ซูมสุดเพื่อป้องกันภาพแตก
+        // ==========================================
+        let targetZoom =
+            Math.max(
+                minZoom,
+                Math.min(
+                    1.5,
+                    maxZoom
+                )
+            );
+
+
+        await track.applyConstraints({
+
+            advanced: [
+                {
+                    zoom:
+                        targetZoom
+                }
+            ]
+
+        });
+
+
+        console.log(
+            "Camera zoom:",
+            targetZoom
+        );
+
+    } catch (error) {
+
+        console.log(
+            "AUTO ZOOM ERROR:",
+            error
+        );
+    }
+}
+
+
+// ==========================================
+// AUTO EXPOSURE
+// ==========================================
+async function applyAutoExposure(track) {
+
+    if (!track) {
+        return;
+    }
+
+
+    try {
+
+        const capabilities =
+            track.getCapabilities
+                ? track.getCapabilities()
+                : {};
+
+
+        if (
+            capabilities.exposureMode &&
+            capabilities.exposureMode.includes(
+                "continuous"
+            )
+        ) {
+
+            await track.applyConstraints({
+
+                advanced: [
+                    {
+                        exposureMode:
+                            "continuous"
+                    }
+                ]
+
+            });
+
+            console.log(
+                "Continuous exposure enabled"
+            );
+        }
+
+    } catch (error) {
+
+        console.log(
+            "AUTO EXPOSURE NOT SUPPORTED:",
             error
         );
     }
@@ -957,6 +1163,7 @@ function checkTorchSupport(track) {
             "btn-torch"
         );
 
+
     if (!track) {
 
         button.disabled = true;
@@ -968,6 +1175,7 @@ function checkTorchSupport(track) {
         return;
     }
 
+
     try {
 
         const capabilities =
@@ -975,7 +1183,10 @@ function checkTorchSupport(track) {
                 ? track.getCapabilities()
                 : {};
 
-        if (capabilities.torch) {
+
+        if (
+            capabilities.torch
+        ) {
 
             button.disabled = false;
 
@@ -990,7 +1201,6 @@ function checkTorchSupport(track) {
             button.classList.add(
                 "opacity-40"
             );
-
         }
 
     } catch (error) {
@@ -1005,19 +1215,24 @@ function checkTorchSupport(track) {
 
 
 // ==========================================
-// TORCH
+// TOGGLE TORCH
 // ==========================================
 async function toggleTorch() {
 
-    if (!currentVideoTrack) return;
+    if (!currentVideoTrack) {
+        return;
+    }
+
 
     try {
 
         const capabilities =
-            currentVideoTrack
-                .getCapabilities();
+            currentVideoTrack.getCapabilities();
 
-        if (!capabilities.torch) {
+
+        if (
+            !capabilities.torch
+        ) {
 
             Swal.fire({
 
@@ -1037,8 +1252,10 @@ async function toggleTorch() {
             return;
         }
 
+
         torchEnabled =
             !torchEnabled;
+
 
         await currentVideoTrack
             .applyConstraints({
@@ -1051,6 +1268,7 @@ async function toggleTorch() {
                 ]
 
             });
+
 
         updateTorchButton(
             torchEnabled
@@ -1073,7 +1291,7 @@ async function toggleTorch() {
 
 
 // ==========================================
-// UPDATE TORCH BUTTON
+// TORCH BUTTON UI
 // ==========================================
 function updateTorchButton(enabled) {
 
@@ -1087,7 +1305,14 @@ function updateTorchButton(enabled) {
             "torch-text"
         );
 
-    if (!button || !text) return;
+
+    if (
+        !button ||
+        !text
+    ) {
+        return;
+    }
+
 
     if (enabled) {
 
@@ -1129,9 +1354,11 @@ async function switchCamera() {
         return;
     }
 
+
     try {
 
         await stopZXingScanner();
+
 
         currentCameraIndex =
             (
@@ -1139,14 +1366,19 @@ async function switchCamera() {
             ) %
             availableCameras.length;
 
+
         selectedDeviceId =
             availableCameras[
                 currentCameraIndex
             ].deviceId;
 
+
         torchEnabled = false;
 
-        updateTorchButton(false);
+        updateTorchButton(
+            false
+        );
+
 
         await startZXingCamera();
 
@@ -1169,26 +1401,30 @@ async function stopZXingScanner() {
 
     torchEnabled = false;
 
-    // ==========================================
-    // RESET ZXING
-    // ==========================================
+
     try {
 
-        if (zxingCodeReader) {
+        if (
+            zxingCodeReader
+        ) {
 
             zxingCodeReader.reset();
-
         }
 
-    } catch (error) {}
+    } catch (error) {
 
-    // ==========================================
-    // STOP VIDEO TRACK
-    // ==========================================
+        console.log(
+            "ZXING RESET ERROR:",
+            error
+        );
+    }
+
+
     const video =
         document.getElementById(
             "zxing-video"
         );
+
 
     if (
         video &&
@@ -1203,24 +1439,47 @@ async function stopZXingScanner() {
                     track => {
 
                         try {
-
                             track.stop();
-
                         } catch (e) {}
 
                     }
                 );
 
-        } catch (error) {}
+        } catch (error) {
 
-        video.srcObject = null;
+            console.log(
+                "STOP TRACK ERROR:",
+                error
+            );
+        }
+
+
+        video.srcObject =
+            null;
     }
 
-    currentVideoTrack = null;
 
-    updateTorchButton(false);
+    currentVideoTrack =
+        null;
+
+
+    updateTorchButton(
+        false
+    );
 }
 
+
+// ==========================================
+// BACK TO SETUP
+// ==========================================
+async function stopScannerAndGoBack() {
+
+    await stopZXingScanner();
+
+    showView(
+        "view-setup"
+    );
+}
 
 // ==========================================
 // BACK TO SETUP
