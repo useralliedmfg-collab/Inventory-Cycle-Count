@@ -73,7 +73,7 @@
                 ⚙️ ตั้งค่าลิงก์
             </button>
         </div>
-        <h1 class="text-lg font-semibold text-blue-900 tracking-wide">Inventory Cycle Count555</h1>
+        <h1 class="text-lg font-semibold text-blue-900 tracking-wide">Inventory Cycle Count</h1>
     </div>
 
     <main class="w-full max-w-md flex-1 bg-white shadow-md flex flex-col relative overflow-hidden">
@@ -756,7 +756,6 @@ async function startZXingCamera() {
             err
         );
 
-
         // ==========================================
         // FALLBACK
         // สำหรับมือถือบางรุ่น
@@ -823,7 +822,6 @@ async function startZXingCamera() {
         }
     }
 
-
     // ==========================================
     // CAMERA OPTIMIZATION
     // ==========================================
@@ -851,27 +849,31 @@ async function startZXingCamera() {
                     return;
                 }
 
-
                 currentVideoTrack =
-                    tracks[0];
+    tracks[0];
 
 
-                // ==================================
-                // AUTO FOCUS
-                // ==================================
-                await applyAutoFocus(
-                    currentVideoTrack
-                );
+// ==================================
+// CONTINUOUS AUTO FOCUS
+// ==================================
+await applyAutoFocus(
+    currentVideoTrack
+);
 
 
-                // ==================================
-                // AUTO ZOOM
-                // ==================================
-                await applyAutoZoom(
-                    currentVideoTrack
-                );
+// ==================================
+// AUTO QR DETECTION
+// ==================================
+startAutoQRDetection();
 
 
+// ==================================
+// TORCH
+// ==================================
+checkTorchSupport(
+    currentVideoTrack
+);
+                
                 // ==================================
                 // EXPOSURE
                 // ==================================
@@ -902,8 +904,9 @@ async function startZXingCamera() {
 }
 
 // ==========================================
-// AUTO FOCUS
-// ใช้ Continuous Autofocus ของกล้องมือถือ
+// CONTINUOUS AUTO FOCUS
+// ไม่บังคับ focusDistance
+// เพื่อไม่ทำให้ QR ที่อยู่ไกลเบลอ
 // ==========================================
 async function applyAutoFocus(track) {
 
@@ -920,7 +923,6 @@ async function applyAutoFocus(track) {
 
         // ==========================================
         // CONTINUOUS AUTO FOCUS
-        // ให้กล้องมือถือปรับโฟกัสเองตลอดเวลา
         // ==========================================
         if (
             capabilities.focusMode &&
@@ -928,11 +930,13 @@ async function applyAutoFocus(track) {
         ) {
 
             await track.applyConstraints({
+
                 advanced: [
                     {
                         focusMode: "continuous"
                     }
                 ]
+
             });
 
             console.log(
@@ -942,7 +946,7 @@ async function applyAutoFocus(track) {
         } else {
 
             console.log(
-                "AUTO FOCUS: CONTINUOUS NOT SUPPORTED"
+                "AUTO FOCUS: Continuous not supported"
             );
 
         }
@@ -953,9 +957,10 @@ async function applyAutoFocus(track) {
             "AUTO FOCUS ERROR:",
             error
         );
+
     }
 }
-
+        
 // ==========================================
 // AUTO ZOOM
 // ==========================================
@@ -1043,6 +1048,349 @@ async function applyAutoZoom(track) {
     }
 }
 
+        // ==========================================
+// AUTO QR DETECTION + SMOOTH ZOOM
+// ==========================================
+
+let barcodeDetector = null;
+let autoZoomRunning = false;
+let autoZoomAnimation = null;
+
+
+// ==========================================
+// INIT BARCODE DETECTOR
+// ==========================================
+function initBarcodeDetector() {
+
+    // Browser ไม่รองรับ
+    if (
+        typeof BarcodeDetector === "undefined"
+    ) {
+
+        console.log(
+            "BarcodeDetector: NOT SUPPORTED"
+        );
+
+        return false;
+    }
+
+    try {
+
+        barcodeDetector =
+            new BarcodeDetector({
+
+                formats: [
+                    "qr_code",
+                    "code_128",
+                    "code_39",
+                    "code_93",
+                    "ean_13",
+                    "ean_8",
+                    "itf"
+                ]
+
+            });
+
+        console.log(
+            "BarcodeDetector: READY"
+        );
+
+        return true;
+
+    } catch (error) {
+
+        console.log(
+            "BarcodeDetector INIT ERROR:",
+            error
+        );
+
+        barcodeDetector = null;
+
+        return false;
+    }
+}
+
+
+// ==========================================
+// START AUTO QR DETECTION
+// ==========================================
+function startAutoQRDetection() {
+
+    if (!currentVideoTrack) {
+        return;
+    }
+
+    if (!barcodeDetector) {
+
+        if (!initBarcodeDetector()) {
+            return;
+        }
+    }
+
+    if (autoZoomRunning) {
+        return;
+    }
+
+    autoZoomRunning = true;
+
+    console.log(
+        "AUTO QR DETECTION: START"
+    );
+
+    detectQRPosition();
+
+}
+
+
+// ==========================================
+// STOP AUTO QR DETECTION
+// ==========================================
+function stopAutoQRDetection() {
+
+    autoZoomRunning = false;
+
+    if (autoZoomAnimation) {
+
+        cancelAnimationFrame(
+            autoZoomAnimation
+        );
+
+        autoZoomAnimation = null;
+    }
+
+}
+
+
+// ==========================================
+// DETECT QR POSITION
+// ==========================================
+async function detectQRPosition() {
+
+    if (!autoZoomRunning) {
+        return;
+    }
+
+    const video =
+        document.getElementById(
+            "zxing-video"
+        );
+
+    if (
+        !video ||
+        video.readyState <
+            HTMLMediaElement.HAVE_CURRENT_DATA
+    ) {
+
+        autoZoomAnimation =
+            requestAnimationFrame(
+                detectQRPosition
+            );
+
+        return;
+    }
+
+    try {
+
+        const detected =
+            await barcodeDetector.detect(
+                video
+            );
+
+        if (
+            detected &&
+            detected.length > 0
+        ) {
+
+            const barcode =
+                detected[0];
+
+            if (
+                barcode.boundingBox
+            ) {
+
+                await adjustZoomToBarcode(
+                    barcode.boundingBox,
+                    video
+                );
+            }
+
+        }
+
+    } catch (error) {
+
+        // ไม่ต้องแสดง error ทุก frame
+        // เพราะบาง browser detect frame ไม่ทัน
+    }
+
+    // ตรวจซ้ำประมาณทุก frame
+    autoZoomAnimation =
+        requestAnimationFrame(
+            detectQRPosition
+        );
+}
+
+
+// ==========================================
+// SMOOTH AUTO ZOOM
+// ==========================================
+async function adjustZoomToBarcode(
+    box,
+    video
+) {
+
+    if (!currentVideoTrack) {
+        return;
+    }
+
+    const capabilities =
+        currentVideoTrack.getCapabilities
+            ? currentVideoTrack.getCapabilities()
+            : {};
+
+    if (!capabilities.zoom) {
+        return;
+    }
+
+    const minZoom =
+        Number(
+            capabilities.zoom.min
+        );
+
+    const maxZoom =
+        Number(
+            capabilities.zoom.max
+        );
+
+    if (
+        !isFinite(minZoom) ||
+        !isFinite(maxZoom)
+    ) {
+        return;
+    }
+
+    if (
+        !video.videoWidth ||
+        !video.videoHeight
+    ) {
+        return;
+    }
+
+    // ==========================================
+    // QR SIZE RELATIVE TO VIDEO
+    // ==========================================
+
+    const qrWidth =
+        box.width /
+        video.videoWidth;
+
+    const qrHeight =
+        box.height /
+        video.videoHeight;
+
+    const qrSize =
+        Math.max(
+            qrWidth,
+            qrHeight
+        );
+
+    // ==========================================
+    // TARGET ZOOM
+    // ==========================================
+
+    let targetZoom;
+
+    if (qrSize < 0.12) {
+
+        // QR เล็กมาก → ขยาย
+        targetZoom = 2.0;
+
+    } else if (qrSize < 0.20) {
+
+        // QR ยังเล็ก → ขยายปานกลาง
+        targetZoom = 1.6;
+
+    } else if (qrSize < 0.30) {
+
+        // กำลังดี
+        targetZoom = 1.25;
+
+    } else {
+
+        // ใหญ่พอแล้ว
+        targetZoom = 1.0;
+
+    }
+
+    targetZoom =
+        Math.max(
+            minZoom,
+            Math.min(
+                targetZoom,
+                maxZoom
+            )
+        );
+
+    // ==========================================
+    // CURRENT ZOOM
+    // ==========================================
+
+    const settings =
+        currentVideoTrack.getSettings
+            ? currentVideoTrack.getSettings()
+            : {};
+
+    const currentZoom =
+        Number(
+            settings.zoom || minZoom
+        );
+
+    if (
+        !isFinite(currentZoom)
+    ) {
+        return;
+    }
+
+    // ==========================================
+    // SMOOTH ZOOM
+    // ไม่กระโดดทันที
+    // ==========================================
+
+    const difference =
+        targetZoom -
+        currentZoom;
+
+    if (
+        Math.abs(difference) < 0.05
+    ) {
+        return;
+    }
+
+    const smoothZoom =
+        currentZoom +
+        (
+            difference * 0.12
+        );
+
+    try {
+
+        await currentVideoTrack
+            .applyConstraints({
+
+                advanced: [
+                    {
+                        zoom:
+                            smoothZoom
+                    }
+                ]
+
+            });
+
+    } catch (error) {
+
+        // บางเครื่องไม่รองรับ dynamic zoom
+    }
+
+}
 
 // ==========================================
 // AUTO EXPOSURE
@@ -1343,6 +1691,8 @@ async function stopZXingScanner() {
 
     torchEnabled = false;
 
+    // หยุด Auto QR Detection
+    stopAutoQRDetection();
 
     try {
 
