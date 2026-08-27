@@ -73,7 +73,7 @@
                 ⚙️ ตั้งค่าลิงก์
             </button>
         </div>
-        <h1 class="text-lg font-semibold text-blue-900 tracking-wide">Inventory Cycle Count000</h1>
+        <h1 class="text-lg font-semibold text-blue-900 tracking-wide">Inventory Cycle Count1</h1>
     </div>
 
     <main class="w-full max-w-md flex-1 bg-white shadow-md flex flex-col relative overflow-hidden">
@@ -475,208 +475,764 @@ localStorage.setItem(
             setTimeout(() => { initScanner(); }, 150);
         }
 
-        let zxingCodeReader = null;
-        let availableCameras = [];
-        let currentCameraIndex = 0;
-        let selectedDeviceId = null;
-        let currentVideoTrack = null;
-        let torchEnabled = false;
-        let scanLocked = false;
+        // ==========================================
+// ZXING CAMERA SCANNER
+// OPTIMIZED FOR FAST + RELIABLE QR / BARCODE
+// ==========================================
 
-        async function initScanner() {
-            const errorBox = document.getElementById("camera-error");
-            errorBox.classList.add("hidden");
-            scanLocked = false;
-            torchEnabled = false;
-            updateTorchButton(false);
+let zxingCodeReader = null;
+let availableCameras = [];
+let currentCameraIndex = 0;
+let selectedDeviceId = null;
+let currentVideoTrack = null;
+let torchEnabled = false;
+let scanLocked = false;
 
-            await stopZXingScanner();
+// ==========================================
+// INIT SCANNER
+// ==========================================
+async function initScanner() {
 
-            if (!zxingCodeReader) {
-                // บังคับโหมด TRY_HARDER สำหรับสแกนบาร์โค้ดจาง/ความคมชัดต่ำ
-                const hints = new Map();
-                hints.set(ZXing.DecodeHintType.TRY_HARDER, true);
-                zxingCodeReader = new ZXing.BrowserMultiFormatReader(hints);
-            }
+    const errorBox =
+        document.getElementById("camera-error");
 
-            try {
-                availableCameras = await zxingCodeReader.listVideoInputDevices();
-                if (!availableCameras || availableCameras.length === 0) {
-                    throw new Error("ไม่พบกล้องในอุปกรณ์นี้");
-                }
+    errorBox.classList.add("hidden");
 
-                let backCameraIndex = availableCameras.findIndex(camera => {
-                    const label = (camera.label || "").toLowerCase();
-                    return label.includes("back") || label.includes("rear") || label.includes("environment") || label.includes("หลัง");
-                });
+    scanLocked = false;
+    torchEnabled = false;
 
-                if (backCameraIndex === -1) backCameraIndex = availableCameras.length - 1;
-                currentCameraIndex = backCameraIndex;
-                selectedDeviceId = availableCameras[currentCameraIndex].deviceId;
+    updateTorchButton(false);
 
-                const switchButton = document.getElementById("btn-switch-cam");
-                if (availableCameras.length > 1) {
-                    switchButton.classList.remove("hidden");
-                } else {
-                    switchButton.classList.add("hidden");
-                }
+    // หยุดกล้องเดิมก่อน
+    await stopZXingScanner();
 
-                await startZXingCamera();
-            } catch (error) {
-                console.error("CAMERA ERROR:", error);
-                errorBox.classList.remove("hidden");
-                document.getElementById("camera-error-msg").innerHTML = "เปิดกล้องไม่ได้<br><br>กรุณากดอนุญาตการใช้งานกล้อง<br>แล้วลองใหม่อีกครั้ง";
-            }
+    // ==========================================
+    // CREATE ZXING READER
+    // ==========================================
+    if (!zxingCodeReader) {
+
+        const hints = new Map();
+
+        // เพิ่มความสามารถในการอ่าน
+        hints.set(
+            ZXing.DecodeHintType.TRY_HARDER,
+            true
+        );
+
+        // จำกัด Format ที่จำเป็น
+        // ช่วยลดภาระในการตรวจจับ
+        hints.set(
+            ZXing.DecodeHintType.POSSIBLE_FORMATS,
+            [
+                ZXing.BarcodeFormat.QR_CODE,
+                ZXing.BarcodeFormat.CODE_128,
+                ZXing.BarcodeFormat.CODE_39,
+                ZXing.BarcodeFormat.CODE_93,
+                ZXing.BarcodeFormat.ITF,
+                ZXing.BarcodeFormat.EAN_13,
+                ZXing.BarcodeFormat.EAN_8
+            ]
+        );
+
+        zxingCodeReader =
+            new ZXing.BrowserMultiFormatReader(
+                hints
+            );
+    }
+
+    // ==========================================
+    // FIND CAMERAS
+    // ==========================================
+    try {
+
+        availableCameras =
+            await zxingCodeReader
+                .listVideoInputDevices();
+
+        if (
+            !availableCameras ||
+            availableCameras.length === 0
+        ) {
+            throw new Error(
+                "ไม่พบกล้องในอุปกรณ์นี้"
+            );
         }
 
-        async function startZXingCamera() {
-            scanLocked = false;
-            const video = document.getElementById("zxing-video");
+        // ==========================================
+        // FIND BACK CAMERA
+        // ==========================================
+        let backCameraIndex =
+            availableCameras.findIndex(
+                camera => {
 
-            // กำหนดคอนสเตรนท์ขอความละเอียดสูง เพื่อจับภาพบาร์โค้ดจางได้ดีขึ้น
-            const constraints = {
-                video: {
-                    deviceId: selectedDeviceId ? { exact: selectedDeviceId } : undefined,
-                    width: { ideal: 1920, min: 1280 },
-                    height: { ideal: 1080, min: 720 },
-                    facingMode: "environment"
+                    const label =
+                        (
+                            camera.label || ""
+                        ).toLowerCase();
+
+                    return (
+                        label.includes("back") ||
+                        label.includes("rear") ||
+                        label.includes("environment") ||
+                        label.includes("หลัง")
+                    );
+
                 }
-            };
+            );
 
-            try {
-                await zxingCodeReader.decodeFromConstraints(constraints, video, async (result, error) => {
-                    if (!result || scanLocked) return;
+        // ถ้าหากหา Back Camera จากชื่อไม่ได้
+        if (backCameraIndex === -1) {
+
+            backCameraIndex =
+                availableCameras.length - 1;
+
+        }
+
+        currentCameraIndex =
+            backCameraIndex;
+
+        selectedDeviceId =
+            availableCameras[
+                currentCameraIndex
+            ].deviceId;
+
+        // ==========================================
+        // CAMERA SWITCH BUTTON
+        // ==========================================
+        const switchButton =
+            document.getElementById(
+                "btn-switch-cam"
+            );
+
+        if (availableCameras.length > 1) {
+
+            switchButton.classList.remove(
+                "hidden"
+            );
+
+        } else {
+
+            switchButton.classList.add(
+                "hidden"
+            );
+
+        }
+
+        // ==========================================
+        // START CAMERA
+        // ==========================================
+        await startZXingCamera();
+
+    } catch (error) {
+
+        console.error(
+            "CAMERA ERROR:",
+            error
+        );
+
+        errorBox.classList.remove(
+            "hidden"
+        );
+
+        document.getElementById(
+            "camera-error-msg"
+        ).innerHTML =
+            "เปิดกล้องไม่ได้<br><br>" +
+            "กรุณากดอนุญาตการใช้งานกล้อง<br>" +
+            "แล้วลองใหม่อีกครั้ง";
+    }
+}
+
+
+// ==========================================
+// START ZXING CAMERA
+// ==========================================
+async function startZXingCamera() {
+
+    scanLocked = false;
+
+    const video =
+        document.getElementById(
+            "zxing-video"
+        );
+
+    // ==========================================
+    // HIGH QUALITY CAMERA CONSTRAINTS
+    // ==========================================
+    const constraints = {
+
+        video: {
+
+            deviceId:
+                selectedDeviceId
+                    ? {
+                        exact:
+                            selectedDeviceId
+                    }
+                    : undefined,
+
+            facingMode: {
+                ideal: "environment"
+            },
+
+            width: {
+                ideal: 1920,
+                min: 1280
+            },
+
+            height: {
+                ideal: 1080,
+                min: 720
+            },
+
+            frameRate: {
+                ideal: 30,
+                min: 15
+            },
+
+            // ขอ Continuous Focus
+            focusMode: "continuous"
+        }
+
+    };
+
+    try {
+
+        // ==========================================
+        // START WITH CONSTRAINTS
+        // ==========================================
+        await zxingCodeReader
+            .decodeFromConstraints(
+                constraints,
+                video,
+                async (
+                    result,
+                    error
+                ) => {
+
+                    if (
+                        !result ||
+                        scanLocked
+                    ) {
+                        return;
+                    }
+
+                    // ป้องกันยิงซ้ำ
                     scanLocked = true;
+
+                    console.log(
+                        "ZXING RESULT:",
+                        result.text
+                    );
+
+                    // หยุดกล้องก่อน
                     await stopZXingScanner();
-                    processScannedData(result.text);
-                });
-            } catch (err) {
-                // Fallback หากอุปกรณ์ไม่รองรับ HD constraints
-                await zxingCodeReader.decodeFromVideoDevice(selectedDeviceId, video, async (result, error) => {
-                    if (!result || scanLocked) return;
-                    scanLocked = true;
-                    await stopZXingScanner();
-                    processScannedData(result.text);
-                });
-            }
 
-            setTimeout(async () => {
-                try {
-                    const stream = video.srcObject;
-                    if (!stream) return;
-                    const tracks = stream.getVideoTracks();
-                    if (!tracks || !tracks.length) return;
-                    currentVideoTrack = tracks[0];
-                    await applyAutoFocus(currentVideoTrack);
-                    checkTorchSupport(currentVideoTrack);
-                } catch (error) {
-                    console.log("CAMERA CONTROL ERROR:", error);
+                    // ส่งเข้า Logic เดิม
+                    processScannedData(
+                        result.text
+                    );
                 }
-            }, 700);
-        }
+            );
 
-        async function applyAutoFocus(track) {
-            if (!track) return;
-            try {
-                const capabilities = track.getCapabilities ? track.getCapabilities() : {};
-                if (capabilities.focusMode && capabilities.focusMode.includes("continuous")) {
-                    await track.applyConstraints({ advanced: [{ focusMode: "continuous" }] });
-                }
-            } catch (error) {
-                console.log("AUTO FOCUS ERROR:", error);
-            }
-        }
+    } catch (err) {
 
-        function checkTorchSupport(track) {
-            const button = document.getElementById("btn-torch");
-            if (!track) {
-                button.disabled = true;
-                button.classList.add("opacity-40");
-                return;
-            }
-            try {
-                const capabilities = track.getCapabilities ? track.getCapabilities() : {};
-                if (capabilities.torch) {
-                    button.disabled = false;
-                    button.classList.remove("opacity-40");
-                } else {
-                    button.disabled = true;
-                    button.classList.add("opacity-40");
-                }
-            } catch (error) {
-                button.disabled = true;
-                button.classList.add("opacity-40");
-            }
-        }
+        console.warn(
+            "HIGH QUALITY CAMERA FAILED:",
+            err
+        );
 
-        async function toggleTorch() {
-            if (!currentVideoTrack) return;
+        // ==========================================
+        // FALLBACK CAMERA
+        // ==========================================
+        try {
+
+            await zxingCodeReader
+                .decodeFromVideoDevice(
+                    selectedDeviceId,
+                    video,
+                    async (
+                        result,
+                        error
+                    ) => {
+
+                        if (
+                            !result ||
+                            scanLocked
+                        ) {
+                            return;
+                        }
+
+                        scanLocked = true;
+
+                        console.log(
+                            "ZXING FALLBACK RESULT:",
+                            result.text
+                        );
+
+                        await stopZXingScanner();
+
+                        processScannedData(
+                            result.text
+                        );
+                    }
+                );
+
+        } catch (fallbackError) {
+
+            console.error(
+                "CAMERA FALLBACK ERROR:",
+                fallbackError
+            );
+
+            document
+                .getElementById(
+                    "camera-error"
+                )
+                .classList.remove(
+                    "hidden"
+                );
+        }
+    }
+
+    // ==========================================
+    // GET VIDEO TRACK
+    // ==========================================
+    setTimeout(
+        async () => {
+
             try {
-                const capabilities = currentVideoTrack.getCapabilities();
-                if (!capabilities.torch) {
-                    Swal.fire({ icon: "info", title: "ไม่รองรับ Flash", text: "อุปกรณ์หรือเบราว์เซอร์นี้ไม่รองรับการเปิดไฟแฟลชผ่านกล้อง", confirmButtonText: "ตกลง" });
+
+                const stream =
+                    video.srcObject;
+
+                if (!stream) return;
+
+                const tracks =
+                    stream.getVideoTracks();
+
+                if (
+                    !tracks ||
+                    !tracks.length
+                ) {
                     return;
                 }
-                torchEnabled = !torchEnabled;
-                await currentVideoTrack.applyConstraints({ advanced: [{ torch: torchEnabled }] });
-                updateTorchButton(torchEnabled);
-            } catch (error) {
-                torchEnabled = false;
-                updateTorchButton(false);
-            }
-        }
 
-        function updateTorchButton(enabled) {
-            const button = document.getElementById("btn-torch");
-            const text = document.getElementById("torch-text");
-            if (!button || !text) return;
-            if (enabled) {
-                button.classList.remove("bg-gray-700");
-                button.classList.add("bg-yellow-500");
-                text.textContent = "ปิดไฟ";
-            } else {
-                button.classList.remove("bg-yellow-500");
-                button.classList.add("bg-gray-700");
-                text.textContent = "ไฟ";
-            }
-        }
+                currentVideoTrack =
+                    tracks[0];
 
-        async function switchCamera() {
-            if (availableCameras.length < 2) return;
-            try {
-                await stopZXingScanner();
-                currentCameraIndex = (currentCameraIndex + 1) % availableCameras.length;
-                selectedDeviceId = availableCameras[currentCameraIndex].deviceId;
-                torchEnabled = false;
-                updateTorchButton(false);
-                await startZXingCamera();
-            } catch (error) {
-                console.error("SWITCH CAMERA ERROR:", error);
-            }
-        }
+                // ==========================================
+                // AUTO FOCUS
+                // ==========================================
+                await applyAutoFocus(
+                    currentVideoTrack
+                );
 
-        async function stopZXingScanner() {
-            scanLocked = true;
-            torchEnabled = false;
-            try {
-                if (zxingCodeReader) zxingCodeReader.reset();
-            } catch (error) {}
+                // ==========================================
+                // CHECK TORCH
+                // ==========================================
+                checkTorchSupport(
+                    currentVideoTrack
+                );
 
-            const video = document.getElementById("zxing-video");
-            if (video && video.srcObject) {
+                // ==========================================
+                // LOG CAMERA SETTINGS
+                // ==========================================
                 try {
-                    video.srcObject.getTracks().forEach(track => { try { track.stop(); } catch (e) {} });
-                } catch (error) {}
-                video.srcObject = null;
+
+                    console.log(
+                        "CAMERA SETTINGS:",
+                        currentVideoTrack
+                            .getSettings()
+                    );
+
+                } catch (e) {}
+
+            } catch (error) {
+
+                console.log(
+                    "CAMERA CONTROL ERROR:",
+                    error
+                );
             }
-            currentVideoTrack = null;
-            updateTorchButton(false);
+
+        },
+        700
+    );
+}
+
+
+// ==========================================
+// AUTO FOCUS
+// ==========================================
+async function applyAutoFocus(track) {
+
+    if (!track) return;
+
+    try {
+
+        const capabilities =
+            track.getCapabilities
+                ? track.getCapabilities()
+                : {};
+
+        const advanced = [];
+
+        // ==========================================
+        // CONTINUOUS AUTO FOCUS
+        // ==========================================
+        if (
+            capabilities.focusMode &&
+            capabilities.focusMode.includes(
+                "continuous"
+            )
+        ) {
+
+            advanced.push({
+                focusMode:
+                    "continuous"
+            });
+
         }
 
-        async function stopScannerAndGoBack() {
-            await stopZXingScanner();
-            showView("view-setup");
+        // ==========================================
+        // MAXIMUM PRACTICAL RESOLUTION
+        // ==========================================
+        if (
+            capabilities.width &&
+            capabilities.height
+        ) {
+
+            const maxWidth =
+                capabilities.width.max ||
+                1920;
+
+            const maxHeight =
+                capabilities.height.max ||
+                1080;
+
+            advanced.push({
+
+                width:
+                    Math.min(
+                        maxWidth,
+                        1920
+                    ),
+
+                height:
+                    Math.min(
+                        maxHeight,
+                        1080
+                    )
+
+            });
         }
+
+        if (advanced.length > 0) {
+
+            await track.applyConstraints({
+                advanced:
+                    advanced
+            });
+
+        }
+
+    } catch (error) {
+
+        console.log(
+            "AUTO FOCUS ERROR:",
+            error
+        );
+    }
+}
+
+
+// ==========================================
+// CHECK TORCH
+// ==========================================
+function checkTorchSupport(track) {
+
+    const button =
+        document.getElementById(
+            "btn-torch"
+        );
+
+    if (!track) {
+
+        button.disabled = true;
+
+        button.classList.add(
+            "opacity-40"
+        );
+
+        return;
+    }
+
+    try {
+
+        const capabilities =
+            track.getCapabilities
+                ? track.getCapabilities()
+                : {};
+
+        if (capabilities.torch) {
+
+            button.disabled = false;
+
+            button.classList.remove(
+                "opacity-40"
+            );
+
+        } else {
+
+            button.disabled = true;
+
+            button.classList.add(
+                "opacity-40"
+            );
+
+        }
+
+    } catch (error) {
+
+        button.disabled = true;
+
+        button.classList.add(
+            "opacity-40"
+        );
+    }
+}
+
+
+// ==========================================
+// TORCH
+// ==========================================
+async function toggleTorch() {
+
+    if (!currentVideoTrack) return;
+
+    try {
+
+        const capabilities =
+            currentVideoTrack
+                .getCapabilities();
+
+        if (!capabilities.torch) {
+
+            Swal.fire({
+
+                icon: "info",
+
+                title: "ไม่รองรับ Flash",
+
+                text:
+                    "อุปกรณ์หรือเบราว์เซอร์นี้" +
+                    "ไม่รองรับการเปิดไฟแฟลชผ่านกล้อง",
+
+                confirmButtonText:
+                    "ตกลง"
+
+            });
+
+            return;
+        }
+
+        torchEnabled =
+            !torchEnabled;
+
+        await currentVideoTrack
+            .applyConstraints({
+
+                advanced: [
+                    {
+                        torch:
+                            torchEnabled
+                    }
+                ]
+
+            });
+
+        updateTorchButton(
+            torchEnabled
+        );
+
+    } catch (error) {
+
+        console.error(
+            "TORCH ERROR:",
+            error
+        );
+
+        torchEnabled = false;
+
+        updateTorchButton(
+            false
+        );
+    }
+}
+
+
+// ==========================================
+// UPDATE TORCH BUTTON
+// ==========================================
+function updateTorchButton(enabled) {
+
+    const button =
+        document.getElementById(
+            "btn-torch"
+        );
+
+    const text =
+        document.getElementById(
+            "torch-text"
+        );
+
+    if (!button || !text) return;
+
+    if (enabled) {
+
+        button.classList.remove(
+            "bg-gray-700"
+        );
+
+        button.classList.add(
+            "bg-yellow-500"
+        );
+
+        text.textContent =
+            "ปิดไฟ";
+
+    } else {
+
+        button.classList.remove(
+            "bg-yellow-500"
+        );
+
+        button.classList.add(
+            "bg-gray-700"
+        );
+
+        text.textContent =
+            "ไฟ";
+    }
+}
+
+
+// ==========================================
+// SWITCH CAMERA
+// ==========================================
+async function switchCamera() {
+
+    if (
+        availableCameras.length < 2
+    ) {
+        return;
+    }
+
+    try {
+
+        await stopZXingScanner();
+
+        currentCameraIndex =
+            (
+                currentCameraIndex + 1
+            ) %
+            availableCameras.length;
+
+        selectedDeviceId =
+            availableCameras[
+                currentCameraIndex
+            ].deviceId;
+
+        torchEnabled = false;
+
+        updateTorchButton(false);
+
+        await startZXingCamera();
+
+    } catch (error) {
+
+        console.error(
+            "SWITCH CAMERA ERROR:",
+            error
+        );
+    }
+}
+
+
+// ==========================================
+// STOP ZXING SCANNER
+// ==========================================
+async function stopZXingScanner() {
+
+    scanLocked = true;
+
+    torchEnabled = false;
+
+    // ==========================================
+    // RESET ZXING
+    // ==========================================
+    try {
+
+        if (zxingCodeReader) {
+
+            zxingCodeReader.reset();
+
+        }
+
+    } catch (error) {}
+
+    // ==========================================
+    // STOP VIDEO TRACK
+    // ==========================================
+    const video =
+        document.getElementById(
+            "zxing-video"
+        );
+
+    if (
+        video &&
+        video.srcObject
+    ) {
+
+        try {
+
+            video.srcObject
+                .getTracks()
+                .forEach(
+                    track => {
+
+                        try {
+
+                            track.stop();
+
+                        } catch (e) {}
+
+                    }
+                );
+
+        } catch (error) {}
+
+        video.srcObject = null;
+    }
+
+    currentVideoTrack = null;
+
+    updateTorchButton(false);
+}
+
+
+// ==========================================
+// BACK TO SETUP
+// ==========================================
+async function stopScannerAndGoBack() {
+
+    await stopZXingScanner();
+
+    showView(
+        "view-setup"
+    );
+}
 
         async function processScannedData(text) {
     const parts = text.split(',').map(x => x.trim());
