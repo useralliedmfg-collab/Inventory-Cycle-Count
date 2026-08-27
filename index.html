@@ -613,7 +613,13 @@ async function initScanner() {
     try {
 
         availableCameras =
-            await zxingCodeReader.listVideoInputDevices();
+    await zxingCodeReader.listVideoInputDevices();
+
+document.getElementById("btn-switch-cam")
+    ?.classList.toggle(
+        "hidden",
+        availableCameras.length <= 1
+    );
 
         if (
             !availableCameras ||
