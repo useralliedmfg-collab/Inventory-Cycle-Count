@@ -73,7 +73,7 @@
                 ⚙️ ตั้งค่าลิงก์
             </button>
         </div>
-        <h1 class="text-lg font-semibold text-blue-900 tracking-wide">Inventory Cycle Count1</h1>
+        <h1 class="text-lg font-semibold text-blue-900 tracking-wide">Inventory Cycle Count000</h1>
     </div>
 
     <main class="w-full max-w-md flex-1 bg-white shadow-md flex flex-col relative overflow-hidden">
@@ -680,6 +680,10 @@ localStorage.setItem(
 
         async function processScannedData(text) {
     const parts = text.split(',').map(x => x.trim());
+console.log('========== RAW SCAN ==========');
+console.log('RAW TEXT:', JSON.stringify(text));
+console.log('PARTS:', parts);
+console.log('==============================');
 
     if (parts.length < 4) {
         Swal.fire({
