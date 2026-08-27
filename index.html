@@ -73,7 +73,7 @@
                 ⚙️ ตั้งค่าลิงก์
             </button>
         </div>
-        <h1 class="text-lg font-semibold text-blue-900 tracking-wide">Inventory Cycle Count222</h1>
+        <h1 class="text-lg font-semibold text-blue-900 tracking-wide">Inventory Cycle Count555</h1>
     </div>
 
     <main class="w-full max-w-md flex-1 bg-white shadow-md flex flex-col relative overflow-hidden">
@@ -677,41 +677,33 @@ async function startZXingCamera() {
     // HIGH QUALITY CAMERA
     // ==========================================
     const constraints = {
+    video: {
+        deviceId: selectedDeviceId
+            ? { exact: selectedDeviceId }
+            : undefined,
 
-        video: {
+        facingMode: {
+            ideal: "environment"
+        },
 
-            deviceId:
-                selectedDeviceId
-                    ? {
-                        exact:
-                            selectedDeviceId
-                    }
-                    : undefined,
+        width: {
+            ideal: 1920,
+            min: 1280
+        },
 
-            facingMode: {
-                ideal: "environment"
-            },
+        height: {
+            ideal: 1080,
+            min: 720
+        },
 
-            width: {
-                ideal: 1920,
-                min: 1280
-            },
-
-            height: {
-                ideal: 1080,
-                min: 720
-            },
-
-            frameRate: {
-                ideal: 30,
-                min: 15
-            },
+        frameRate: {
+            ideal: 30,
+            min: 15
         }
-    };
-
+    }
+};
 
     try {
-
         await zxingCodeReader
             .decodeFromConstraints(
                 constraints,
@@ -909,16 +901,15 @@ async function startZXingCamera() {
     );
 }
 
-
 // ==========================================
 // AUTO FOCUS
+// ใช้ Continuous Autofocus ของกล้องมือถือ
 // ==========================================
 async function applyAutoFocus(track) {
 
     if (!track) {
         return;
     }
-
 
     try {
 
@@ -927,92 +918,43 @@ async function applyAutoFocus(track) {
                 ? track.getCapabilities()
                 : {};
 
-
-        // Continuous Focus
+        // ==========================================
+        // CONTINUOUS AUTO FOCUS
+        // ให้กล้องมือถือปรับโฟกัสเองตลอดเวลา
+        // ==========================================
         if (
             capabilities.focusMode &&
-            capabilities.focusMode.includes(
-                "continuous"
-            )
+            capabilities.focusMode.includes("continuous")
         ) {
 
             await track.applyConstraints({
-
                 advanced: [
                     {
-                        focusMode:
-                            "continuous"
+                        focusMode: "continuous"
                     }
                 ]
-
             });
 
             console.log(
-                "Continuous autofocus enabled"
+                "AUTO FOCUS: CONTINUOUS"
             );
-        }
 
+        } else {
 
-        // ==========================================
-        // Near Focus
-        // ช่วยอ่าน QR ใกล้ ๆ
-        // ==========================================
-        if (
-            capabilities.focusDistance
-        ) {
+            console.log(
+                "AUTO FOCUS: CONTINUOUS NOT SUPPORTED"
+            );
 
-            const minFocus =
-                capabilities
-                    .focusDistance
-                    .min;
-
-            if (
-                typeof minFocus ===
-                "number"
-            ) {
-
-                await track.applyConstraints({
-
-                    advanced: [
-                        {
-                            focusDistance:
-                                minFocus
-                        }
-                    ]
-
-                });
-
-                // กลับไป continuous
-                if (
-                    capabilities.focusMode &&
-                    capabilities.focusMode.includes(
-                        "continuous"
-                    )
-                ) {
-
-                    await track.applyConstraints({
-
-                        advanced: [
-                            {
-                                focusMode:
-                                    "continuous"
-                            }
-                        ]
-
-                    });
-                }
-            }
         }
 
     } catch (error) {
 
         console.log(
-            "AUTO FOCUS NOT SUPPORTED:",
+            "AUTO FOCUS ERROR:",
             error
         );
     }
 }
-
 
 // ==========================================
 // AUTO ZOOM
