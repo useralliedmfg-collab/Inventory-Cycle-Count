@@ -2283,12 +2283,12 @@ console.log('==============================');
     currentScanData.balanceQty =
     balanceQty;
 
-    const balanceDisplay =
+    const balanceDisplayElement =
     document.getElementById(
         'display-balance-qty'
     );
 
-    if (balanceDisplay) {
+if (balanceDisplayElement) {
 
     if (
         balanceQty !== '' &&
@@ -2296,17 +2296,17 @@ console.log('==============================');
         balanceQty !== undefined
     ) {
 
-        balanceDisplay.textContent =
+        balanceDisplayElement.textContent =
             balanceQty;
 
     } else {
 
-        balanceDisplay.textContent =
+        balanceDisplayElement.textContent =
             'ไม่พบข้อมูล';
 
     }
 
-    }
+}
 
     const rcUnitDisplay =
         document.getElementById('rc-unit-display');
