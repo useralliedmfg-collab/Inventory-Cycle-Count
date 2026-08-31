@@ -140,24 +140,21 @@
                     <option value="ZONE_D">Zone D</option>
                 </select>
             </div>
-
-            <div>
+<div>
     <label class="block text-sm font-medium text-gray-600 mb-1">
         พื้นที่ปฏิบัติงาน (Location)
     </label>
 
     <select
         id="location-select"
-        disabled
-        class="w-full border border-gray-300 rounded-lg p-3 text-lg bg-gray-50 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none disabled:opacity-60 disabled:cursor-not-allowed"
+        class="w-full border border-gray-300 rounded-lg p-3 text-lg bg-gray-50 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
     >
         <option value="" disabled selected>
             -- กรุณาเลือกโซนก่อน --
         </option>
     </select>
 </div>
-
-<div>
+           
     <label class="block text-sm font-medium text-gray-600 mb-1">
         ชื่อผู้รับผิดชอบ (Responsible Person)
     </label>
@@ -536,30 +533,31 @@ localStorage.setItem(
             }
         }
 
-        function updateLocations() {
+function updateLocations() {
 
-    const zoneSelect =
-        document.getElementById('zone-select');
+    const zoneSelect = document.getElementById('zone-select');
+    const locationSelect = document.getElementById('location-select');
 
-    const locationSelect =
-        document.getElementById('location-select');
+    const selectedZone = zoneSelect.value;
 
-    const selectedZone =
-        zoneSelect.value;
-
-    // ล้าง Location เดิม
+    // ==========================================
+    // RESET LOCATION
+    // ==========================================
     locationSelect.innerHTML = '';
 
-    // ถ้ายังไม่ได้เลือก Zone
-    if (
-        !selectedZone ||
-        !MOCK_ZONES[selectedZone]
-    ) {
+    // ==========================================
+    // ยังไม่ได้เลือก Zone
+    // ==========================================
+    if (!selectedZone || !MOCK_ZONES[selectedZone]) {
 
-        locationSelect.innerHTML =
-            '<option value="" disabled selected>' +
-            '-- กรุณาเลือกโซนก่อน --' +
-            '</option>';
+        const option = document.createElement('option');
+
+        option.value = '';
+        option.textContent = '-- กรุณาเลือกโซนก่อน --';
+        option.disabled = true;
+        option.selected = true;
+
+        locationSelect.appendChild(option);
 
         locationSelect.disabled = true;
 
@@ -567,41 +565,37 @@ localStorage.setItem(
     }
 
     // ==========================================
-    // เพิ่ม Location ตาม Zone
+    // DEFAULT OPTION
     // ==========================================
+    const defaultOption = document.createElement('option');
 
-    locationSelect.innerHTML =
-        '<option value="" disabled selected>' +
-        '-- เลือกพื้นที่ปฏิบัติงาน --' +
-        '</option>';
+    defaultOption.value = '';
+    defaultOption.textContent = '-- เลือกพื้นที่ปฏิบัติงาน --';
+    defaultOption.disabled = true;
+    defaultOption.selected = true;
 
-    MOCK_ZONES[selectedZone].forEach(
-        function(location) {
-
-            const option =
-                document.createElement('option');
-
-            option.value =
-                location;
-
-            option.textContent =
-                location;
-
-            locationSelect.appendChild(
-                option
-            );
-
-        }
-    );
+    locationSelect.appendChild(defaultOption);
 
     // ==========================================
-    // เปิดให้เลือก Location
+    // ADD LOCATION
     // ==========================================
+    MOCK_ZONES[selectedZone].forEach(function(location) {
 
+        const option = document.createElement('option');
+
+        option.value = location;
+        option.textContent = location;
+
+        locationSelect.appendChild(option);
+
+    });
+
+    // ==========================================
+    // ENABLE LOCATION
+    // ==========================================
     locationSelect.disabled = false;
-
 }
-
+        
         function showView(viewId) {
             document.getElementById('view-setup').classList.add('hidden');
             document.getElementById('view-scanner').classList.add('hidden');
