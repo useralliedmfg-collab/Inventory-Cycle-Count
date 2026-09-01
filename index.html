@@ -2610,8 +2610,14 @@ async function getStockBalanceQty(
                         initScanner();
                     });
                 } else {
-                    Swal.fire({ icon: 'error', title: 'เกิดข้อผิดพลาด', text: result.message || 'ไม่สามารถบันทึกข้อมูลได้' });
-                }
+    Swal.fire({
+        icon: 'error',
+        title: 'ไม่สามารถบันทึกข้อมูลได้',
+        text: 'เนื่องจาก Serial Number นี้ถูกสแกนไปแล้ว',
+        confirmButtonText: 'ตกลง',
+        confirmButtonColor: '#2563eb'
+    });
+}
             } catch (error) {
                 loadingOverlay.classList.add('hidden');
                 Swal.fire({ icon: 'error', title: 'เชื่อมต่อล้มเหลว', text: error.toString() });
